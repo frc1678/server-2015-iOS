@@ -1,0 +1,2 @@
+PODS_SERVER______IOS_DROPBOX_SYNC_API_SDK_FRAMEWORK_SEARCH_PATHS = "$(PODS_ROOT)/Dropbox-Sync-API-SDK/dropbox-ios-sync-sdk-3.1.2"
+PODS_SERVER______IOS_DROPBOX_SYNC_API_SDK_OTHER_LDFLAGS = -l"c++" -framework "CFNetwork" -framework "Dropbox" -framework "QuartzCore" -framework "Security" -framework "SystemConfiguration"

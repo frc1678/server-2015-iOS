@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "CCDropboxLinkingAppDelegate.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : CCDropboxLinkingAppDelegate
 
 @property (strong, nonatomic) UIWindow *window;
 
