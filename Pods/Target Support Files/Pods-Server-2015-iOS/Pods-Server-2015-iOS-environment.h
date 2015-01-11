@@ -30,3 +30,9 @@
 #define COCOAPODS_VERSION_MINOR_Realm_Headers 89
 #define COCOAPODS_VERSION_PATCH_Realm_Headers 2
 
+// realm-database-2015
+#define COCOAPODS_POD_AVAILABLE_realm_database_2015
+#define COCOAPODS_VERSION_MAJOR_realm_database_2015 0
+#define COCOAPODS_VERSION_MINOR_realm_database_2015 0
+#define COCOAPODS_VERSION_PATCH_realm_database_2015 1
+

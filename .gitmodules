@@ -1,0 +1,6 @@
+[submodule "realm-database-2015"]
+	path = realm-database-2015
+	url = https://github.com/frc1678/realm-database-2015
+[submodule "CCDropboxRealmSync-iOS"]
+	path = CCDropboxRealmSync-iOS
+	url = https://github.com/frc1678/CCDropboxRealmSync-iOS

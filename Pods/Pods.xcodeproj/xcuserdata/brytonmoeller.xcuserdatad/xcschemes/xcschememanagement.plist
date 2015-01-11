@@ -19,6 +19,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>Pods-Server-2015-iOS-realm-database-2015.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods-Server-2015-iOS.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -27,22 +32,27 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>01C3293DC849F607CBED6943</key>
+		<key>14B46DC91705C808B6123979</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>285916CD99B6B15903A6461A</key>
+		<key>464E079606D53FB948E74B03</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>61BAD31C5190EFBCEC9326D8</key>
+		<key>9CDCBE0C4FC600D0CDA14B4C</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>6F4FCC1B7DFA01D217085D5B</key>
+		<key>AD0ED5616FF2D5B3DBC76994</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>CD6D8FAE22F5B718AE73FCCA</key>
 		<dict>
 			<key>primary</key>
 			<true/>

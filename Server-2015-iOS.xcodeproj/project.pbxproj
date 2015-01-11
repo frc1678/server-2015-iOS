@@ -197,6 +197,7 @@
 				TargetAttributes = {
 					195B9AB51A62EA86009A2FEF = {
 						CreatedOnToolsVersion = 6.1.1;
+						DevelopmentTeam = S2C8988WQX;
 					};
 					195B9ACE1A62EA86009A2FEF = {
 						CreatedOnToolsVersion = 6.1.1;
@@ -409,6 +410,7 @@
 			baseConfigurationReference = 7E57B1E62DB1C50717E0CD44 /* Pods-Server-2015-iOS.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = "Server-2015-iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -420,6 +422,7 @@
 			baseConfigurationReference = 1287F04B7B81849910000D36 /* Pods-Server-2015-iOS.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = "Server-2015-iOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
