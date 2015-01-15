@@ -14,7 +14,7 @@
 
 @interface ViewController ()
 
-@property (nonatomic, strong) NSData *dataFromDropbox;
+@property (nonatomic, strong) NSMutableArray *dataFromDropbox;
 
 
 @end
@@ -23,36 +23,30 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"donald_test.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
 - (IBAction)forceReloadTapped:(id)sender {
-    [CCRealmSync defaultReadonlyDropboxRealm:^(RLMRealm *realm) {
-        [self reloadData:realm withParsedData:[self getParsedJSON]];
-    }];
+    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
 
 - (void)putDataInTableViewFromRealm
 {
-    [CCRealmSync defaultReadonlyDropboxRealm:^(RLMRealm *realm) { //taking the data from the Realm Database
-        NSLog(@"Got Realm: %@", realm);
-        
-        [self reloadData:realm withParsedData:[self getParsedJSON]];
-    }];
+    
 }
 
 - (void) viewDidLoad
 {
     [super viewDidLoad];
-    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
 
+    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -62,17 +56,17 @@
     [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
 }
 
-- (void)reloadData:(RLMRealm *)realm withParsedData:(NSMutableArray *)parsedJSON {
+- (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
     
     RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
     for(Team *t in teamsFromDB) {
-        [parsedJSON addObject:t];
+        [data addObject:t];
     }
     
-    [parsedJSON sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
+    [data sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
     
-    NSLog(@"%lu teams!", (unsigned long)parsedJSON.count);
-    
+    NSLog(@"%lu teams!", (unsigned long)data.count);
+    self.dataFromDropbox = data;
     [self.tableView reloadData];
 }
 
@@ -96,7 +90,7 @@
 
 -(NSMutableArray *)getParsedJSON
 {
-    return nil;
+    //return nil;
     NSError *error;
     NSMutableArray *parsedJSON = [NSJSONSerialization JSONObjectWithData:self.dataFromDropbox options:NSJSONReadingMutableContainers error:&error];
     if (error)
@@ -120,6 +114,8 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
+    [self reloadDataFromRealm:[RLMRealm realmWithPath:[[self dropboxFilePath] stringValue]] withData:self.dataFromDropbox];
+
     NSMutableArray *allTheData = [self getParsedJSON];
     NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
