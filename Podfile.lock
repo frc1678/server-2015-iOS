@@ -10,12 +10,12 @@ PODS:
   - Realm/Headers (0.89.2)
 
 DEPENDENCIES:
-  - CCDropboxRealmSync-iOS (from `../CCDropboxRealmSync-iOS`)
+  - CCDropboxRealmSync-iOS (from `./CCDropboxRealmSync-iOS`)
   - realm-database-2015 (from `./realm-database-2015`)
 
 EXTERNAL SOURCES:
   CCDropboxRealmSync-iOS:
-    :path: ../CCDropboxRealmSync-iOS
+    :path: ./CCDropboxRealmSync-iOS
   realm-database-2015:
     :path: ./realm-database-2015
 
