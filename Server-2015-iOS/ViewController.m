@@ -11,6 +11,7 @@
 #import <CCDropboxRealmSync-iOS/CCDropboxLinkingAppDelegate.h>
 #import "CCRealmSync.h"
 #import <RealmModels.h>
+#import "ServerCalculator.h"
 
 @interface ViewController ()
 
@@ -123,7 +124,7 @@
     NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
     [self putDataInTableViewFromRealm];
-
+    [ServerCalculator beginCalculationsOnParsedData:[self getParsedJSON]];
 }
 
 @end
