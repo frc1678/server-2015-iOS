@@ -124,7 +124,7 @@
     NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
     [self putDataInTableViewFromRealm];
-    [ServerCalculator beginCalculationsOnParsedData:[self getParsedJSON]];
+    [ServerCalculator beginCalculations];
 }
 
 @end

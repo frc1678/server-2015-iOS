@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 
 @interface ServerCalculator : UIViewController
-+(void)beginCalculationsOnParsedData:(NSArray *)data;
++(void)beginCalculations
 
 @end

@@ -24,11 +24,11 @@
     // Dispose of any resources that can be recreated.
 }
 
-+(void)beginCalculationsOnParsedData:(NSArray *)data
++(void)beginCalculations
 {
-    NSLog(@"%@", data);
+    //Download data
+    //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
-    
 }
 
 /*
