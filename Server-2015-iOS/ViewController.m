@@ -59,14 +59,17 @@
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
     
     RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
+    NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
+    //[ar addObject:@"hi"];
     for(Team *t in teamsFromDB) {
-        [data addObject:t];
+        [ar addObject:t];
+        //NSLog(@"data: %@, t: %@", ar, t);
     }
     
-    [data sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
+    [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
     
-    NSLog(@"%lu teams!", (unsigned long)data.count);
-    self.dataFromDropbox = data;
+    NSLog(@"%lu teams!", (unsigned long)ar.count);
+    self.dataFromDropbox = ar;
     [self.tableView reloadData];
 }
 
@@ -82,15 +85,15 @@
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell" forIndexPath:indexPath];
-    
-    cell.textLabel.text = [NSString stringWithFormat:@"%ld", (long)[[self getParsedJSON][indexPath.row] number]];
+    NSArray *data = [self getParsedJSON];
+    cell.textLabel.text = [NSString stringWithFormat:@"%ld", (long)[data [indexPath.row] number]];
     
     return cell;
 }
 
 -(NSMutableArray *)getParsedJSON
 {
-    //return nil;
+    return self.dataFromDropbox;
     NSError *error;
     NSMutableArray *parsedJSON = [NSJSONSerialization JSONObjectWithData:self.dataFromDropbox options:NSJSONReadingMutableContainers error:&error];
     if (error)
@@ -114,7 +117,7 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
-    [self reloadDataFromRealm:[RLMRealm realmWithPath:[[self dropboxFilePath] stringValue]] withData:self.dataFromDropbox];
+    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
     NSMutableArray *allTheData = [self getParsedJSON];
     NSLog(@"ALL THE DHATUHZ: %@", allTheData);
