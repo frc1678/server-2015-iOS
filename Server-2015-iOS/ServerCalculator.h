@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface ServerCalculator : UIViewController
-+(void)beginCalculations
+
+
+-(void)beginCalculations;
 
 @end

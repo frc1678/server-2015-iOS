@@ -7,29 +7,104 @@
 //
 
 #import "ServerCalculator.h"
+#import "CCDropboxSync.h"
+#import "CCRealmSync.h"
+#import <RealmModels.h>
+//#import "CCDropboxLinkingAppDelegate.h"
+
 
 @interface ServerCalculator ()
+
+@property (nonatomic, strong) NSMutableArray *changePackets;
 
 @end
 
 @implementation ServerCalculator
 
+typedef NS_ENUM(NSInteger, DBFilePathEnum) {
+    UnprocessedChangePackets,
+    ProcessedChangePackets,
+    RealmDotRealm
+};
+
+- (id)dropboxFilePath:(DBFilePathEnum)filePath {
+    if(filePath == UnprocessedChangePackets)
+    {
+        return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"];
+    }
+    else if (filePath == ProcessedChangePackets)
+    {
+        return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"];
+    }
+    else if(filePath == RealmDotRealm)
+    {
+        return @"/Database File/realm.realm";
+        //return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+    }
+    else
+    {
+        NSLog(@"This Should not happen");
+        return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"];
+    }
+    
+}
+
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+        //Add observer for DB change packets folder
     // Do any additional setup after loading the view.
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
-+(void)beginCalculations
+
+
+
+-(void)beginCalculations
 {
-    //Download data
+    NSLog(@"Calcs");
+    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
+    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
+        [self updateWithChangePackets];
+        NSLog(@"Unprocessed Files Changed");
+    }];
+    [self updateWithChangePackets];
+    //Download chamge packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
 }
+
+
+
+-(void)updateWithChangePackets
+{
+    NSLog(@"Update With Change Packets");
+    
+    NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
+    DBFileInfo *fileInfo = [[DBFileInfo alloc] init];
+    NSArray *JSONfile = [[NSArray alloc] init];
+    NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    for(fileInfo in unprocessedFiles)
+    {
+        JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
+        [realm beginWriteTransaction];
+        for(change in JSONfile)
+        {
+            
+            //realm.change[@"keyToChange"] = change[@"valueToChangeTo"];
+            
+        }
+        [realm commitWriteTransaction];
+        //NSLog(@"File: %@", JSONfile);
+        
+    }
+    
+    //called when notified that something changed
+    //after processing, you should move the change packets to a processedChangePackets directory
+}
+
+
 
 /*
 #pragma mark - Navigation

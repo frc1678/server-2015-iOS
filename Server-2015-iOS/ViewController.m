@@ -46,7 +46,7 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-
+    [RLMRealm setDefaultRealmPath:@"/Database File/realm.realm"];
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
@@ -121,10 +121,11 @@
     [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
     NSMutableArray *allTheData = [self getParsedJSON];
-    NSLog(@"ALL THE DHATUHZ: %@", allTheData);
+    //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
     [self putDataInTableViewFromRealm];
-    [ServerCalculator beginCalculations];
+    ServerCalculator *calc = [[ServerCalculator alloc] init];
+    [calc beginCalculations];
 }
 
 @end
