@@ -101,10 +101,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         // Method 2: Queries Realm based on a uniqueKey (really is a unique value) from the JSON, and the fixed primary key set in the Realm model.
         RLMObject *objectToModify = [(RLMObject *)NSClassFromString(className) performSelector:@selector(objectForPrimaryKey:) withObject:uniqueKey];
         
+        
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
             NSString *keyPath = change[@"keyToChange"];
             NSString *value = change[@"valueToChangeTo"];
+            // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
+            // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
             [objectToModify setValue:value forKeyPath:keyPath];
         }
     }
