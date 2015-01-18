@@ -100,7 +100,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             NSString *valueToChangeTo = change[@"valueToChangeTo"];
             
-            RLMResults *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@"] firstObject];
+            RLMResults *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
             if([datapoint  isEqual: @"recons"])
             {
                 objectToChange.recons = valueToChangeTo;
