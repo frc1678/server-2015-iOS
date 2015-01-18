@@ -87,37 +87,26 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
-    DBFileInfo *fileInfo = [[DBFileInfo alloc] init];
-    NSDictionary *JSONfile = [[NSDictionary alloc] init];
-    //NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
     
-    for(fileInfo in unprocessedFiles)
+    for(DBFileInfo *fileInfo in unprocessedFiles)
     {
-        JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
+        NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
+        NSString *className = JSONfile[@"class"];
+        NSString *uniqueKey = JSONfile[@"uniqueKey"]; // this will be changed to uniqueValue
+        NSString *filterString = [NSString stringWithFormat:@"%@ == %@", @"number", uniqueKey]; // build the string to query Realm with.  Hard coded @"number" will be changed to uniqueValue loaded from JSON
+        
+        // Query for the matching unique objects
+        // Method 1: Queries Realm based on a uniqueKey and uniqueValue from the JSON
+//        RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+        // Method 2: Queries Realm based on a uniqueKey (really is a unique value) from the JSON, and the fixed primary key set in the Realm model.
+        RLMObject *objectToModify = [(RLMObject *)NSClassFromString(className) performSelector:@selector(objectForPrimaryKey:) withObject:uniqueKey];
+        
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
-            NSString *team = JSONfile[@"uniqueKey"];
-            NSArray *keyToChange = [change[@"keyToChange"] componentsSeparatedByString:@"."];
-            NSString *realmObjToChange = keyToChange[0];
-            NSString *match = keyToChange[1];
-            NSString *datapoint = keyToChange[3];
-            
-            NSInteger valueToChangeTo = [change[@"valueToChangeTo"] integerValue];
-            
-            //RLMObject *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
-            if([datapoint  isEqual: @"recons"])
-            {
-                //objectToChange.recons = valueToChangeTo;
-                //There should be a better way to do this, but if not add all the other `else if` statements
-            }
-            else
-            {
-                NSLog(@"This should not happen");
-            }
-            
+            NSString *keyPath = change[@"keyToChange"];
+            NSString *value = change[@"valueToChangeTo"];
+            [objectToModify setValue:value forKeyPath:keyPath];
         }
-        //NSLog(@"File: %@", JSONfile);
-        
     }
     
     
