@@ -27,7 +27,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     RealmDotRealm
 };
 
-- (id)dropboxFilePath:(DBFilePathEnum)filePath {
+- (DBPath *)dropboxFilePath:(DBFilePathEnum)filePath {
     if(filePath == UnprocessedChangePackets)
     {
         return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"];
@@ -62,7 +62,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSLog(@"Unprocessed Files Changed");
     }];
     [self updateWithChangePackets];
-    //Download chamge packets
+    //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
 }
@@ -73,13 +73,24 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 {
     NSLog(@"Update With Change Packets");
     
+    
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    
+    [realm beginWriteTransaction];
+    
+    [self mergeChangePacketsIntoRealm:realm];
+    [self recalculateValuesInRealm:realm];
+    
+    [realm commitWriteTransaction];
+    
+}
+
+- (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
     DBFileInfo *fileInfo = [[DBFileInfo alloc] init];
     NSDictionary *JSONfile = [[NSDictionary alloc] init];
     //NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [realm beginWriteTransaction];
-
+    
     for(fileInfo in unprocessedFiles)
     {
         JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
@@ -108,23 +119,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //NSLog(@"File: %@", JSONfile);
         
     }
-    [realm commitWriteTransaction];
-
+    
     
     //called when notified that something changed
     //after processing, you should move the change packets to a processedChangePackets directory
+
 }
 
-
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+- (void)recalculateValuesInRealm:(RLMRealm *)realm {
+    // Calculate stuff...
 }
-*/
+
 
 @end
