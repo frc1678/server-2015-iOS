@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ServerCalculator : UIViewController
+@interface ServerCalculator : NSObject
 
 
 -(void)beginCalculations;

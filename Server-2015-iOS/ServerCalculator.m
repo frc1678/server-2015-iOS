@@ -9,8 +9,8 @@
 #import "ServerCalculator.h"
 #import "CCDropboxSync.h"
 #import "CCRealmSync.h"
-#import <RealmModels.h>
-//#import "CCDropboxLinkingAppDelegate.h"
+//#import <RealmModels.h>
+#import "RealmModels.h"
 
 
 @interface ServerCalculator ()
@@ -48,14 +48,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     
 }
-
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
-        //Add observer for DB change packets folder
-    // Do any additional setup after loading the view.
-}
-
 
 
 
@@ -100,10 +92,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             NSInteger valueToChangeTo = [change[@"valueToChangeTo"] integerValue];
             
-            RLMObject *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
+            //RLMObject *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
             if([datapoint  isEqual: @"recons"])
             {
-                objectToChange.recons = valueToChangeTo;
+                //objectToChange.recons = valueToChangeTo;
                 //There should be a better way to do this, but if not add all the other `else if` statements
             }
             else
