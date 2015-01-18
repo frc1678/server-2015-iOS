@@ -98,9 +98,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSString *match = keyToChange[1];
             NSString *datapoint = keyToChange[3];
             
-            NSString *valueToChangeTo = change[@"valueToChangeTo"];
+            NSInteger valueToChangeTo = [change[@"valueToChangeTo"] integerValue];
             
-            RLMResults *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
+            RLMObject *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@", team, match] firstObject];
             if([datapoint  isEqual: @"recons"])
             {
                 objectToChange.recons = valueToChangeTo;
