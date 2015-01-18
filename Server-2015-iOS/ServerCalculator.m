@@ -78,10 +78,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSDictionary *JSONfile = [[NSDictionary alloc] init];
     //NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
     RLMRealm *realm = [RLMRealm defaultRealm];
+    [realm beginWriteTransaction];
+
     for(fileInfo in unprocessedFiles)
     {
         JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
-        [realm beginWriteTransaction];
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
             NSString *team = JSONfile[@"uniqueKey"];
@@ -104,10 +105,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
             
         }
-        [realm commitWriteTransaction];
         //NSLog(@"File: %@", JSONfile);
         
     }
+    [realm commitWriteTransaction];
+
     
     //called when notified that something changed
     //after processing, you should move the change packets to a processedChangePackets directory
