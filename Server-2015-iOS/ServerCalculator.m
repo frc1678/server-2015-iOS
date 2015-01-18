@@ -38,8 +38,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == RealmDotRealm)
     {
-        return @"/Database File/realm.realm";
-        //return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+        //return @"/Database File/realm.realm";
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
     }
     else
     {
@@ -62,6 +62,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 -(void)beginCalculations
 {
+    
     NSLog(@"Calcs");
     //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
     [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
@@ -82,17 +83,33 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
     DBFileInfo *fileInfo = [[DBFileInfo alloc] init];
-    NSArray *JSONfile = [[NSArray alloc] init];
-    NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
+    NSDictionary *JSONfile = [[NSDictionary alloc] init];
+    //NSMutableDictionary *change = [[NSMutableDictionary alloc] init];
     RLMRealm *realm = [RLMRealm defaultRealm];
     for(fileInfo in unprocessedFiles)
     {
         JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
         [realm beginWriteTransaction];
-        for(change in JSONfile)
+        for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
+            NSString *team = JSONfile[@"uniqueKey"];
+            NSArray *keyToChange = [change[@"keyToChange"] componentsSeparatedByString:@"."];
+            NSString *realmObjToChange = keyToChange[0];
+            NSString *match = keyToChange[1];
+            NSString *datapoint = keyToChange[3];
             
-            //realm.change[@"keyToChange"] = change[@"valueToChangeTo"];
+            NSString *valueToChangeTo = change[@"valueToChangeTo"];
+            
+            RLMResults *objectToChange = [[TeamInMatchData objectsWhere:@"team = %@ AND match.match = %@"] firstObject];
+            if([datapoint  isEqual: @"recons"])
+            {
+                objectToChange.recons = valueToChangeTo;
+                //There should be a better way to do this, but if not add all the other `else if` statements
+            }
+            else
+            {
+                NSLog(@"This should not happen");
+            }
             
         }
         [realm commitWriteTransaction];

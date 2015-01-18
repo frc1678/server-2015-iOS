@@ -30,10 +30,6 @@
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
-- (IBAction)forceReloadTapped:(id)sender {
-    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-}
-
 
 - (void)putDataInTableViewFromRealm
 {
@@ -46,7 +42,7 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-    [RLMRealm setDefaultRealmPath:@"/Database File/realm.realm"];
+        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
