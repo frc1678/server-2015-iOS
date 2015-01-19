@@ -27,6 +27,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     RealmDotRealm
 };
 
+
 - (DBPath *)dropboxFilePath:(DBFilePathEnum)filePath {
     if(filePath == UnprocessedChangePackets)
     {
@@ -122,10 +123,36 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 }
 
+
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
     // Calculate stuff...
     
 }
 
+typedef NS_ENUM(NSInteger, fillerObjectClassEnum) {
+    NSStringClass,
+    NSIntegerClass
+    //finish adding these.
+};
+
+
+-(id)fillerObject:(fillerObjectClassEnum)objectClass
+{
+    id returnMe;
+    if(objectClass == NSIntegerClass)
+    {
+        //returnMe = NSInteger filler
+    }
+    else if(objectClass == NSStringClass)
+    {
+        //returnMe NSString filler
+    }
+    else
+    {
+        returnMe = nil;
+        NSLog(@"This should not happen");
+    }
+    return returnMe;
+}
 
 @end
