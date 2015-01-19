@@ -147,17 +147,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 } 
             }
         }
-        
-        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[self dropboxFilePath:ProcessedChangePackets] error:&error];
+        //Moving change packet into processedChangePackets directory in DB
+        NSString *name = [[NSString alloc] init];
+        name = fileInfo.path.name;
+        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:name] error:&error];
         if (error) {
             NSLog(@"%@",error);
         }
 
     }
-    
-    
-    //called when notified that something changed
-    //after processing, you should move the change packets to a processedChangePackets directory
 
 }
 
