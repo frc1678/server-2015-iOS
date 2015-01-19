@@ -63,7 +63,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSLog(@"Unprocessed Files Changed");
     }];
     [self updateWithChangePackets];
-    //[self updateWithChangePackets];
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
@@ -88,18 +87,35 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
-    NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
-    
+    NSError *error;
+
+    NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:&error];
+    if (error) {
+        NSLog(@"%@",error);
+    }
+
     for(DBFileInfo *fileInfo in unprocessedFiles)
     {
-        NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:[[[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:nil] readData:nil] options:NSJSONReadingMutableContainers error:nil];
+        DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
+        if (error) {
+            NSLog(@"%@",error);
+        }
+        NSData *data = [file readData:&error];
+        if (error) {
+            NSLog(@"%@",error);
+        }
+        
+        NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+        if (error) {
+            NSLog(@"%@",error);
+        }
         
         NSString *className = JSONfile[@"class"];
         NSString *uniqueKey = JSONfile[@"uniqueKey"];
         NSString *uniqueValue = JSONfile[@"uniqueValue"];
         
         NSString *filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
-        NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
+        //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
         // Query for the matching unique objects
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
@@ -111,13 +127,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSString *keyPath = change[@"keyToChange"];
             NSString *valueToChangeTo = change[@"valueToChangeTo"];
             
-            NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
+            //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
             
             // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
             
             @try{
-                [objectToModify setValue:valueToChangeTo forKey:keyPath];
+                [objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
             } @catch (NSException *e) {
                 if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                     //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
@@ -132,7 +148,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
         }
         
-        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[self dropboxFilePath:ProcessedChangePackets] error:nil];
+        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[self dropboxFilePath:ProcessedChangePackets] error:&error];
+        if (error) {
+            NSLog(@"%@",error);
+        }
+
     }
     
     
