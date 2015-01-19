@@ -63,6 +63,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSLog(@"Unprocessed Files Changed");
     }];
     [self updateWithChangePackets];
+    //[self updateWithChangePackets];
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
@@ -98,7 +99,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSString *uniqueValue = JSONfile[@"uniqueValue"];
         
         NSString *filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
-        
+        NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
         // Query for the matching unique objects
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
@@ -108,13 +109,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
             NSString *keyPath = change[@"keyToChange"];
-            NSString *value = change[@"valueToChangeTo"];
+            NSString *valueToChangeTo = change[@"valueToChangeTo"];
+            
+            NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
             
             // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
             
             @try{
-                [objectToModify setValue:value forKey:keyPath];
+                [objectToModify setValue:valueToChangeTo forKey:keyPath];
             } @catch (NSException *e) {
                 if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                     //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
