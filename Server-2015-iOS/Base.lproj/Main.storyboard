@@ -25,7 +25,20 @@
                             <outlet property="delegate" destination="40k-JH-Xxf" id="INA-p5-3Ix"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Server" id="23u-Pc-FUB"/>
+                    <navigationItem key="navigationItem" title="Server" id="23u-Pc-FUB">
+                        <barButtonItem key="rightBarButtonItem" style="plain" id="J8h-i2-6tP">
+                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="2nC-QP-Q8u">
+                                <rect key="frame" x="451" y="7" width="161" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Pre-Generate Schedule">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                            <connections>
+                                <action selector="generateSchedule:" destination="40k-JH-Xxf" id="DB1-td-BLq"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="oaL-ep-3E0" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

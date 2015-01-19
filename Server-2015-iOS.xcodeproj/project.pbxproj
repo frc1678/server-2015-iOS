@@ -15,6 +15,7 @@
 		195B9ACA1A62EA86009A2FEF /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 195B9AC81A62EA86009A2FEF /* LaunchScreen.xib */; };
 		195B9AD61A62EA86009A2FEF /* Server_2015_iOSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 195B9AD51A62EA86009A2FEF /* Server_2015_iOSTests.m */; };
 		195B9AE01A62F1EF009A2FEF /* default.png in Resources */ = {isa = PBXBuildFile; fileRef = 195B9ADF1A62F1EF009A2FEF /* default.png */; };
+		19CA84881A6C8A02009269C0 /* PreCompetitionSetup.m in Sources */ = {isa = PBXBuildFile; fileRef = 19CA84871A6C8A02009269C0 /* PreCompetitionSetup.m */; };
 		19D880F41A68CBD00051243C /* ServerCalculator.m in Sources */ = {isa = PBXBuildFile; fileRef = 19D880F31A68CBD00051243C /* ServerCalculator.m */; };
 		CAEF676CA2C18CA5EB4924DE /* libPods-Server-2015-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 166FAE544B134D51F3032594 /* libPods-Server-2015-iOS.a */; };
 /* End PBXBuildFile section */
@@ -46,6 +47,8 @@
 		195B9AD41A62EA86009A2FEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		195B9AD51A62EA86009A2FEF /* Server_2015_iOSTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Server_2015_iOSTests.m; sourceTree = "<group>"; };
 		195B9ADF1A62F1EF009A2FEF /* default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = default.png; sourceTree = SOURCE_ROOT; };
+		19CA84861A6C8A02009269C0 /* PreCompetitionSetup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreCompetitionSetup.h; sourceTree = "<group>"; };
+		19CA84871A6C8A02009269C0 /* PreCompetitionSetup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreCompetitionSetup.m; sourceTree = "<group>"; };
 		19D880F21A68CBD00051243C /* ServerCalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ServerCalculator.h; sourceTree = "<group>"; };
 		19D880F31A68CBD00051243C /* ServerCalculator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ServerCalculator.m; sourceTree = "<group>"; };
 		7E57B1E62DB1C50717E0CD44 /* Pods-Server-2015-iOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Server-2015-iOS.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Server-2015-iOS/Pods-Server-2015-iOS.debug.xcconfig"; sourceTree = "<group>"; };
@@ -97,6 +100,8 @@
 				195B9AC11A62EA86009A2FEF /* ViewController.m */,
 				19D880F21A68CBD00051243C /* ServerCalculator.h */,
 				19D880F31A68CBD00051243C /* ServerCalculator.m */,
+				19CA84861A6C8A02009269C0 /* PreCompetitionSetup.h */,
+				19CA84871A6C8A02009269C0 /* PreCompetitionSetup.m */,
 				195B9AC31A62EA86009A2FEF /* Main.storyboard */,
 				195B9ADF1A62F1EF009A2FEF /* default.png */,
 				195B9AC61A62EA86009A2FEF /* Images.xcassets */,
@@ -290,6 +295,7 @@
 			files = (
 				195B9AC21A62EA86009A2FEF /* ViewController.m in Sources */,
 				195B9ABF1A62EA86009A2FEF /* AppDelegate.m in Sources */,
+				19CA84881A6C8A02009269C0 /* PreCompetitionSetup.m in Sources */,
 				19D880F41A68CBD00051243C /* ServerCalculator.m in Sources */,
 				195B9ABC1A62EA86009A2FEF /* main.m in Sources */,
 			);

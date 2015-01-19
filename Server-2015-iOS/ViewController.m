@@ -13,6 +13,7 @@
 //#import <RealmModels.h>
 #import "RealmModels.h"
 #import "ServerCalculator.h"
+#import "PreCompetitionSetup.h"
 
 @interface ViewController ()
 
@@ -123,6 +124,10 @@
     [self putDataInTableViewFromRealm];
     ServerCalculator *calc = [[ServerCalculator alloc] init];
     [calc beginCalculations];
+}
+- (IBAction)generateSchedule:(id)sender {
+    PreCompetitionSetup *pcs;
+    [pcs createRealmObjectsForCompetition];
 }
 
 @end
