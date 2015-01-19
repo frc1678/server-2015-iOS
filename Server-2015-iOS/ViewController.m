@@ -33,11 +33,6 @@
 }
 
 
-- (void)putDataInTableViewFromRealm
-{
-    
-}
-
 - (void) viewDidLoad
 {
     [super viewDidLoad];
@@ -77,14 +72,14 @@
 - (NSInteger)tableView:(UITableView *)tableView
  numberOfRowsInSection:(NSInteger)section
 {
-    return [self getParsedJSON].count;
+    return self.dataFromDropbox.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell" forIndexPath:indexPath];
-    NSArray *data = [self getParsedJSON];
+    NSArray *data = self.dataFromDropbox;
     cell.textLabel.text = [NSString stringWithFormat:@"%ld", (long)[data [indexPath.row] number]];
     
     return cell;
@@ -93,24 +88,7 @@
 -(NSMutableArray *)getParsedJSON
 {
     return self.dataFromDropbox;
-    NSError *error;
-    NSMutableArray *parsedJSON = [NSJSONSerialization JSONObjectWithData:self.dataFromDropbox options:NSJSONReadingMutableContainers error:&error];
-    if (error)
-        NSLog(@"JSONObjectWithData error: %@", error);
-    
-    for (NSMutableDictionary *dictionary in parsedJSON)
-    {
-        NSString *arrayString = dictionary[@"array"];
-        if (arrayString)
-        {
-            NSData *data = [arrayString dataUsingEncoding:NSUTF8StringEncoding];
-            NSError *error = nil;
-            dictionary[@"array"] = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-            if (error)
-                NSLog(@"JSONObjectWithData for array error: %@", error);
-        }
-    }
-    return parsedJSON;
+    //Not Actually Parsing
 }
 
 //we should make this one giant abstraction tree with incredible naming
@@ -118,14 +96,13 @@
 {
     [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
-    NSMutableArray *allTheData = [self getParsedJSON];
+    NSMutableArray *allTheData = self.dataFromDropbox;
     //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
-    [self putDataInTableViewFromRealm];
     ServerCalculator *calc = [[ServerCalculator alloc] init];
     [calc beginCalculations];
 }
-- (IBAction)generateSchedule:(id)sender {
+- (IBAction)generateSchedule:(id)sender {//Do this or have Wesley/Colin do it, whoever has time
     PreCompetitionSetup *pcs;
     [pcs createRealmObjectsForCompetition];
 }
