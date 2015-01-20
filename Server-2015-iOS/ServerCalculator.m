@@ -93,9 +93,26 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     if (error) {
         NSLog(@"%@",error);
     }
-
+    //////////////////////////////THE FOLLOWING CODE MAY NOT BE SANE!
+    NSMutableArray *timestampToFileInfoArray = [[NSMutableArray alloc] init];
+    NSString *fileName = [[NSString alloc] init];
+    NSArray *nameComponents;
+    NSNumber *timestamp;
+    NSMutableDictionary *dict;
+    NSMutableArray *timestampArray;
     for(DBFileInfo *fileInfo in unprocessedFiles)
     {
+        fileName = fileInfo.path.name;
+        nameComponents = [fileName componentsSeparatedByString:@"|"];
+        timestamp = [[NSNumber alloc] initWithDouble:[nameComponents[1] doubleValue]];
+        dict[timestamp] = fileInfo;
+        
+        [timestampArray addObject:timestamp];
+    }
+    [timestampArray sortedArrayUsingSelector:@selector(integerValue)];
+    //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
+        ///////////////////END OF CODE THAT IS INSANE
+    
         DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
         if (error) {
             NSLog(@"%@",error);
