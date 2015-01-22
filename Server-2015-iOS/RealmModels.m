@@ -1,5 +1,15 @@
 #import "RealmModels.h"
 
+@implementation CoopAction
+
+@end
+
+
+@implementation ReconAcquisition
+
+@end
+
+
 @implementation Team
 
 @end

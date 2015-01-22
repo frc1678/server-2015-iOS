@@ -103,12 +103,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSNumber *timestamp = [[NSNumber alloc] initWithLongLong:[[nameComponents lastObject] longLongValue]];
         dict[timestamp] = fileInfo;
     }
-    NSArray *sortedFilenames = [[dict allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSArray *sortedTimestamps = [[dict allKeys] sortedArrayUsingSelector:@selector(compare:)];
     
     //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
         ///////////////////END OF CODE THAT IS INSANE
-    for(DBFileInfo *fileInfo in unprocessedFiles)
+    for(NSNumber *timestamp in sortedTimestamps)
     {
+        DBFileInfo *fileInfo = dict[timestamp];
+        
+        NSLog(@"Processing file %@", fileInfo.path);
+        continue;
         
         DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
         if (error) {
