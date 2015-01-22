@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "443307645.773143"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "65"
-            endingLineNumber = "65"
+            startingLineNumber = "66"
+            endingLineNumber = "66"
             landmarkName = "-reloadDataFromRealm:withData:"
             landmarkType = "5">
          </BreakpointContent>
@@ -42,12 +42,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "443307645.773143"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "96"
-            endingLineNumber = "96"
-            landmarkName = "-getParsedJSON"
+            startingLineNumber = "97"
+            endingLineNumber = "97"
+            landmarkName = "-startDatabaseOperations"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -132,11 +132,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443228969.001573"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "65"
-            endingLineNumber = "65"
+            startingLineNumber = "66"
+            endingLineNumber = "66"
             landmarkName = "-beginCalculations"
             landmarkType = "5">
          </BreakpointContent>
@@ -148,11 +148,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443319483.385683"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "96"
-            endingLineNumber = "96"
+            startingLineNumber = "97"
+            endingLineNumber = "97"
             landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
          </BreakpointContent>
@@ -164,11 +164,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443229859.89978"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "89"
-            endingLineNumber = "89"
+            startingLineNumber = "90"
+            endingLineNumber = "90"
             landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
          </BreakpointContent>
@@ -180,11 +180,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443319483.385683"
+            timestampString = "443593041.031431"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "106"
-            endingLineNumber = "106"
+            startingLineNumber = "103"
+            endingLineNumber = "103"
             landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
          </BreakpointContent>
@@ -196,11 +196,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443319483.385683"
+            timestampString = "443593041.031431"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "108"
-            endingLineNumber = "108"
+            startingLineNumber = "104"
+            endingLineNumber = "104"
             landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
          </BreakpointContent>
@@ -212,11 +212,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443305389.278125"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "74"
-            endingLineNumber = "74"
+            startingLineNumber = "75"
+            endingLineNumber = "75"
             landmarkName = "-updateWithChangePackets"
             landmarkType = "5">
          </BreakpointContent>
@@ -228,13 +228,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "443307645.773143"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "123"
-            endingLineNumber = "123"
-            landmarkName = "-startDatabaseOperations"
-            landmarkType = "5">
+            startingLineNumber = "124"
+            endingLineNumber = "124">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -244,11 +242,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "443308380.756682"
+            timestampString = "443381002.850347"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "60"
-            endingLineNumber = "60"
+            startingLineNumber = "61"
+            endingLineNumber = "61"
             landmarkName = "-beginCalculations"
             landmarkType = "5">
             <Locations>
@@ -259,11 +257,11 @@
                   symbolName = "-[ServerCalculator beginCalculations]"
                   moduleName = "Server-2015-iOS"
                   urlString = "file:///Users/brytonmoeller/Desktop/Programming/XcodeStuff/Xcodeprojects/Server-2015-iOS/Server-2015-iOS/ServerCalculator.m"
-                  timestampString = "443319518.197024"
+                  timestampString = "443593041.173653"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "60"
-                  endingLineNumber = "60"
+                  startingLineNumber = "61"
+                  endingLineNumber = "61"
                   offsetFromSymbolStart = "48">
                </Location>
                <Location
@@ -273,11 +271,11 @@
                   symbolName = "__37-[ServerCalculator beginCalculations]_block_invoke"
                   moduleName = "Server-2015-iOS"
                   urlString = "file:///Users/brytonmoeller/Desktop/Programming/XcodeStuff/Xcodeprojects/Server-2015-iOS/Server-2015-iOS/ServerCalculator.m"
-                  timestampString = "443319518.197192"
+                  timestampString = "443593041.173879"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "60"
-                  endingLineNumber = "60"
+                  startingLineNumber = "61"
+                  endingLineNumber = "61"
                   offsetFromSymbolStart = "24">
                </Location>
             </Locations>

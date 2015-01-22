@@ -95,24 +95,21 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     //////////////////////////////THE FOLLOWING CODE MAY NOT BE SANE!
     NSMutableArray *timestampToFileInfoArray = [[NSMutableArray alloc] init];
-    NSString *fileName = [[NSString alloc] init];
-    NSArray *nameComponents;
-    NSNumber *timestamp;
-    NSMutableDictionary *dict;
-    NSMutableArray *timestampArray;
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
     for(DBFileInfo *fileInfo in unprocessedFiles)
     {
-        fileName = fileInfo.path.name;
-        nameComponents = [fileName componentsSeparatedByString:@"|"];
-        timestamp = [[NSNumber alloc] initWithDouble:[nameComponents[1] doubleValue]];
+        NSString *fileName = [fileInfo.path.name stringByReplacingOccurrencesOfString:@".realm" withString:@""];
+        NSArray *nameComponents = [fileName componentsSeparatedByString:@"|"];
+        NSNumber *timestamp = [[NSNumber alloc] initWithLongLong:[[nameComponents lastObject] longLongValue]];
         dict[timestamp] = fileInfo;
-        
-        [timestampArray addObject:timestamp];
     }
-    [timestampArray sortedArrayUsingSelector:@selector(integerValue)];
+    NSArray *sortedFilenames = [[dict allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    
     //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
         ///////////////////END OF CODE THAT IS INSANE
-    
+    for(DBFileInfo *fileInfo in unprocessedFiles)
+    {
+        
         DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
         if (error) {
             NSLog(@"%@",error);
@@ -171,10 +168,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         if (error) {
             NSLog(@"%@",error);
         }
+    }
 
     }
 
-}
+
 
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
