@@ -10,8 +10,7 @@
 #import "CCDropboxLinkingAppDelegate.h"
 #import <CCDropboxRealmSync-iOS/CCDropboxLinkingAppDelegate.h>
 #import "CCRealmSync.h"
-#import <Rea>
-//#import "RealmModels.h"
+#import "RealmModels.h"
 #import "ServerCalculator.h"
 #import "PreCompetitionSetup.h"
 
