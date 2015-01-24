@@ -166,7 +166,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
             RLMResults *matchDataObj = [objectToModify valueForKey:keyPathComponents[0]];
-            RLMResults *matchObject = [matchDataObj objectsWhere:@"%@ == %@", NSClassFromString([(id<UniqueKey>)class uniqueKey]), keyPathComponents[1]];
+            NSString *uniqueKey = NSClassFromString([(id<UniqueKey>)class uniqueKey]);
+            RLMResults *matchObject = [matchDataObj objectsWhere:@"%@ == %@", uniqueKey, keyPathComponents[1]];
             
             @try{
                 //[objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
