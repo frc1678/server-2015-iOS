@@ -11,6 +11,7 @@
 #import "CCRealmSync.h"
 //#import <RealmModels.h>
 #import "RealmModels.h"
+#import "UniqueKey.h"
 
 
 @interface ServerCalculator ()
@@ -94,7 +95,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSLog(@"%@",error);
     }
     //////////////////////////////THE FOLLOWING CODE MAY NOT BE SANE!
-    NSMutableArray *timestampToFileInfoArray = [[NSMutableArray alloc] init];
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
     for(DBFileInfo *fileInfo in unprocessedFiles)
     {
@@ -112,7 +112,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         DBFileInfo *fileInfo = dict[timestamp];
         
         NSLog(@"Processing file %@", fileInfo.path);
-        continue;
+//        continue;
         
         DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
         if (error) {
@@ -129,29 +129,47 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
         
         NSString *className = JSONfile[@"class"];
-        NSString *uniqueKey = JSONfile[@"uniqueKey"];
         NSString *uniqueValue = JSONfile[@"uniqueValue"];
         
-        NSString *filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
+        Class class = NSClassFromString(className);
+        NSString *filterString = nil;
+        if([class conformsToProtocol:@protocol(UniqueKey)]) {
+            NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
+            RLMObjectSchema *schema = realm.schema[className];
+            RLMPropertyType uniqueValueType = schema[uniqueKey].type;
+            
+            if (uniqueValueType == RLMPropertyTypeString) {
+                filterString = [NSString stringWithFormat:@"%@ == '%@'", uniqueKey, uniqueValue]; // build the string to query Realm with.
+            } else {
+                filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
+            }
+            
+        } else {
+            NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
+            continue;
+        }
         //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
         // Query for the matching unique objects
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
-        RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+        RLMObject *objectToModify = [[(RLMObject *)class performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
         
         
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
             NSString *keyPath = change[@"keyToChange"];
             NSString *valueToChangeTo = change[@"valueToChangeTo"];
+            NSArray *keyPathComponents = [keyPath componentsSeparatedByString:@"."];
             
             //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
             
             // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
+            RLMResults *matchDataObj = [objectToModify valueForKey:keyPathComponents[0]];
+            RLMResults *matchObject = [matchDataObj objectsWhere:@"%@ == %@", NSClassFromString([(id<UniqueKey>)class uniqueKey]), keyPathComponents[1]];
             
             @try{
-                [objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
+                //[objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
             } @catch (NSException *e) {
                 if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                     //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
