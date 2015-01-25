@@ -129,6 +129,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             if(newObject == nil)
             {
                 newObject = [[[newObject class] alloc] init];
+                TeamInMatchData *teamInMatchData = [[TeamInMatchData alloc] init];
+                Match *matchObject = [[Match alloc] init];
+                matchObject.match = head;
+                teamInMatchData.match = matchObject;
+                [newObject addObject:teamInMatchData];
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
