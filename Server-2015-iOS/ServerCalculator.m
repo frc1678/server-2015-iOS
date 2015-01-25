@@ -96,10 +96,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 {
     RLMObject *baseObject = object;
     NSMutableArray *keyPathComponents = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
-    //baseObject = baseObject.keyPathComponents[0];
-    [keyPathComponents removeObjectAtIndex:0];
-    NSString *newKeyPath = [keyPathComponents componentsJoinedByString:@"."];
-    [self setValue:value forKeyPath:newKeyPath onRealmObject:baseObject];
+    
+    if ([keyPathComponents count] > 1) {
+        //baseObject = baseObject.keyPathComponents[0];
+        [keyPathComponents removeObjectAtIndex:0];
+        NSString *newKeyPath = [keyPathComponents componentsJoinedByString:@"."];
+        [self setValue:value forKeyPath:newKeyPath onRealmObject:baseObject];
+    }
+    else {
+        //baseObject.keyPathComponents[0] = value;
+        NSLog(@"DONE");
+    }
 }
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
