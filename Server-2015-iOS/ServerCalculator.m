@@ -14,6 +14,32 @@
 #import "UniqueKey.h"
 
 
+@interface RLMProperty (DefaultValue)
+- (id) defaultValue;
+@end
+
+@implementation RLMProperty (DefaultValue)
+
+- (id) defaultValue
+{
+    if(self.type == RLMPropertyTypeBool || self.type == RLMPropertyTypeDouble || self.type == RLMPropertyTypeFloat || self.type == RLMPropertyTypeInt) {
+        return [NSNumber numberWithInt:0];
+    } else if(self.type == RLMPropertyTypeArray) {
+        return [[RLMArray alloc] initWithObjectClassName:self.objectClassName];
+    } else if(self.type == RLMPropertyTypeData) {
+        return [[NSData alloc] init];
+    } else if(self.type == RLMPropertyTypeDate) {
+        return [[NSDate alloc] init];
+    } else if(self.type == RLMPropertyTypeString) {
+        return @"";
+    } else {
+        return nil;
+    }
+}
+
+@end
+
+
 @interface ServerCalculator ()
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
@@ -128,23 +154,51 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             if(newObject == nil)
             {
-                newObject = [[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
-                TeamInMatchData *teamInMatchData = [[TeamInMatchData alloc] init];
-                Match *matchObject = [[Match alloc] init];
-                matchObject.match = head;
-                teamInMatchData.match = matchObject;
-                [newObject addObject:teamInMatchData];
+                // If newObject is nil, then we need to create a new blank object of the correct type for the RLMArray, and insert it
+                RLMArray *array = object;
+                NSString *className = array.objectClassName;
+                Class class = NSClassFromString(className);
+                newObject = [[class alloc] init];
+                for (RLMProperty *p in [newObject objectSchema].properties) {
+                    newObject[p.name] = [p defaultValue];
+                }
+                
+                if([newObject conformsToProtocol:@protocol(UniqueKey)])
+                {
+                    [self setValue:head forKeyPath:[newObject uniqueKey] onRealmObject:newObject];
+                }
+                else if([newObject conformsToProtocol:@protocol(SemiUniqueKey)])
+                {
+                    [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject];
+                }
+                
+                [array addObject:newObject];
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
         else
         {
-            id newObject = object[head];
+            id newObject = nil;
+            @try {
+                newObject = object[head];
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+                return;
+            }
+            
             if(newObject == nil)
             {
-                newObject = [[RLMObject alloc] init];
-                //Do we need to find out what class this is? if so, we could do that with an if chain checking on the head
-                //if not, leave as a RLMObject
+                // If newObject is nil, we need to create it, with the right class, and then set that as the value for head on the current object
+                NSString *className = [object objectSchema][head].objectClassName;
+                Class class = NSClassFromString(className);
+                newObject = [[class alloc] init];
+                for (RLMProperty *p in [newObject objectSchema].properties) {
+                    newObject[p.name] = [p defaultValue];
+                }
+                
+                
+                object[head] = newObject;
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
@@ -152,8 +206,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else
     {
-        object[head] = value;
-        NSLog(@"DONE");
+        @try {
+            object[head] = value;
+        }
+        @catch (NSException *exception) {
+            NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+        }
     }
 }
 
@@ -223,35 +281,37 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
         RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
-        NSLog(@"ObjectToModify: %@", objectToModify);
 
-        
-        for(NSMutableDictionary *change in JSONfile[@"changes"])
-        {
-            NSString *keyPath = change[@"keyToChange"];
-            NSString *valueToChangeTo = change[@"valueToChangeTo"];
-            
-            //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
-            
-            // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
-            
-            //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
-            //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
-            //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-            @try{
-                [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify];
-            } @catch (NSException *e) {
-                if ([[e name] isEqualToString:NSUndefinedKeyException]) {
-                    //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
-                    NSLog(@"Oh No! The Horror!!!! One of the keys doesnt exist! We raised a dreaded NSUndefinedKeyException!!!!!!!!!!!!!!!!!!!!!!!!!"); // handle
-                } else {
-                    [[NSException exceptionWithName:[e name]
-                                             reason:[e reason]
-                                           userInfo:[e userInfo]]
-                     raise];
-                    NSLog(@"Oh, no! We raised some other exception!");
-                } 
+        if(objectToModify) {
+            for(NSMutableDictionary *change in JSONfile[@"changes"])
+            {
+                NSString *keyPath = change[@"keyToChange"];
+                NSString *valueToChangeTo = change[@"valueToChangeTo"];
+                
+                //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
+                
+                // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
+                
+                //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
+                //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
+                //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
+                @try{
+                    [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify];
+                } @catch (NSException *e) {
+                    if ([[e name] isEqualToString:NSUndefinedKeyException]) {
+                        //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
+                        NSLog(@"Oh No! The Horror!!!! One of the keys doesnt exist! We raised a dreaded NSUndefinedKeyException!!!!!!!!!!!!!!!!!!!!!!!!!"); // handle
+                    } else {
+                        [[NSException exceptionWithName:[e name]
+                                                 reason:[e reason]
+                                               userInfo:[e userInfo]]
+                         raise];
+                        NSLog(@"Oh, no! We raised some other exception!");
+                    } 
+                }
             }
+        } else {
+            NSLog(@"Condition %@ not found in database!", filterString);
         }
         //Moving change packet into processedChangePackets directory in DB
         NSString *name = [[NSString alloc] init];
