@@ -165,9 +165,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
-            RLMResults *matchDataObj = [objectToModify valueForKey:keyPathComponents[0]];
-            NSString *uniqueKey = NSClassFromString([(id<UniqueKey>)class uniqueKey]);
-            RLMResults *matchObject = [matchDataObj objectsWhere:@"%@ == %@", uniqueKey, keyPathComponents[1]];
+            
+            //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
+            //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
+            //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
             
             @try{
                 //[objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
