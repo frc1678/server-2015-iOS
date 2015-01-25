@@ -128,7 +128,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             if(newObject == nil)
             {
-                // filler
+                newObject = [[[newObject class] alloc] init];
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
@@ -137,7 +137,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             id newObject = object[head];
             if(newObject == nil)
             {
-                //filler
+                newObject = [[[newObject class] alloc] init];
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
