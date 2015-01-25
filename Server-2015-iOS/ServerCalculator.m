@@ -106,7 +106,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             {
                 if([item conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    if ([[item valueForKey:[item uniqueKey]] isEqualToString:head])
+                    if ([[item valueForKeyPath:[item uniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
                         break;
@@ -114,7 +114,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else if([item conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    if ([[item valueForKey:[item semiUniqueKey]] isEqualToString:head])
+                    if ([[item valueForKeyPath:[item semiUniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
                         break;
