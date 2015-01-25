@@ -277,13 +277,21 @@ typedef NS_ENUM(NSInteger, fillerObjectClassEnum) {
 -(NSObject *)fillerObject:(id)object
 {
     NSObject *returnMe;
-    if([object isKindOfClass:[NSNumber class]])
+    if([object isKindOfClass:[CalculatedCompetitionData class]])
     {
-        //returnMe = NSInteger filler
+        
     }
-    else if([object isKindOfClass:[NSString class]])
+    else if([object isKindOfClass:[CalculatedMatchData class]])
     {
-        //returnMe NSString filler
+        
+    }
+    else if([object isKindOfClass:[CalculatedTeamData class]])
+    {
+        
+    }
+    else if([object isKindOfClass:[CalculatedTeamInMatchData class]])
+    {
+        
     }
     else
     {
