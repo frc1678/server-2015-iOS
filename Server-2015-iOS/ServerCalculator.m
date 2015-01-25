@@ -97,29 +97,56 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
-    if (tail.count > 0) {
-        if([object class] == NSClassFromString(@"RLMArray"))
+    id newObject;
+    if (tail.count > 0)
+    {
+        if([object isKindOfClass:[RLMArray class]])
         {
             for(id item in object)
             {
-                if ([[item uniqueKey] isEqualToString:head]) {
-                    id newObject = item;
-                    if(newObject == nil)
+                if([item conformsToProtocol:@protocol(UniqueKey)])
+                {
+                    if ([[item valueForKey:[item uniqueKey]] isEqualToString:head])
                     {
-                        newObject = [self fillerObject:newObject];
+                        newObject = item;
+                        if(newObject == nil)
+                        {
+                            //filler
+                        }
+                        [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
                     }
-                    [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+                }
+                else if([item conformsToProtocol:@protocol(SemiUniqueKey)])
+                {
+                    if ([[item valueForKey:[item semiUniqueKey]] isEqualToString:head])
+                    {
+                        newObject = item;
+                        if(newObject == nil)
+                        {
+                            //filler
+                        }
+                        [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+                    }
+                }
+                else
+                {
+                    NSLog(@"Oh no, it doesnt conform to unique key or semi unique key protocols!");
                 }
             }
         }
         else
         {
-            id newObject = object[head];
+            [newObject setValue:value forKey:head];
+            if(newObject == nil)
+            {
+                //filler
+            }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
         
     }
-    else {
+    else
+    {
         object[head] = value;
         NSLog(@"DONE");
     }
@@ -192,14 +219,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         
         RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
         NSLog(@"ObjectToModify: %@", objectToModify);
-        [self setValue:@1 forKeyPath:@"one.two.three.last" onRealmObject:objectToModify];
 
         
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
             NSString *keyPath = change[@"keyToChange"];
             NSString *valueToChangeTo = change[@"valueToChangeTo"];
-            NSArray *keyPathComponents = [keyPath componentsSeparatedByString:@"."];
             
             //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
             
@@ -209,7 +234,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
             //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
             @try{
-                //[objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
+                [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify];
             } @catch (NSException *e) {
                 if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                     //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
