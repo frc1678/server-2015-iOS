@@ -86,10 +86,28 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     [realm commitWriteTransaction];
     
 }
+/*
+ 1. Value does not change.
+ 2. newKeyPath always has the first element of current keyPath chopped off.
+ 3. newObject is always the equivelent of object.keyPathComponents[0]
+ */
+
+- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(RLMObject *)object
+{
+    RLMObject *baseObject = object;
+    NSMutableArray *keyPathComponents = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
+    for(int i = 0; i <= [keyPathComponents count]; i++)
+    {
+        //baseObject = baseObject.keyPathComponents[0]; OR SOMETHING PRETTY MUCH THIS
+        NSLog(@"keyPathComponents: %@", keyPathComponents);
+        [keyPathComponents removeObjectAtIndex:0];
+    }
+    baseObject = value;
+}
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSError *error;
-
+    
     NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:&error];
     if (error) {
         NSLog(@"%@",error);
@@ -153,7 +171,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
         RLMObject *objectToModify = [[(RLMObject *)class performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
-        
+        [self setValue:@1 forKeyPath:@"one.two.three.last" onRealmObject:objectToModify];
+
         
         for(NSMutableDictionary *change in JSONfile[@"changes"])
         {
@@ -163,13 +182,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
             
-            // This is the magical Obj-C method, that given a keyPath string like @"uploadedData.numWheels" will automatically go inside the uploadedData property, and will then go inside the numWheels property of the uploadedData property, and change its value. Fortunately it all works with Realm.
             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
             
             //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
             //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
             //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-            
             @try{
                 //[objectToModify setValue:valueToChangeTo forKeyPath:keyPath];
             } @catch (NSException *e) {
