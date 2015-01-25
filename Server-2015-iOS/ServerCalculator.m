@@ -92,14 +92,32 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  3. newObject is always the equivelent of object.keyPathComponents[0]
  */
 
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(RLMObject *)object
+- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object
 {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
     if (tail.count > 0) {
-        // RLMObject *newObject = baseObject.keyPathComponents[0];
-        [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+        if([object class] == NSClassFromString(@"RLMArray"))
+        {
+            for(id item in object)
+            {
+                if ([[item uniqueKey] isEqualToString:head]) {
+                    id newObject = item;
+                    if(newObject == nil)
+                    {
+                        newObject = [self fillerObject:newObject];
+                    }
+                    [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+                }
+            }
+        }
+        else
+        {
+            id newObject = object[head];
+            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+        }
+        
     }
     else {
         object[head] = value;
@@ -172,7 +190,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         // Query for the matching unique objects
         //Queries Realm based on a uniqueKey and uniqueValue from the JSON
         
-        RLMObject *objectToModify = [[(RLMObject *)class performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+        RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+        NSLog(@"ObjectToModify: %@", objectToModify);
         [self setValue:@1 forKeyPath:@"one.two.three.last" onRealmObject:objectToModify];
 
         
@@ -230,14 +249,14 @@ typedef NS_ENUM(NSInteger, fillerObjectClassEnum) {
 };
 
 
--(NSObject *)fillerObject:(fillerObjectClassEnum)objectClass
+-(NSObject *)fillerObject:(id)object
 {
     NSObject *returnMe;
-    if(objectClass == NSIntegerClass)
+    if([object isKindOfClass:[NSNumber class]])
     {
         //returnMe = NSInteger filler
     }
-    else if(objectClass == NSStringClass)
+    else if([object isKindOfClass:[NSString class]])
     {
         //returnMe NSString filler
     }
