@@ -97,11 +97,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
-    id newObject;
     if (tail.count > 0)
     {
         if([object isKindOfClass:[RLMArray class]])
         {
+            id newObject = nil;
             for(id item in object)
             {
                 if([item conformsToProtocol:@protocol(UniqueKey)])
@@ -109,11 +109,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     if ([[item valueForKey:[item uniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
-                        if(newObject == nil)
-                        {
-                            //filler
-                        }
-                        [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+                        break;
                     }
                 }
                 else if([item conformsToProtocol:@protocol(SemiUniqueKey)])
@@ -121,11 +117,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     if ([[item valueForKey:[item semiUniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
-                        if(newObject == nil)
-                        {
-                            //filler
-                        }
-                        [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+                        break;
                     }
                 }
                 else
@@ -133,10 +125,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     NSLog(@"Oh no, it doesnt conform to unique key or semi unique key protocols!");
                 }
             }
+            
+            if(newObject == nil)
+            {
+                // filler
+            }
+            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
         else
         {
-            [newObject setValue:value forKey:head];
+            id newObject = object[head];
             if(newObject == nil)
             {
                 //filler
