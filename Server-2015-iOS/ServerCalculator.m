@@ -106,7 +106,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             {
                 if([item conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    if ([[item valueForKey:[item uniqueKey]] isEqualToString:head])
+                    if ([[item valueForKeyPath:[item uniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
                         break;
@@ -114,7 +114,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else if([item conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    if ([[item valueForKey:[item semiUniqueKey]] isEqualToString:head])
+                    if ([[item valueForKeyPath:[item semiUniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
                         break;
@@ -128,7 +128,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             if(newObject == nil)
             {
-                newObject = [[[newObject class] alloc] init];
+                newObject = [[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
                 TeamInMatchData *teamInMatchData = [[TeamInMatchData alloc] init];
                 Match *matchObject = [[Match alloc] init];
                 matchObject.match = head;
@@ -142,7 +142,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             id newObject = object[head];
             if(newObject == nil)
             {
-                newObject = [[[newObject class] alloc] init];
+                newObject = [[RLMObject alloc] init];
+                //Do we need to find out what class this is? if so, we could do that with an if chain checking on the head
+                //if not, leave as a RLMObject
+                //But regardless, we need to give the object a place in the database, like get the object it belongs too and set the relationship. like [team.teamInMatchDatas addObject:newObject]
             }
             [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
         }
