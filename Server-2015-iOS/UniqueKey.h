@@ -39,9 +39,8 @@
 @interface TeamInMatchData (UniqueKey) <SemiUniqueKey>
 @end
 
-// But not yet because idNum is not in database yet.
-//@interface ReconAcquisition (UniqueKey) <SemiUniqueKey>
-//@end
+@interface ReconAcquisition (UniqueKey) <SemiUniqueKey>
+@end
 
 
 

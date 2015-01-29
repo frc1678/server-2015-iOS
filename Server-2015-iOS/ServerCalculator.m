@@ -274,6 +274,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
         } else {
             NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
+            NSLog(@"The file that has the issue is: %@", JSONfile);
             continue;
         }
         //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
@@ -316,54 +317,20 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //Moving change packet into processedChangePackets directory in DB
         NSString *name = [[NSString alloc] init];
         name = fileInfo.path.name;
-        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:name] error:&error];
-        if (error) {
+        @try {
+            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:name] error:&error];
+        }
+        @catch (NSException *exception) {
+            NSLog(@"%@", exception);
             NSLog(@"%@",error);
         }
     }
 
     }
 
-
-
-
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
     // Calculate stuff...
     
-}
-
-typedef NS_ENUM(NSInteger, fillerObjectClassEnum) {
-    NSStringClass,
-    NSIntegerClass
-    //finish adding these.
-};
-
-
--(NSObject *)fillerObject:(id)object
-{
-    NSObject *returnMe;
-    if([object isKindOfClass:[CalculatedCompetitionData class]])
-    {
-        
-    }
-    else if([object isKindOfClass:[CalculatedMatchData class]])
-    {
-        
-    }
-    else if([object isKindOfClass:[CalculatedTeamData class]])
-    {
-        
-    }
-    else if([object isKindOfClass:[CalculatedTeamInMatchData class]])
-    {
-        
-    }
-    else
-    {
-        returnMe = nil;
-        NSLog(@"This should not happen");
-    }
-    return returnMe;
 }
 
 @end
