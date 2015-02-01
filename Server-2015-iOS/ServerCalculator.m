@@ -43,10 +43,12 @@
 @interface ServerCalculator ()
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
+@property (nonatomic, strong) NSTimer *timer;
 
 @end
 
 @implementation ServerCalculator
+
 
 typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     UnprocessedChangePackets,
@@ -79,27 +81,36 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 
 
-
+#define WAIT_TIME 10.0
 -(void)beginCalculations
 {
     
     NSLog(@"Calcs");
     //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
     [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
-        [self updateWithChangePackets];
-        NSLog(@"Unprocessed Files Changed");
+        
+        [self.timer invalidate];
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+        
+        
+        //Start 10 sec timer.
+        NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
     }];
-    [self updateWithChangePackets];
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
 }
 
+-(void)timerFired:(NSTimer *)timer
+{
+    self.timer = nil;
+    NSLog(@"Starting new processing!\n");
 
+    [self updateWithChangePackets];
+}
 
 -(void)updateWithChangePackets
 {
-    NSLog(@"Update With Change Packets");
     
     
     RLMRealm *realm = [RLMRealm defaultRealm];
@@ -216,7 +227,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
-    NSError *error;
+    NSError *error = nil;
     
     NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:&error];
     if (error) {
@@ -239,13 +250,18 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     {
         DBFileInfo *fileInfo = dict[timestamp];
         
-        NSLog(@"Processing file %@", fileInfo.path);
+//        NSLog(@"Processing file %@", fileInfo.path);
 //        continue;
         
+        error = nil;
+
         DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
+//        NSLog(@"File %@, status: %@", fileInfo.path, file.status);
+        
         if (error) {
             NSLog(@"%@",error);
         }
+        
         NSData *data = [file readData:&error];
         if (error) {
             NSLog(@"%@",error);
@@ -298,6 +314,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                 @try{
                     [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify];
+                    NSLog(@"Sucessfully proccessed %@", fileInfo.path);
                 } @catch (NSException *e) {
                     if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                         //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
