@@ -42,6 +42,9 @@
 @interface ReconAcquisition (UniqueKey) <SemiUniqueKey>
 @end
 
+@interface CoopAction (UniqueKey) <SemiUniqueKey>
+@end
+
 
 
 

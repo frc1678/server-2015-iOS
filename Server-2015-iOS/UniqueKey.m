@@ -50,10 +50,19 @@
 
 @implementation ReconAcquisition (UniqueKey)
 + (NSString *)semiUniqueKey {
-    return @"idNum";
+    return @"uniqueID"; //Should this be idNum?
 }
 - (NSString *)semiUniqueKey {
     return [ReconAcquisition semiUniqueKey];
+}
+@end
+
+@implementation CoopAction (UniqueKey)
++ (NSString *)semiUniqueKey {
+    return @"uniqueID";
+}
+- (NSString *)semiUniqueKey {
+    return [CoopAction semiUniqueKey];
 }
 @end
 

@@ -12,6 +12,7 @@
 //#import <RealmModels.h>
 #import "RealmModels.h"
 #import "UniqueKey.h"
+#import "ServerMath.h"
 
 
 @interface RLMProperty (DefaultValue)
@@ -129,7 +130,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  3. newObject is always the equivelent of object.keyPathComponents[0]
  */
 
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object
+- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original
 {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
@@ -143,7 +144,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             {
                 if([item conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    if ([[item valueForKeyPath:[item uniqueKey]] isEqualToString:head])
+                    if ([[item valueForKeyPath:[item uniqueKey]] isEqual:head])
                     {
                         newObject = item;
                         break;
@@ -151,7 +152,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else if([item conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    if ([[item valueForKeyPath:[item semiUniqueKey]] isEqualToString:head])
+                    id itemValue = [item valueForKeyPath:[item semiUniqueKey]];
+                    if([itemValue isKindOfClass:[NSNumber class]] && [[itemValue description] isEqualToString:head])
+                    {
+                        newObject = item;
+                        break;
+                    }
+                    else if ([[item valueForKeyPath:[item semiUniqueKey]] isEqualToString:head])
                     {
                         newObject = item;
                         break;
@@ -159,7 +166,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else
                 {
-                    NSLog(@"Oh no, it doesnt conform to unique key or semi unique key protocols!");
+                    NSLog(@"Oh no, %@ doesnt conform to unique key or semi unique key protocols!", item);
                 }
             }
             
@@ -171,21 +178,41 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 Class class = NSClassFromString(className);
                 newObject = [[class alloc] init];
                 for (RLMProperty *p in [newObject objectSchema].properties) {
-                    newObject[p.name] = [p defaultValue];
+                    // Add hard-coded checking for team or match objects, in the case of a match data change packet.
+                    if ([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"team"])
+                    {
+                        newObject[p.name] = original;
+                    }
+                    else if([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"match"])
+                    {
+                        RLMResults *matchResults = [Match objectsWhere:[NSString stringWithFormat:@"%@ == '%@'", [Match uniqueKey], head]];
+                        if (matchResults.count == 1)
+                        {
+                            newObject[p.name] = [matchResults firstObject];
+                        }
+                        else
+                        {
+                            NSLog(@"Error: %ld matches have the name %@", matchResults.count, head);
+                        }
+                    }
+                    else
+                    {
+                        newObject[p.name] = [p defaultValue];
+                    }
                 }
                 
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    [self setValue:head forKeyPath:[newObject uniqueKey] onRealmObject:newObject];
+                    [self setValue:head forKeyPath:[newObject uniqueKey] onRealmObject:newObject onOriginalObject:original];
                 }
                 else if([newObject conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject];
+                    [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original];
                 }
                 
                 [array addObject:newObject];
             }
-            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original];
         }
         else
         {
@@ -211,7 +238,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 object[head] = newObject;
             }
-            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject];
+            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original];
         }
         
     }
@@ -313,12 +340,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                 //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                 @try{
-                    [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify];
-                    NSLog(@"Sucessfully proccessed %@", fileInfo.path);
+                    
+                    [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify];
+                    //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                 } @catch (NSException *e) {
                     if ([[e name] isEqualToString:NSUndefinedKeyException]) {
                         //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
-                        NSLog(@"Oh No! The Horror!!!! One of the keys doesnt exist! We raised a dreaded NSUndefinedKeyException!!!!!!!!!!!!!!!!!!!!!!!!!"); // handle
+                        NSLog(@"One of the keys in File: %@, Object: %@, keyPath: %@ doesnt exist.", fileInfo.path.name, [objectToModify valueForKey:@"number"], keyPath);
                     } else {
                         [[NSException exceptionWithName:[e name]
                                                  reason:[e reason]
@@ -334,20 +362,34 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //Moving change packet into processedChangePackets directory in DB
         NSString *name = [[NSString alloc] init];
         name = fileInfo.path.name;
+        NSLog(@"Finished Processing %@", name);
         @try {
-            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:name] error:&error];
+            NSString *toName = name;
+            while (true) {
+                error = nil;
+                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:toName] error:&error];
+                if(error.code == DBErrorExists) {
+                    toName = [toName stringByReplacingOccurrencesOfString:@".json" withString:@" copy.json"];
+                } else {
+                    break;
+                }
+                NSLog(@"%@", error);
+            }
+            
         }
         @catch (NSException *exception) {
             NSLog(@"%@", exception);
             NSLog(@"%@",error);
         }
     }
+    
+    [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
 
-    }
+}
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
-    // Calculate stuff...
-    
+    ServerMath *calculator = [[ServerMath alloc] init];
+    [calculator beginMath];
 }
 
 @end
