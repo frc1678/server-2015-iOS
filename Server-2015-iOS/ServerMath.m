@@ -31,7 +31,9 @@
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
     Team *team10000 = (Team *)[team10000Query firstObject];
     [self averageWithTeam:team10000 WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        return [[teamInMatchData valueForKeyPath:@"uploadedData.numTotesMovedIntoAutoZone"] floatValue]; //get this correctly.
+        float returnMe = [teamInMatchData.uploadedData[@"numTotesStacked"] floatValue];
+        NSLog(@"%f", returnMe);
+        return returnMe;
     }];
     
 }
