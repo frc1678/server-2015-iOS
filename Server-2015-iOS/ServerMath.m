@@ -20,7 +20,6 @@
     {
         total = total + block(teamInMatchData, teamInMatchData.match);
     }
-    NSLog(@"%lu", (unsigned long)[team.matchData count]);
     return total/[team.matchData count];
 }
 
@@ -35,20 +34,24 @@
     }];
 }
 
+-(float)driverAbilityOfTeam:(Team *)team
+{
+    return 10*[self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+        float returnMe = [teamInMatchData.uploadedData[@"agility"] floatValue];
+        return returnMe;
+    }];
+}
+
 
 -(void)beginMath
 {
     NSLog(@"Starting Math");
     
-    RLMResults *team10005Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10004"]];
+    RLMResults *team10005Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
     Team *team10005 = (Team *)[team10005Query firstObject];
-    NSLog(@"numTotesStacked: %f",[self averageWithTeam:team10005 WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        float returnMe = [teamInMatchData.uploadedData[@"numTotesStacked"] floatValue];
-        NSLog(@"%f", returnMe);
-        return returnMe;
-    }]);
     
     NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10005]);
+    NSLog(@"Agility: %f", [self driverAbilityOfTeam:team10005]);
     
 }
 
