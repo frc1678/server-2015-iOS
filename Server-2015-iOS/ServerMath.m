@@ -12,6 +12,7 @@
 
 @implementation ServerMath
 
+//The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
 -(float)averageWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block {
     float total = 0.0;
     
@@ -19,8 +20,19 @@
     {
         total = total + block(teamInMatchData, teamInMatchData.match);
     }
-    NSLog(@"%f", total/[team.matchData count]);
+    NSLog(@"%lu", (unsigned long)[team.matchData count]);
     return total/[team.matchData count];
+}
+
+-(float)reliabilityOfTeam:(Team *)team
+{
+    return 100*[self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+        if([teamInMatchData.uploadedData[@"disabled"]  isEqual:@1] || [teamInMatchData.uploadedData[@"incapacitated"] isEqual:@1])
+        {
+            return 0.0;
+        }
+        else return 1.0;
+    }];
 }
 
 
@@ -28,17 +40,19 @@
 {
     NSLog(@"Starting Math");
     
-    RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
-    Team *team10000 = (Team *)[team10000Query firstObject];
-    [self averageWithTeam:team10000 WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+    RLMResults *team10005Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10004"]];
+    Team *team10005 = (Team *)[team10005Query firstObject];
+    NSLog(@"numTotesStacked: %f",[self averageWithTeam:team10005 WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
         float returnMe = [teamInMatchData.uploadedData[@"numTotesStacked"] floatValue];
         NSLog(@"%f", returnMe);
         return returnMe;
-    }];
+    }]);
+    
+    NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10005]);
     
 }
 
-//The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
+
 
 
 
