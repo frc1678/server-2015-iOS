@@ -12,6 +12,17 @@
 
 @implementation ServerMath
 
+-(float)averageWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block {
+    float total = 0.0;
+    
+    for(TeamInMatchData *teamInMatchData in team.matchData)
+    {
+        total = total + block(teamInMatchData, teamInMatchData.match);
+    }
+    return total/[team.matchData count];
+}
+
+
 -(void)beginMath
 {
     NSLog(@"Starting Math");
@@ -25,15 +36,6 @@
 }
 
 //The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
--(float)averageWithTeam:(Team *)team WithDatapointBlock:(float (TeamInMatchData *, Match *))block {
-    float total = 0.0;
-    
-    for(TeamInMatchData *teamInMatchData in team.matchData)
-    {
-        total = total + block(teamInMatchData, teamInMatchData.match);
-    }
-    return total/[team.matchData count];
-}
 
 
 
