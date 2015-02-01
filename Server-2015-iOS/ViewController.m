@@ -12,7 +12,7 @@
 #import "CCRealmSync.h"
 #import "RealmModels.h"
 #import "ServerCalculator.h"
-#import "PreCompetitionSetup.h"
+#import "ServerMath.h"
 
 @interface ViewController ()
 
@@ -102,9 +102,10 @@
     ServerCalculator *calc = [[ServerCalculator alloc] init];
     [calc beginCalculations];
 }
-- (IBAction)generateSchedule:(id)sender {//Do this or have Wesley/Colin do it, whoever has time
-    PreCompetitionSetup *pcs;
-    [pcs createRealmObjectsForCompetition];
+
+- (IBAction)reCalculate:(id)sender {
+    ServerMath *math = [[ServerMath alloc] init];
+    [math beginMath];
 }
 
 @end

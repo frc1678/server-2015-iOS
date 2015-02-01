@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="wTl-RU-RAG">
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
     </dependencies>
     <scenes>
@@ -28,11 +29,14 @@
                     <navigationItem key="navigationItem" title="Server" id="23u-Pc-FUB">
                         <barButtonItem key="rightBarButtonItem" style="plain" id="J8h-i2-6tP">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="2nC-QP-Q8u">
-                                <rect key="frame" x="451" y="7" width="161" height="30"/>
+                                <rect key="frame" x="423" y="7" width="89" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Pre-Generate Schedule">
+                                <state key="normal" title="Re-Calculate">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="reCalculate:" destination="40k-JH-Xxf" eventType="touchUpInside" id="7g6-Cn-Sm9"/>
+                                </connections>
                             </button>
                             <connections>
                                 <action selector="generateSchedule:" destination="40k-JH-Xxf" id="DB1-td-BLq"/>
