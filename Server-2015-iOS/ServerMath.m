@@ -20,14 +20,15 @@
     
     for(TeamInMatchData *teamInMatchData in team.matchData)
     {
-        total = total + block(teamInMatchData, teamInMatchData.match);
+        total += block(teamInMatchData, teamInMatchData.match);
     }
     return total/[team.matchData count];
 }
 
+//Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
 -(float)reliabilityOfTeam:(Team *)team
 {
-    return 100*[self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
         if([teamInMatchData.uploadedData[@"disabled"]  isEqual:@1] || [teamInMatchData.uploadedData[@"incapacitated"] isEqual:@1])
         {
             return 0.0;
@@ -36,40 +37,88 @@
     }];
 }
 
+// Finds driver's ability = agility
 -(float)driverAbilityOfTeam:(Team *)team
 {
-    return 10*[self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        float returnMe = [teamInMatchData.uploadedData[@"agility"] floatValue];
-        return returnMe;
-    }];
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) { //multiply by 10 instead of deviding by 10 for 'out of 100' score
+        return [teamInMatchData.uploadedData[@"agility"] floatValue];
+    }]/10;
 }
 
 /*
  STACKING ABILITY
  
  for match in matches:
-	total += (stackPlacingSecurity/10 + reconsStacked*KONSTANT); //stackPlacingSecurity is a super scout thing
+	total += (stackPlacingSecurity + reconsStacked*KONSTANT); //stackPlacingSecurity is a super scout thing
  
  stackingAbility = (total/[matches count]) + OTHERKONSTANT(maxStackHeightWithRecon/timeToStackMaxStackHeightWithRecon) + KONSTANDTHREE(maxStackHeightWithOutRecon/timeToStackMaxStackHeightWithOutRecon); //the max stack height and the max stack height times are pit scout things
 */
 
-#define STACKING_ABILITY_RECONS_STACKED_CONSTANT 1.0
-#define STACKING_ABILITY_CONSTANT_WITH_RECON 1.0
-#define STACKING_ABILITY_CONSTANT_WITHOUT_RECON 1.0
+#define STACKING_ABILITY_TOTES_STACKED_CONSTANT 1.0
+#define STACKING_ABILITY_CONSTANT_AVG_HEIGHT 1.0
 
 
--(float)stackingAbilityOfTeam:(Team *)team
+// Finds stacking ability = sum of 3 stacking subscores with arbitrary coefficients
+-(float)stackingAbilityOfTeamOrigional:(Team *)team
 {
     float part1 = [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        float returnMe = ([teamInMatchData.uploadedData[@"stackPlacing"] floatValue]) + ([teamInMatchData.uploadedData[@"numReconsStacked"] floatValue] * STACKING_ABILITY_CONSTANT_WITH_RECON);
+        float returnMe = ([teamInMatchData.uploadedData[@"stackPlacing"] floatValue]) *
+        (([teamInMatchData.uploadedData[@"numTotesStacked"] floatValue] * STACKING_ABILITY_TOTES_STACKED_CONSTANT) + [teamInMatchData.uploadedData[@"numReconsStacked"] floatValue]);
         return returnMe;
     }];
-    float part2 = (STACKING_ABILITY_CONSTANT_WITH_RECON * [team[@"maxStackHeightWithRecon"] floatValue]/[team[@"timeToStackMaxStackHeightWithRecon"] floatValue]);
-    float part3 = (STACKING_ABILITY_CONSTANT_WITHOUT_RECON * [team[@"maxStackHeightWithOutRecon"] floatValue]/[team[@"timeToStackMaxStackHeightWithOutRecon"] floatValue]);
+    float part2 = (STACKING_ABILITY_CONSTANT_AVG_HEIGHT * [team[@"maxStackHeightWithRecon"] floatValue]);
 
-    return part1 + part2 + part3;
+    return part1 + part2;
 }
 
+
+-(float)stackingAbilityTeamNew:(Team *)team
+{
+    float numTotesStacked = 0;
+    float numReconsStacked = 0;
+    float maxFieldToteHeight = 0;
+    float maxReconsStackHeight = 0;
+    float numLitterDropped = 0;
+    float numNoodlesContributed = 0;
+    float matches = [team.matchData count];
+    
+    for (TeamInMatchData *teamInMatchData in team.matchData)
+    {
+        numTotesStacked += [teamInMatchData.uploadedData[@"numTotesStacked"] floatValue];
+        numReconsStacked += [teamInMatchData.uploadedData[@"numReconsStacked"] floatValue];
+        maxFieldToteHeight += [teamInMatchData.uploadedData[@"maxFieldToteHeight"] floatValue];
+        maxReconsStackHeight += [teamInMatchData.uploadedData[@"maxReconStackHeight"] floatValue];
+        numLitterDropped += [teamInMatchData.uploadedData[@"numLitterDropped"] floatValue];
+        numNoodlesContributed += [teamInMatchData.uploadedData[@"numNoodlesContributed"] floatValue];
+    }
+    
+    float score = ( 2 * numTotesStacked / matches) +
+                    4 * (MIN(numTotesStacked / maxFieldToteHeight, numReconsStacked / matches))*(maxReconsStackHeight / matches) +
+                    6 * (MIN (MIN(numTotesStacked / maxFieldToteHeight, numReconsStacked / matches), MIN(10 - numLitterDropped, numNoodlesContributed / matches) )
+                  );
+    
+    return score;
+}
+
+-(float)reconReliabilityForTeam:(Team *)team
+{
+    float reconsStacked = 0.0;
+    float reconsPickedUp = 0.0;
+    
+    for(TeamInMatchData *teamInMatchData in team.matchData)
+    {
+        reconsStacked += [teamInMatchData.uploadedData[@"numReconsStacked"] floatValue];
+        reconsPickedUp += [teamInMatchData.uploadedData[@"numReconsPickedUp"] floatValue];
+    }
+    return (reconsStacked/reconsPickedUp);
+}
+
+-(float)reconAbilityForTeam:(Team *)team
+{
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+        return [teamInMatchData.uploadedData[@"maxReconHeight"] floatValue];
+    }] * [self reconAbilityForTeam:team];
+}
 
 -(void)beginMath
 {
