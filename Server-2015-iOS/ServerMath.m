@@ -24,6 +24,12 @@
     }
     return total/[team.matchData count];
 }
+-(float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath {
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+        return [[data valueForKeyPath:keyPath] floatValue];
+    }];
+}
+
 
 //Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
 -(float)reliabilityOfTeam:(Team *)team
@@ -40,9 +46,7 @@
 // Finds driver's ability = agility
 -(float)driverAbilityOfTeam:(Team *)team
 {
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) { //multiply by 10 instead of deviding by 10 for 'out of 100' score
-        return [teamInMatchData.uploadedData[@"agility"] floatValue];
-    }]/10;
+    return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.agility"] / 10;
 }
 
 /*
