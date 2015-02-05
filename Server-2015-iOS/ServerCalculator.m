@@ -83,16 +83,87 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 -(void)beginCalculations
 {
     
-    NSLog(@"Calcs");
-    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
-    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
-        [self updateWithChangePackets];
-        NSLog(@"Unprocessed Files Changed");
-    }];
-    [self updateWithChangePackets];
+    [self makeSmallTestingDB];
+//    NSLog(@"Calcs");
+//    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
+//    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
+//        [self updateWithChangePackets];
+//        NSLog(@"Unprocessed Files Changed");
+//    }];
+//    [self updateWithChangePackets];
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
+}
+
+- (void) makeSmallTestingDB {
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    
+    [realm beginWriteTransaction];
+    
+    Competition *comp = [[Competition alloc] init];
+    comp.name = @"Testing Throwdown";
+    comp.competitionCode = @"TEST";
+    [realm addObject:comp];
+    
+    Team *a = [[Team alloc] init];
+    a.number = 10000;
+    a.name = @"Team A";
+    
+    Team *b = [[Team alloc] init];
+    b.number = 10001;
+    b.name = @"Team B";
+    
+    Team *c = [[Team alloc] init];
+    c.number = 10002;
+    c.name = @"Team C";
+    
+    Team *d = [[Team alloc] init];
+    d.number = 10003;
+    d.name = @"Team D";
+    
+    Team *e = [[Team alloc] init];
+    e.number = 10004;
+    e.name = @"Team E";
+    
+    Team *f = [[Team alloc] init];
+    f.number = 10005;
+    f.name = @"Team F";
+    
+    NSArray *teams = @[a, b, c, d, e, f];
+    [realm addObjects:teams];
+    
+    RLMArray<Team> *attending = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+    [attending addObjects:teams];
+    comp.attendingTeams = attending;
+    
+    RLMArray<Match> *matches = (RLMArray<Match> *)[[RLMArray alloc] initWithObjectClassName:@"Match"];
+    
+    NSMutableArray *alliances = [teams mutableCopy];
+    for (int i = 0; i < 6; i++) {
+        Match *match = [[Match alloc] init];
+        match.match = [NSString stringWithFormat:@"TQ%d", i + 1];
+        match.redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+        match.blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+
+        [realm addObject:match];
+
+        [match.redTeams addObjects:[alliances objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 3)]]];
+        
+        [match.blueTeams addObjects:[alliances objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 3)]]];
+        
+        [matches addObject:match];
+        
+        
+        Team *t = [alliances firstObject];
+        [alliances removeObjectAtIndex:0];
+        [alliances insertObject:t atIndex:5];
+    }
+    
+    comp.matches = matches;
+    
+    [realm commitWriteTransaction];
+    
 }
 
 
