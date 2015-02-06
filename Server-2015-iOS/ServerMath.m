@@ -46,11 +46,23 @@
     }
     return total/[team.matchData count];
 }
+
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath {
     return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
         return [[data valueForKeyPath:keyPath] floatValue];
     }];
 }
+
+- (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath withSpecificValue:(float)value {
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+        if([[data valueForKeyPath:keyPath] floatValue] == value)
+        {
+            return 1.0;
+        }
+        return 0.0;
+    }];
+}
+
 
 
 //Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
@@ -146,30 +158,65 @@
 
  *  @return The value of the lambda function for an alliance in auto.
  */
--(float)lambda:(NSArray *)alliance
+-(float)lambda:(NSArray *)alliance forCoopConditionString:(NSString *)coopConditionString
 {
-    float teamA = 0.0;
-    float teamB = 0.0;
-    float teamC = 0.0;
+    //determine the order of dificulty of the coop actions in the coop condition string
+    //generate the key paths for the hardest and second hardest actions
     
+    NSArray *actions = [coopConditionString componentsSeparatedByString:@", "];
     
-    return teamA * teamB * teamC;
+    NSString *totesToAutoZoneKeyPath = @"uploadedData.numTotesMovedIntoAutoZone";
+    NSString *threeToteStackKeyPath = @"uploadedData.stackedToteSet";
+    NSString *reconsIntoAutoZoneKeyPath = @"uploadedData.numContainersMovedIntoAutoZone";
+    //Finish making the key paths you will use in the action in actions loop
+    
+    float totalProbability = 1.0;
+    for(Team *team in alliance)
+    {
+        for(NSString *action in actions)
+        {
+            if([action isEqualToString:@"0"]) totalProbability *= 1.0;
+            else if([action isEqualToString:@"1t"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:totesToAutoZoneKeyPath withSpecificValue:1.0];
+            else if([action isEqualToString:@"3tk"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:threeToteStackKeyPath];
+            else if([action isEqualToString:@"1rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 1.
+            }];
+            else if([action isEqualToString:@"2rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 2.
+            }];
+            else if([action isEqualToString:@"4rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 4.
+            }];
+
+                
+            //ALL OF THE FOLLOWING IS IN THE AVERAGE BLOCK PARAMETER:
+            //For the ones below, you must find the recons aquired from field by doing recons into auto zone - the recons aquired from the step (in recon aquisitions).
+            //Then you first check if the totes aquired is zero, if so, it is the first one.
+            //Next, you use the number of recons aquired from field to figure out which of the second three it is.
+            else if([action isEqualToString:@"1rf"])
+            else if([action isEqualToString:@"1rf+1t"])
+            else if([action isEqualToString:@"2rf+2t"])
+            else if([action isEqualToString:@"3rf+3t"])
+            
+        }
+    }
+    
+    return totalProbability;
 }
 
-- (float)autoPredictedScore:(NSArray *)alliance
+- (float)autoPredictedScore:(NSArray *)alliance forCoopConditionString:(NSString *)coopConditionString
 {
-    float predictedScore = 0.0;
+    return [self maximize:[self.coopActionDictionary allKeys] function:^float(NSString *condition) {
+        return [self lambda:alliance forCoopConditionString:condition] * [self.coopActionDictionary[condition] floatValue];
+    }];
     
-    
-    
-    return predictedScore;
 }
 
 - (void)beginMath
 {
     NSLog(@"Starting Math");
     self.coopActionDictionary = @{
-                                  @"1t, 1t, 1t":@6,
+                                    @"1t, 1t, 1t":@8,
                                     @"1rf, 1rf, 1rf":@6,
                                     @"1rs, 1rs, 1rs":@6,
                                     @"1rs, 1rs, 1rf":@6,
