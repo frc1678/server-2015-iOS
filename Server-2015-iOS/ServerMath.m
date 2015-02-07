@@ -21,11 +21,26 @@
 
 // O(n)
 - (float)maximize:(NSArray *)xs function:(float(^)(id val))f {
-    float max = FLT_MIN;
+    float max = -FLT_MAX;
     for (id x in xs) {
-        max = MAX(f(x), max);
+        float y = f(x);
+        max = MAX(y, max);
     }
     return max;
+}
+
+- (id)findMaximumObject:(NSArray *)xs function:(float(^)(id val))f {
+    float max = -FLT_MAX;
+    id maxObject = nil;
+    for (id x in xs) {
+        float y = f(x);
+        //NSLog(@"f(x): %f, max: %f", y, max);
+        if(y > max) {
+            maxObject = x;
+            max = y;
+        }
+    }
+    return maxObject;
 }
 
 - (float)minimize:(NSArray *)xs function:(float(^)(id val))f {
@@ -34,6 +49,17 @@
         min = MIN(f(x), min);
     }
     return min;
+}
+
+- (id)findMinimizeObject:(NSArray *)xs function:(float(^)(id val))f {
+    float min = FLT_MAX;
+    id minObject = nil;
+    for (id x in xs) {
+        if(f(x) < min) {
+            minObject = x;
+        }
+    }
+    return minObject;
 }
 
 //The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
@@ -54,6 +80,7 @@
 }
 
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath withSpecificValue:(float)value {
+
     return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
         if([[data valueForKeyPath:keyPath] floatValue] == value)
         {
@@ -147,8 +174,101 @@
 {
     return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.maxReconStackHeight"] * [self reconReliabilityForTeam:team];
 }
+
+-(float)averageReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
+{
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            if(ra.numReconsAcquired == num) {
+                //NSLog(@"YO: %d", num);
+                return 1.0;
+            }
+        }
+        return 0.0;
+    }];
+}
+
+//Didnt want to be a block because its huge and messy
+-(float)probabilityThatTeam:(Team *)team doesActionFromActionString:(NSString *)action
+{
+    float totalProbability = 1.0;
+    NSString *totesToAutoZoneKeyPath = @"uploadedData.numTotesMovedIntoAutoZone";
+    NSString *threeToteStackKeyPath = @"uploadedData.stackedToteSet";
+    NSString *reconsIntoAutoZoneKeyPath = @"uploadedData.numContainersMovedIntoAutoZone";
+    if([action isEqualToString:@"1t"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:totesToAutoZoneKeyPath withSpecificValue:1.0];
+    else if([action isEqualToString:@"3tk"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:threeToteStackKeyPath];
+    else if([action isEqualToString:@"1rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:1];
+    else if([action isEqualToString:@"2rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:2];
+    else if([action isEqualToString:@"4rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:4];
+    
+    
+    //ALL OF THE FOLLOWING IS IN THE AVERAGE BLOCK PARAMETER:
+    //For the ones below, you must find the recons aquired from field by doing recons into auto zone - the recons aquired from the step (in recon aquisitions).
+    //Then you first check if the totes aquired is zero, if so, it is the first one.
+    //Next, you use the number of recons aquired from field to figure out which of the second three it is.
+    
+    //ARG, ABSTRACT THIS!!!!
+    else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        int reconsFromStep = 0;
+        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            reconsFromStep += ra.numReconsAcquired;
+        }
+        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 0 && reconsFromField == 1)
+        {
+            return 1.0;
+        }
+        return 0.0;
+    }];
+    else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        int reconsFromStep = 0;
+        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            reconsFromStep += ra.numReconsAcquired;
+        }
+        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 1 && reconsFromField == 1)
+        {
+            return 1.0;
+        }
+        return 0.0;
+    }];
+    else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        int reconsFromStep = 0;
+        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            reconsFromStep += ra.numReconsAcquired;
+        }
+        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 2 && reconsFromField == 2)
+        {
+            return 1.0;
+        }
+        return 0.0;
+    }];
+    else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        int reconsFromStep = 0;
+        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            reconsFromStep += ra.numReconsAcquired;
+        }
+        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 3 && reconsFromField == 3)
+        {
+            return 1.0;
+        }
+        return 0.0;
+    }];
+    return totalProbability;
+}
+
+
+
+
 /**
- * 
+ *
  *λ(a) = max Pg(α) · max Ph(β) · max Pi(γ)
  
  *           g∈J         h∈J         i∈J
@@ -162,54 +282,32 @@
 {
     //determine the order of dificulty of the coop actions in the coop condition string
     //generate the key paths for the hardest and second hardest actions
-    
-    NSArray *actions = [coopConditionString componentsSeparatedByString:@", "];
-    
-    NSString *totesToAutoZoneKeyPath = @"uploadedData.numTotesMovedIntoAutoZone";
-    NSString *threeToteStackKeyPath = @"uploadedData.stackedToteSet";
-    NSString *reconsIntoAutoZoneKeyPath = @"uploadedData.numContainersMovedIntoAutoZone";
-    //Finish making the key paths you will use in the action in actions loop
-    
+    NSMutableArray *mutableAlliance = [alliance mutableCopy];
     float totalProbability = 1.0;
-    for(Team *team in alliance)
-    {
-        for(NSString *action in actions)
-        {
-            if([action isEqualToString:@"0"]) totalProbability *= 1.0;
-            else if([action isEqualToString:@"1t"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:totesToAutoZoneKeyPath withSpecificValue:1.0];
-            else if([action isEqualToString:@"3tk"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:threeToteStackKeyPath];
-            else if([action isEqualToString:@"1rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 1.
-            }];
-            else if([action isEqualToString:@"2rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 2.
-            }];
-            else if([action isEqualToString:@"4rs"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-                //Get the total number recons aquired in the reconAquisition object, and return 1.0 if its equal to 4.
-            }];
-
-                
-            //ALL OF THE FOLLOWING IS IN THE AVERAGE BLOCK PARAMETER:
-            //For the ones below, you must find the recons aquired from field by doing recons into auto zone - the recons aquired from the step (in recon aquisitions).
-            //Then you first check if the totes aquired is zero, if so, it is the first one.
-            //Next, you use the number of recons aquired from field to figure out which of the second three it is.
-            else if([action isEqualToString:@"1rf"])
-            else if([action isEqualToString:@"1rf+1t"])
-            else if([action isEqualToString:@"2rf+2t"])
-            else if([action isEqualToString:@"3rf+3t"])
-            
-        }
+    NSArray *actions = [coopConditionString componentsSeparatedByString:@", "];
+    // Actions are sorted in order of difficulty, so we iterate in order of difficulty
+    for (NSString *action in actions) {
+        totalProbability *= [self maximize:mutableAlliance function:^float(id val) {
+            return [self probabilityThatTeam:val doesActionFromActionString:action];
+        }];
+        Team *teamToRemove = [self findMaximumObject:mutableAlliance function:^float(id val) {
+            return [self probabilityThatTeam:val doesActionFromActionString:action];
+        }];
+        [mutableAlliance removeObject:teamToRemove];
     }
+    
     
     return totalProbability;
 }
 
-- (float)autoPredictedScore:(NSArray *)alliance forCoopConditionString:(NSString *)coopConditionString
+- (float)autoPredictedScore:(NSArray *)alliance
 {
     return [self maximize:[self.coopActionDictionary allKeys] function:^float(NSString *condition) {
-        return [self lambda:alliance forCoopConditionString:condition] * [self.coopActionDictionary[condition] floatValue];
+        float probability = [self lambda:alliance forCoopConditionString:condition];
+        float totalPoints = [self.coopActionDictionary[condition] floatValue];
+        if(probability > 0.0) NSLog(@"condition: %@, points: %f, probability: %f", condition, totalPoints ,probability);
+        return probability * totalPoints;
     }];
-    
 }
 
 - (void)beginMath
@@ -248,7 +346,7 @@
                                     @"2rs, 1rf+1t, 1rs":@8,
                                     @"2rs, 1rs, 0":@8,
                                     @"2rs, 1rf, 0":@8,
-                                    @"2rs, 10, 0":@0,
+                                    @"2rs, 0, 0":@0,
                                     
                                     @"3rf+3t, 2rs, 2rs":@14,
                                     @"3rf+3t, 2rs, 1rs":@14,
@@ -272,11 +370,20 @@
                                     @"4rs, 0, 0":@8
                                     };
 
-    RLMResults *team10005Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
-    Team *team10005 = (Team *)[team10005Query firstObject];
+    RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
+    RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10001"]];
+    RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
+
+    Team *team10000 = (Team *)[team10000Query firstObject];
+    Team *team10001 = (Team *)[team10001Query firstObject];
+    Team *team10002 = (Team *)[team10002Query firstObject];
+
+    NSArray *alliance = [[NSArray alloc] init];
+    alliance = @[team10000, team10001, team10002];
     
-    NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10005]);
-    NSLog(@"Agility: %f", [self driverAbilityOfTeam:team10005]);
+    NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10000]);
+    NSLog(@"Agility: %f", [self driverAbilityOfTeam:team10000]);
+    NSLog(@"PredictedScore: %f", [self autoPredictedScore:alliance]);
     
 }
 

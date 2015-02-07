@@ -49,6 +49,9 @@
     NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
     [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
 }
+- (IBAction)restart:(id)sender {
+    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:@[]];
+}
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
     

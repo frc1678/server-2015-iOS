@@ -1,30 +1,30 @@
 {
     "class": "Team",
-    "uniqueValue": 10000,
+    "uniqueValue": 10001,
     "changes": [{
         "keyToChange": "matchData.TQ1.uploadedData.robotMovedIntoAutoZone",
         "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.stackedToteSet",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numTotesMovedIntoAutoZone",
-        "valueToChangeTo": 1
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numContainersMovedIntoAutoZone",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numTotesStacked",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 10
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numReconLevels",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 10
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numNoodlesContributed",
         "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numStacksDamaged",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numReconsStacked",
         "valueToChangeTo": 2
@@ -36,46 +36,25 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.numLitterDropped",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.coopActions.0.onTop",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.coopActions.0.didSucceed",
         "valueToChangeTo": true
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.0
+        "valueToChangeTo": 3.0
     }, {
         "keyToChange": "matchData.TQ1.uploadedData.reconAcquisitions.0.acquiredMiddle",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 3
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.agility",
-        "valueToChangeTo": 8
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.stackPlacing",
-        "valueToChangeTo": 7
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":9
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.incapacitated",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.disabled",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ1.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": ""
     },{
         "keyToChange": "matchData.TQ2.uploadedData.robotMovedIntoAutoZone",
         "valueToChangeTo": true
@@ -87,25 +66,25 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numContainersMovedIntoAutoZone",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numTotesStacked",
-        "valueToChangeTo": 14
+        "valueToChangeTo": 8
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numReconLevels",
-        "valueToChangeTo": 14
+        "valueToChangeTo": 8
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numNoodlesContributed",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numStacksDamaged",
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numReconsStacked",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numReconsPickedUp",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.numTotesPickedUpFromGround",
         "valueToChangeTo": 0
@@ -114,46 +93,25 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.coopActions.0.onTop",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.coopActions.0.didSucceed",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 4
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.0
+        "valueToChangeTo": 3.5
     }, {
         "keyToChange": "matchData.TQ2.uploadedData.reconAcquisitions.0.acquiredMiddle",
-        "valueToChangeTo": true
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 0
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.agility",
-        "valueToChangeTo": 8
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.stackPlacing",
-        "valueToChangeTo": 8
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":8
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.incapacitated",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.disabled",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ2.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": ""
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.robotMovedIntoAutoZone",
-        "valueToChangeTo": false
+        "valueToChangeTo": true
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.stackedToteSet",
         "valueToChangeTo": false
@@ -162,7 +120,7 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numContainersMovedIntoAutoZone",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numTotesStacked",
         "valueToChangeTo": 10
@@ -171,10 +129,10 @@
         "valueToChangeTo": 10
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numNoodlesContributed",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numStacksDamaged",
-        "valueToChangeTo": 1
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numReconsStacked",
         "valueToChangeTo": 2
@@ -186,46 +144,25 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.numLitterDropped",
-        "valueToChangeTo": 1
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.coopActions.0.onTop",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.coopActions.0.didSucceed",
         "valueToChangeTo": true
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 4
+        "valueToChangeTo": 3
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.0
+        "valueToChangeTo": 3.0
     }, {
         "keyToChange": "matchData.TQ3.uploadedData.reconAcquisitions.0.acquiredMiddle",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 0
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.agility",
-        "valueToChangeTo": 7
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.stackPlacing",
-        "valueToChangeTo": 9
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":9
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.incapacitated",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.disabled",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ3.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": "WOOP SWAHGGAHY GEE INDA HOWSSE!"
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.robotMovedIntoAutoZone",
         "valueToChangeTo": true
@@ -237,13 +174,13 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.numContainersMovedIntoAutoZone",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.numTotesStacked",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 11
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.numReconLevels",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 11
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.numNoodlesContributed",
         "valueToChangeTo": 2
@@ -261,46 +198,25 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.numLitterDropped",
-        "valueToChangeTo": 1
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.coopActions.0.onTop",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.coopActions.0.didSucceed",
         "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 4
+        "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.0
+        "valueToChangeTo": 0.0
     }, {
         "keyToChange": "matchData.TQ4.uploadedData.reconAcquisitions.0.acquiredMiddle",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 4
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.agility",
-        "valueToChangeTo": 7
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.stackPlacing",
-        "valueToChangeTo": 8
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":8
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.incapacitated",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.disabled",
-        "valueToChangeTo": true
-    }, {
-        "keyToChange": "matchData.TQ4.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": ""
     },{
         "keyToChange": "matchData.TQ5.uploadedData.robotMovedIntoAutoZone",
         "valueToChangeTo": true
@@ -315,19 +231,19 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numTotesStacked",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 8
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numReconLevels",
-        "valueToChangeTo": 12
+        "valueToChangeTo": 8
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numNoodlesContributed",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numStacksDamaged",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numReconsStacked",
-        "valueToChangeTo": 2
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.numReconsPickedUp",
         "valueToChangeTo": 2
@@ -339,43 +255,22 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.coopActions.0.onTop",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.coopActions.0.didSucceed",
-        "valueToChangeTo": true
+        "valueToChangeTo": false
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 4
+        "valueToChangeTo": 3
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.6
+        "valueToChangeTo": 3.6
     }, {
         "keyToChange": "matchData.TQ5.uploadedData.reconAcquisitions.0.acquiredMiddle",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 0
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.agility",
-        "valueToChangeTo": 6
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.stackPlacing",
-        "valueToChangeTo": 7
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":8
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.incapacitated",
-        "valueToChangeTo": true
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.disabled",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ5.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": ""
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.robotMovedIntoAutoZone",
         "valueToChangeTo": false
@@ -390,31 +285,31 @@
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numTotesStacked",
-        "valueToChangeTo": 15
+        "valueToChangeTo": 10
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numReconLevels",
-        "valueToChangeTo": 15
+        "valueToChangeTo": 10
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numNoodlesContributed",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numStacksDamaged",
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numReconsStacked",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
-        "keyToChange": "matchData.TQ6.uploadedData.numReconsPickedUp",
-        "valueToChangeTo": 3
+        "keyToChange": "matchData.TQ5.uploadedData.numReconsPickedUp",
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numTotesPickedUpFromGround",
         "valueToChangeTo": 0
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.numLitterDropped",
-        "valueToChangeTo": 0
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.coopActions.0.numTotes",
-        "valueToChangeTo": 3
+        "valueToChangeTo": 2
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.coopActions.0.onTop",
         "valueToChangeTo": false
@@ -423,33 +318,12 @@
         "valueToChangeTo": true
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.reconAcquisitions.0.numReconsAcquired",
-        "valueToChangeTo": 4
+        "valueToChangeTo": 1
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.reconAcquisitions.0.time",
-        "valueToChangeTo": 2.3
+        "valueToChangeTo": 3.3
     }, {
         "keyToChange": "matchData.TQ6.uploadedData.reconAcquisitions.0.acquiredMiddle",
         "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.numLitterThrownToOtherSide",
-        "valueToChangeTo": 5
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.agility",
-        "valueToChangeTo": 8
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.stackPlacing",
-        "valueToChangeTo": 7
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.humanPlayerLoading",
-        "valueToChangeTo":9
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.incapacitated",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.disabled",
-        "valueToChangeTo": false
-    }, {
-        "keyToChange": "matchData.TQ6.uploadedData.miscellaneousNotes",
-        "valueToChangeTo": ""
     }]
 }
