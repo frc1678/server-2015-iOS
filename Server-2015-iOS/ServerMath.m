@@ -90,7 +90,58 @@
     }];
 }
 
+-(float)predictedCOOPScoreForTeam:(Team *)team
+{
+    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        for (CoopAction *ca in TIMD.uploadedData.coopActions)
+        {
+            if(ca.didSucceed)
+            {
+                //Finish This
+            }
+        }
+        return 0.0;
+    }];
+}
 
+-(float)predictedTeleopScoreForTeam:(Team *)team
+{
+    float avgTotesScore = 2*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"];
+    float avgReconLevelsScore = 4*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numReconLevels"];
+    float avgNoodleScore = 6*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+    
+    return avgTotesScore + avgReconLevelsScore + avgNoodleScore;
+}
+
+-(float)predictedTeleopScoreForAlliance:(NSArray *)alliance
+{
+    float predictedTeleop;
+    for (Team *t in alliance)
+    {
+        predictedTeleop += [self predictedTeleopScoreForTeam:t];
+    }
+    return predictedTeleop;
+}
+
+-(float)predictedElimScoreForAlliance:(NSArray *)alliance
+{
+    return [self predictedTeleopScoreForAlliance:alliance] + [self predictedAutoScoreForAlliance:alliance];
+}
+
+-(float)predictedCOOPScoreForAlliance:(NSArray *)alliance
+{
+    float predictedCOOP;
+    for (Team *t in alliance)
+    {
+        predictedCOOP += [self predictedCOOPScoreForTeam:t];
+    }
+    return predictedCOOP;
+}
+
+-(float)predictedQualScoreForAlliance:(NSArray *)alliance
+{
+    return [self predictedTeleopScoreForAlliance:alliance] + [self predictedAutoScoreForAlliance:alliance] + [self predictedElimScoreForAlliance:alliance];
+}
 
 //Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
 - (float)reliabilityOfTeam:(Team *)team
@@ -300,7 +351,7 @@
     return totalProbability;
 }
 
-- (float)autoPredictedScore:(NSArray *)alliance
+- (float)predictedAutoScoreForAlliance:(NSArray *)alliance
 {
     return [self maximize:[self.coopActionDictionary allKeys] function:^float(NSString *condition) {
         float probability = [self lambda:alliance forCoopConditionString:condition];
@@ -378,13 +429,15 @@
     Team *team10001 = (Team *)[team10001Query firstObject];
     Team *team10002 = (Team *)[team10002Query firstObject];
 
-    NSArray *alliance = [[NSArray alloc] init];
-    alliance = @[team10000, team10001, team10002];
+    NSArray *alliance = @[team10000, team10001, team10002];
     
     NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10000]);
     NSLog(@"Agility: %f", [self driverAbilityOfTeam:team10000]);
-    NSLog(@"PredictedScore: %f", [self autoPredictedScore:alliance]);
-    
+    NSLog(@"PredictedScore: %f", [self predictedAutoScoreForAlliance:alliance]);
+    //NSLog(@"Recon Ability: %f", [self reconAbilityForTeam:team10002]);
+    //NSLog(@"Stacking ability new: %f", [self stackingAbilityTeamNew:team10001]);
+    //NSLog(@"Stacking ability origional: %f", [self stackingAbilityOfTeamOrigional:team10001]);
+
 }
 
 
