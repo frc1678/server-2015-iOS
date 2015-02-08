@@ -115,10 +115,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     
     RLMRealm *realm = [RLMRealm defaultRealm];
-    
+    [self mergeChangePacketsIntoRealm:realm];
+
     [realm beginWriteTransaction];
     
-    [self mergeChangePacketsIntoRealm:realm];
     [self recalculateValuesInRealm:realm];
     
     [realm commitWriteTransaction];
@@ -260,7 +260,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     if (error) {
         NSLog(@"%@",error);
     }
-    //////////////////////////////THE FOLLOWING CODE MAY NOT BE SANE!
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
     for(DBFileInfo *fileInfo in unprocessedFiles)
     {
@@ -272,7 +271,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSArray *sortedTimestamps = [[dict allKeys] sortedArrayUsingSelector:@selector(compare:)];
     
     //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
-        ///////////////////END OF CODE THAT IS INSANE
     for(NSNumber *timestamp in sortedTimestamps)
     {
         DBFileInfo *fileInfo = dict[timestamp];
@@ -340,8 +338,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                 //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                 @try{
-                    
+                    [realm beginWriteTransaction];
                     [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify];
+                    [realm commitWriteTransaction];
                     //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                 } @catch (NSException *e) {
                     if ([[e name] isEqualToString:NSUndefinedKeyException]) {
