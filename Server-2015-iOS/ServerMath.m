@@ -61,9 +61,15 @@
     }
     return minObject;
 }
+- (float)averageCalculatedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(CalculatedTeamData *))block {
+    float total = 0.0;
+    CalculatedTeamData *cd = team.calculatedData;
+    total += block(cd);
+    return total/[team.matchData count];
+}
 
 //The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
-- (float)averageWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block {
+- (float)averageUploadedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block {
     float total = 0.0;
     
     for(TeamInMatchData *teamInMatchData in team.matchData)
@@ -74,14 +80,14 @@
 }
 
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath {
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
         return [[data valueForKeyPath:keyPath] floatValue];
     }];
 }
 
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath withSpecificValue:(float)value {
 
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
         if([[data valueForKeyPath:keyPath] floatValue] == value)
         {
             return 1.0;
@@ -92,7 +98,7 @@
 
 -(float)predictedCOOPScoreForTeam:(Team *)team
 {
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         for (CoopAction *ca in TIMD.uploadedData.coopActions)
         {
             if(ca.didSucceed)
@@ -146,7 +152,7 @@
 //Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
 - (float)reliabilityOfTeam:(Team *)team
 {
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
         if(teamInMatchData.uploadedData.disabled || teamInMatchData.uploadedData.incapacitated)
         {
             return 0.0;
@@ -170,11 +176,11 @@
 // Finds stacking ability = sum of 3 stacking subscores with arbitrary coefficients
 - (float)stackingAbilityOfTeamOrigional:(Team *)team
 {
-    float part1 = [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+    float part1 = [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
         return teamInMatchData.uploadedData.stackPlacing
             * (STACKING_ABILITY_TOTES_STACKED_CONSTANT * teamInMatchData.uploadedData.numTotesStacked + teamInMatchData.uploadedData.numReconsStacked);
     }];
-    float part2 = STACKING_ABILITY_CONSTANT_AVG_HEIGHT * [team[@"maxReconStackHeight"] floatValue]; // this doesn't actually exist... yet... to be continued...
+    float part2 = STACKING_ABILITY_CONSTANT_AVG_HEIGHT * team.calculatedData.avgMaxReconHeight; // this doesn't actually exist... yet... to be continued...
 
     return part1 + part2;
 }
@@ -195,7 +201,7 @@
         numTotesStacked += teamInMatchData.uploadedData.numTotesStacked;
         numReconsStacked += teamInMatchData.uploadedData.numReconsStacked;
         maxFieldToteHeight += teamInMatchData.uploadedData.maxFieldToteHeight;
-        maxReconsStackHeight += [team[@"maxReconStackHeight"] floatValue];
+        maxReconsStackHeight += team.calculatedData.avgMaxReconHeight;
         numLitterDropped += teamInMatchData.uploadedData.numLitterDropped;
         numNoodlesContributed += teamInMatchData.uploadedData.numNoodlesContributed;
     }
@@ -223,12 +229,14 @@
 
 - (float)reconAbilityForTeam:(Team *)team
 {
-    return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.maxReconStackHeight"] * [self reconReliabilityForTeam:team];
+    return [self averageCalculatedDataWithTeam:team WithDatapointBlock:^float(CalculatedTeamData *cd) {
+        return cd.avgMaxReconHeight;
+    }] * [self reconReliabilityForTeam:team];
 }
 
 -(float)averageReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
 {
-    return [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
         {
             if(ra.numReconsAcquired == num) {
@@ -260,7 +268,7 @@
     //Next, you use the number of recons aquired from field to figure out which of the second three it is.
     
     //ARG, ABSTRACT THIS!!!!
-    else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
         {
@@ -273,7 +281,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
         {
@@ -286,7 +294,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
         {
@@ -299,7 +307,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
         {
@@ -361,6 +369,59 @@
     }];
 }
 
+/*
+ @property NSInteger predictedSeed;
+ @property float firstPickAbility;
+ @property float secondPickAbility;
+ @property float avgNumMaxHeightStacks;
+ @property float isStackedToteSetPercentage;
+ @property float avgNumTotesMoveIntoAutoZone;
+ @property float avgNumTotesStacked;
+ @property float avgNumReconLevels;
+ @property float avgNumNoodlesContributed;
+ @property float avgNumReconsStacked;
+ @property float avgNumReconsPickedUp;
+ @property float avgNumTotesPickedUpFromGround;
+ @property float avgNumLitterDropped;
+ @property float avgNumStacksDamaged;
+ @property float avgMaxFieldToteHeight;
+ @property float avgNumLitterThrownToOtherSide;
+ @property float avgAgility;
+ @property float driverAbility;
+ @property float avgStackPlacing;
+ @property float avgHumanPlayerLoading;
+ @property float incapacitatedPercentage;
+ @property float disabledPercentage;
+ @property float reliability;
+ @property float avgReconStepAcquisitionTime;
+ @property ReconAcquisition *reconAcquisitionTypes;
+ @property float mostCommonReconAcquisitionType;
+ @property float avgMostCommonReconAcquisitionTypeTime;
+ @property float avgThreeChokeholdTime;
+ @property float avgFourChokeholdTime;
+ @property float avgCoopPoints;
+ */
+
+-(void)updateCalculatedData
+{
+    RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
+    
+    [[RLMRealm defaultRealm] beginWriteTransaction];
+    for (Team *t in allTeams)
+    {
+        CalculatedTeamData *cd = t.calculatedData;
+        cd.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
+        cd.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
+        cd.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
+        cd.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+        cd.reconAbility = [self reconAbilityForTeam:t];
+        cd.reconReliability = [self reconReliabilityForTeam:t];
+        cd.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
+    }
+    
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+}
+
 - (void)beginMath
 {
     NSLog(@"Starting Math");
@@ -420,6 +481,8 @@
                                     @"4rs, 2rf+2t, 0":@14,
                                     @"4rs, 0, 0":@8
                                     };
+    [self updateCalculatedData];
+
 
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
     RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10001"]];
@@ -433,10 +496,12 @@
     
     NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10000]);
     NSLog(@"Agility: %f", [self driverAbilityOfTeam:team10000]);
-    NSLog(@"PredictedScore: %f", [self predictedAutoScoreForAlliance:alliance]);
-    //NSLog(@"Recon Ability: %f", [self reconAbilityForTeam:team10002]);
-    //NSLog(@"Stacking ability new: %f", [self stackingAbilityTeamNew:team10001]);
-    //NSLog(@"Stacking ability origional: %f", [self stackingAbilityOfTeamOrigional:team10001]);
+    NSLog(@"Predicted Auto Score: %f", [self predictedAutoScoreForAlliance:alliance]);
+    NSLog(@"Predicted Teleop Score: %f", [self predictedTeleopScoreForAlliance:alliance]);
+
+    NSLog(@"Recon Ability: %f", [self reconAbilityForTeam:team10002]);
+    NSLog(@"Stacking ability new: %f", [self stackingAbilityTeamNew:team10001]);
+    NSLog(@"Stacking ability origional: %f", [self stackingAbilityOfTeamOrigional:team10001]);
 
 }
 
