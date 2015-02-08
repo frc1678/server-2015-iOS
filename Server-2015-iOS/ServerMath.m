@@ -376,7 +376,6 @@
  @property float avgNumMaxHeightStacks;
  @property float isStackedToteSetPercentage;
  @property float avgNumTotesMoveIntoAutoZone;
- @property float avgNumTotesStacked;
  @property float avgNumReconLevels;
  @property float avgNumNoodlesContributed;
  @property float avgNumReconsStacked;
@@ -502,6 +501,7 @@
     NSLog(@"Recon Ability: %f", [self reconAbilityForTeam:team10002]);
     NSLog(@"Stacking ability new: %f", [self stackingAbilityTeamNew:team10001]);
     NSLog(@"Stacking ability origional: %f", [self stackingAbilityOfTeamOrigional:team10001]);
+    NSLog(@"AverageTotes: %f", team10001.calculatedData.avgNumTotesStacked);
 
 }
 

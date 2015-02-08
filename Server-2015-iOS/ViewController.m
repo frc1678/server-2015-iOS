@@ -122,7 +122,7 @@
     [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
 }
 - (IBAction)restart:(id)sender {
-    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:@[]];
+    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:nil];
 }
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
@@ -139,26 +139,11 @@
     
     NSLog(@"%lu teams!", (unsigned long)ar.count);
     self.dataFromDropbox = ar;
-    [self.tableView reloadData];
 }
 
 
 
-- (NSInteger)tableView:(UITableView *)tableView
- numberOfRowsInSection:(NSInteger)section
-{
-    return self.dataFromDropbox.count;
-}
 
-- (UITableViewCell *)tableView:(UITableView *)tableView
-         cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell" forIndexPath:indexPath];
-    NSArray *data = self.dataFromDropbox;
-    cell.textLabel.text = [NSString stringWithFormat:@"%ld", (long)[data [indexPath.row] number]];
-    
-    return cell;
-}
 
 -(NSMutableArray *)getParsedJSON
 {
@@ -171,7 +156,6 @@
 {
     [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
-    NSMutableArray *allTheData = self.dataFromDropbox;
     //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
     
     //[self makeSmallTestingDB];
