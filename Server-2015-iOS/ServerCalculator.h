@@ -18,6 +18,8 @@
 
 -(void)beginCalculations;
 
+- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original;
+
 @end
 
 @interface RLMProperty (DefaultValue)

@@ -127,7 +127,8 @@
     }
 - (IBAction)restart:(id)sender {
     [self startDatabaseOperations];
-    [self logText:@"Restarted."];
+    
+    [self logText:@"Restarting..."];
 
 }
 
@@ -160,7 +161,6 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
-    
     [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
     //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
@@ -171,17 +171,19 @@
     [calc beginCalculations];
 }
 
+
 - (IBAction)reCalculate:(id)sender {
     ServerMath *math = [[ServerMath alloc] init];
     [math beginMath];
-    [self logText:@"Recalculated."];
+    [self logText:@"Recalculating..."];
 
 }
-
 -(void)logText:(NSString *)text
 {
     NSString *logString = [self.logTextView.text stringByAppendingFormat:@"\n%@", text];
     self.logTextView.text = logString;
 }
+
+
 
 @end

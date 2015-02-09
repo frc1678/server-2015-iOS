@@ -509,7 +509,7 @@
         }
         
         [sc setValue:@([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"]) forKeyPath:@"calculatedData.avgNumTotesStacked" onRealmObject:t onOriginalObject:t];
-        //t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
+        
         [sc setValue:@([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"]) forKeyPath:@"calculatedData.avgNumTotesStacked" onRealmObject:t onOriginalObject:t];
         [sc setValue:@([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"]) forKeyPath:@"calculatedData.avgMaxFieldToteHeight" onRealmObject:t onOriginalObject:t];
         [sc setValue:@([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numStacksDamaged"]) forKeyPath:@"calculatedData.avgNumStacksDamaged" onRealmObject:t onOriginalObject:t];

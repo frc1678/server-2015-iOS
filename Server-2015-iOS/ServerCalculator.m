@@ -7,6 +7,7 @@
 //
 
 #import "ServerCalculator.h"
+#import "ViewController.h"
 #import "CCDropboxSync.h"
 #import "CCRealmSync.h"
 //#import <RealmModels.h>
@@ -100,8 +101,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  */
 -(void)beginCalculations
 {
-    
     NSLog(@"Calcs");
+    
     //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
     [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
         
@@ -112,6 +113,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //Start 10 sec timer.
         NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
     }];
+    NSLog(@"Done with begin calcs");
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
@@ -155,6 +157,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 // Finds UniqueKey-s and SemiUniqueKey-s among the components
 - (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original
 {
+    if (!value) {
+        NSLog(@"value is not ok");
+    }
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
@@ -248,7 +253,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 return;
             }
             
-            if(newObject == nil)
+            if(!newObject)
             {
                 // If newObject is nil, we need to create it, with the right class, and then set that as the value for head on the current object
                 NSString *className = [object objectSchema][head].objectClassName;
