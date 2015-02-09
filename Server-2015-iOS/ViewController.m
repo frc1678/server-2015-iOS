@@ -110,14 +110,21 @@
 {
     self.logTextView.text = @"Hello, I'm the Citrus Server!";
     [super viewDidAppear:animated];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    dispatch_async(backgroundQueue, ^{
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+    });
+        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
+        [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), backgroundQueue, ^{
+        NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
+        [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
+
+    });
     
-    //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-    NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
-    [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
-}
+    }
 - (IBAction)restart:(id)sender {
     [self startDatabaseOperations];
     [self logText:@"Restarted."];
@@ -153,6 +160,7 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
+    
     [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
 
     //NSLog(@"ALL THE DHATUHZ: %@", allTheData);

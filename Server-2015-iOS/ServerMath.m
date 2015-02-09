@@ -71,6 +71,7 @@
 
 //The block returns the datapoint for the match for the team. It always returns a float, e.g. 0.0 is false, 1.0 is true
 - (float)averageUploadedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block {
+    
     float total = 0.0;
     
     for(TeamInMatchData *teamInMatchData in team.matchData)
@@ -160,7 +161,7 @@
 
 -(float)predictedQualScoreForAlliance:(NSArray *)alliance
 {
-    return [self predictedTeleopScoreForAlliance:alliance] + [self predictedAutoScoreForAlliance:alliance] + [self predictedElimScoreForAlliance:alliance];
+    return [self predictedTeleopScoreForAlliance:alliance] + [self predictedAutoScoreForAlliance:alliance] + [self predictedCOOPScoreForAlliance:alliance];
 }
 
 //Finds 'unreliability' of a team by deviding the number of times they were disabled or incapacitated by the number of matches they played.
@@ -504,7 +505,9 @@
     {
         if (t.calculatedData == nil)
         {
-            for (RLMProperty *p in t.calculatedData.objectSchema.properties)
+            CalculatedTeamData *ctd = [[CalculatedTeamData alloc] init];
+
+            for (RLMProperty *p in [ctd objectSchema].properties)
             {
                 t.calculatedData[p.name] = [p defaultValue];
             }
@@ -513,12 +516,13 @@
         }
         if (t.uploadedData == nil)
         {
-            for (RLMProperty *p in t.uploadedData.objectSchema.properties)
+            UploadedTeamData *ud = [[UploadedTeamData alloc] init];
+
+            for (RLMProperty *p in [ud objectSchema].properties)
             {
                 t.uploadedData[p.name] = [p defaultValue];
             }
 
-            //UploadedTeamData *ud = [[UploadedTeamData alloc] init];
             //t.uploadedData = ud;
         }
         CalculatedTeamData *cd = t.calculatedData;
@@ -649,7 +653,12 @@
                                     @"4rs, 2rf+2t, 0":@14,
                                     @"4rs, 0, 0":@8
                                     };
-    [self updateCalculatedData];
+    
+    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    dispatch_async(backgroundQueue, ^{
+        [self updateCalculatedData];
+
+    });
 
 
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];

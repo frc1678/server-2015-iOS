@@ -45,6 +45,7 @@
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) NSArray *unprocessedFiles;
 
 @end
 
@@ -255,13 +256,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSError *error = nil;
-    
-    NSArray *unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:&error];
-    if (error) {
+    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    dispatch_async(backgroundQueue, ^{
+        self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
+    });
+        if (error) {
         NSLog(@"%@",error);
     }
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-    for(DBFileInfo *fileInfo in unprocessedFiles)
+    for(DBFileInfo *fileInfo in self.unprocessedFiles)
     {
         NSString *fileName = [fileInfo.path.name stringByReplacingOccurrencesOfString:@".realm" withString:@""];
         NSArray *nameComponents = [fileName componentsSeparatedByString:@"|"];
@@ -381,14 +384,19 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSLog(@"%@",error);
         }
     }
-    
-    [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+    dispatch_async(backgroundQueue, ^{
+        [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+    });
 
 }
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
+    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+
+    dispatch_async(backgroundQueue, ^{
     ServerMath *calculator = [[ServerMath alloc] init];
     [calculator beginMath];
+    });
 }
 
 @end

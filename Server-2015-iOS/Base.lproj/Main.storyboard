@@ -54,9 +54,6 @@
                                     <action selector="reCalculate:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="M7a-hS-8NM"/>
                                 </connections>
                             </button>
-                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="Hch-LV-dMg">
-                                <rect key="frame" x="16" y="127" width="568" height="2"/>
-                            </progressView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Citrus Server" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="WRz-kV-m1c">
                                 <rect key="frame" x="16" y="137" width="568" height="113"/>
                                 <constraints>
@@ -76,24 +73,23 @@
                         </subviews>
                         <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="Hch-LV-dMg" firstAttribute="leading" secondItem="WRz-kV-m1c" secondAttribute="leading" id="1Kp-Ow-NSv"/>
-                            <constraint firstItem="WRz-kV-m1c" firstAttribute="trailing" secondItem="Hch-LV-dMg" secondAttribute="trailing" id="3Hw-93-LSL"/>
-                            <constraint firstItem="Hch-LV-dMg" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="4Fw-6x-DNk"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" id="29Q-YG-gLt"/>
                             <constraint firstItem="6hl-yu-Gps" firstAttribute="leading" secondItem="WRz-kV-m1c" secondAttribute="leading" id="6fq-AW-Nf6"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="98Y-Cx-e8z"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="baseline" secondItem="Ddx-fh-c7f" secondAttribute="firstBaseline" id="F7A-XX-nn4"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="height" secondItem="Ddx-fh-c7f" secondAttribute="height" id="HcM-1Q-aA1"/>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="Hch-LV-dMg" secondAttribute="trailing" id="NkX-Wo-cy0"/>
+                            <constraint firstItem="6hl-yu-Gps" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="ImD-BP-s4r"/>
                             <constraint firstItem="WRz-kV-m1c" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="P0I-hg-xHb"/>
                             <constraint firstAttribute="bottom" secondItem="6hl-yu-Gps" secondAttribute="bottom" constant="20" symbolic="YES" id="QyO-CQ-VMK"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="width" secondItem="Ddx-fh-c7f" secondAttribute="width" id="UgH-68-GTf"/>
-                            <constraint firstItem="Hch-LV-dMg" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="8" symbolic="YES" id="Wim-Vu-vlO"/>
+                            <constraint firstItem="WRz-kV-m1c" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="18" id="V72-Un-BnA"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" symbolic="YES" id="dSW-QQ-Xuf"/>
-                            <constraint firstItem="Hch-LV-dMg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="leading" id="dve-7u-FvS"/>
-                            <constraint firstItem="WRz-kV-m1c" firstAttribute="top" secondItem="Hch-LV-dMg" secondAttribute="bottom" constant="8" symbolic="YES" id="gMc-W6-Ib5"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="fRo-lr-RvB"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" symbolic="YES" id="hIl-ZJ-IWW"/>
                             <constraint firstItem="6hl-yu-Gps" firstAttribute="top" secondItem="WRz-kV-m1c" secondAttribute="bottom" constant="8" symbolic="YES" id="hXw-nv-Dfg"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" id="jSt-4M-u3k"/>
                             <constraint firstItem="6hl-yu-Gps" firstAttribute="trailing" secondItem="WRz-kV-m1c" secondAttribute="trailing" id="n4q-O5-TeW"/>
+                            <constraint firstItem="6hl-yu-Gps" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="sBo-Sd-HWI"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="cQp-B2-Bpg" secondAttribute="top" id="xA4-ga-hKA"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="baseline" secondItem="cQp-B2-Bpg" secondAttribute="firstBaseline" id="xvv-IY-105"/>
                         </constraints>
@@ -101,7 +97,9 @@
                             <mask key="constraints">
                                 <exclude reference="dSW-QQ-Xuf"/>
                                 <exclude reference="xvv-IY-105"/>
+                                <exclude reference="P0I-hg-xHb"/>
                                 <exclude reference="F7A-XX-nn4"/>
+                                <exclude reference="hIl-ZJ-IWW"/>
                             </mask>
                         </variation>
                     </view>
