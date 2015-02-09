@@ -21,6 +21,11 @@
 
 @implementation RLMProperty (DefaultValue)
 
+/**
+ *  Sorts the input data by type. If bool, double, float, or int returns [NSNumber numberWithInt:0]. If array, data, date, or string initializes them.
+ *
+ *  @return returns a default object of the appropriate type
+ */
 - (id) defaultValue
 {
     if(self.type == RLMPropertyTypeBool || self.type == RLMPropertyTypeDouble || self.type == RLMPropertyTypeFloat || self.type == RLMPropertyTypeInt) {
@@ -58,7 +63,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     RealmDotRealm
 };
 
-
+/**
+ *  Convinience method for getting the different Dropbox file paths
+ *
+ *  @param filePath path of the file
+ *
+ *  @return new path
+ */
 - (DBPath *)dropboxFilePath:(DBFilePathEnum)filePath {
     if(filePath == UnprocessedChangePackets)
     {
@@ -84,6 +95,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 
 #define WAIT_TIME 10.0
+/**
+ *  Sets a wait time = 10sec before updating unprocessed files
+ */
 -(void)beginCalculations
 {
     
@@ -103,6 +117,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
 }
 
+/**
+ *  updates realm with the change packets
+ *
+ *  @param NSTimer Object
+ */
 -(void)timerFired:(NSTimer *)timer
 {
     self.timer = nil;
@@ -111,10 +130,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     [self updateWithChangePackets];
 }
 
+/**
+ *  Updates/writes to Realm
+ */
 -(void)updateWithChangePackets
 {
-    
-    
     RLMRealm *realm = [RLMRealm defaultRealm];
     [self mergeChangePacketsIntoRealm:realm];
 
@@ -131,6 +151,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  3. newObject is always the equivelent of object.keyPathComponents[0]
  */
 
+// Separates the keyPath into components and creates an array out o them
+// Finds UniqueKey-s and SemiUniqueKey-s among the components
 - (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original
 {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
@@ -253,6 +275,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
     }
 }
+
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSError *error = nil;
