@@ -33,16 +33,7 @@
 }
 
 
-- (void) viewDidLoad
-{
-    [super viewDidLoad];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
 
-    //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-}
 
 - (void) makeSmallTestingDB {
     RLMRealm *realm = [RLMRealm defaultRealm];
@@ -117,12 +108,20 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    self.logTextView.text = @"Hello, I'm the Citrus Server!";
     [super viewDidAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+    
+    //[RLMRealm setDefaultRealmPath:@"realm.realm"];
+    [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
     NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
     [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
 }
 - (IBAction)restart:(id)sender {
-    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:nil];
+    [self startDatabaseOperations];
+    [self logText:@"Restarted."];
+
 }
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
@@ -167,6 +166,14 @@
 - (IBAction)reCalculate:(id)sender {
     ServerMath *math = [[ServerMath alloc] init];
     [math beginMath];
+    [self logText:@"Recalculated."];
+
+}
+
+-(void)logText:(NSString *)text
+{
+    NSString *logString = [self.logTextView.text stringByAppendingFormat:@"\n%@", text];
+    self.logTextView.text = logString;
 }
 
 @end

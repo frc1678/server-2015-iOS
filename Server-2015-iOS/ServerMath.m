@@ -9,6 +9,7 @@
 #import "ServerMath.h"
 #import "RealmModels.h"
 #import "UniqueKey.h"
+#import "ServerCalculator.h"
 
 @interface ServerMath ()
 
@@ -175,7 +176,7 @@
 }
 
 // Finds driver's ability = agility
-- (float)avgDriverAbilityOfTeam:(Team *)team
+- (float)avgDriverAbilityForTeam:(Team *)team
 {
     return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.agility"] / 10;
 }
@@ -235,9 +236,9 @@
     int *fourCount;
     int *sideCount;
     int *middleCount;
-    for (UploadedTeamData *ud in team.uploadedData)
+    for (TeamInMatchData *timd in team.matchData)
     {
-        for (ReconAcquisition *ra in ud)
+        for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
         {
             if (ra.numReconsAcquired == 1) oneCount++;
             else if (ra.numReconsAcquired == 2) twoCount++;
@@ -285,9 +286,9 @@
     NSString *mostCommonAcquisition = [self mostCommonAquisitionTypeForTeam:team];
     NSInteger *mostCommonReconsAcquired = [[[mostCommonAcquisition stringByReplacingOccurrencesOfString:@" Side" withString:@""] stringByReplacingOccurrencesOfString:@" Middle" withString:@""] integerValue];
     
-    for (UploadedTeamInMatchData *md in team.matchData)
+    for (TeamInMatchData *timd in team.matchData)
     {
-        for (ReconAcquisition *ra in md.reconAcquisitions)
+        for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
         {
             if (ra.numReconsAcquired == mostCommonReconsAcquired)
             {
@@ -295,7 +296,7 @@
                 else if (!ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Side"]) time += 1.0;
             }
         }
-        time /= md.reconAcquisitions.count;
+        time /= timd.uploadedData.reconAcquisitions.count;
     }
     return time /= team.matchData.count;
 }
@@ -322,7 +323,7 @@
     }] * [self reconReliabilityForTeam:team];
 }
 
--(float)averageReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
+-(float)avgReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
@@ -350,9 +351,9 @@
     NSString *reconsIntoAutoZoneKeyPath = @"uploadedData.numContainersMovedIntoAutoZone";
     if([action isEqualToString:@"1t"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:totesToAutoZoneKeyPath withSpecificValue:1.0];
     else if([action isEqualToString:@"3tk"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:threeToteStackKeyPath];
-    else if([action isEqualToString:@"1rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:1];
-    else if([action isEqualToString:@"2rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:2];
-    else if([action isEqualToString:@"4rs"]) totalProbability *= [self averageReconsFromStepForTeam:team withNumRecons:4];
+    else if([action isEqualToString:@"1rs"]) totalProbability *= [self avgReconsFromStepForTeam:team withNumRecons:1];
+    else if([action isEqualToString:@"2rs"]) totalProbability *= [self avgReconsFromStepForTeam:team withNumRecons:2];
+    else if([action isEqualToString:@"4rs"]) totalProbability *= [self avgReconsFromStepForTeam:team withNumRecons:4];
     
     
     //ALL OF THE FOLLOWING IS IN THE AVERAGE BLOCK PARAMETER:
@@ -462,15 +463,37 @@
     }];
 }
 
+- (float)avgAcquisitionTimeForNumRecons:(int)num forTeam:(Team *)team
+{
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+        float average = 0.0;
+        for (ReconAcquisition *RA in TIMD.uploadedData.reconAcquisitions)
+        {
+            if (RA.numReconsAcquired == num) average += RA.time;
+        }
+        return average/TIMD.uploadedData.reconAcquisitions.count;
+    }];
+}
+
+-(NSInteger *)totalScoreForTeam:(Team *)team
+{
+    //get the sum of the official Scores for the previous matches
+    return 0;
+}
+
+-(NSInteger *)predictedSeedForTeam:(Team *)team
+{
+    //Get the totalScore, and add that to the sum of the predicted scores for future matches.
+    return 0;
+}
+
 /*
- @property NSInteger predictedSeed;
  @property float firstPickAbility;
  @property float secondPickAbility;
- @property ReconAcquisition *reconAcquisitionTypes;
- @property float avgMostCommonReconAcquisitionTypeTime;
- @property float avgThreeChokeholdTime;
- @property float avgFourChokeholdTime;
+ @property NSString *reconAcquisitionTypes; //A list of all of the recon acquisition types that they have ever done, in a string. Why not a RLM Array? Low Priority.
  */
+
+
 
 -(void)updateCalculatedData
 {
@@ -481,8 +504,22 @@
     {
         if (t.calculatedData == nil)
         {
-            CalculatedTeamData *ctd = [[CalculatedTeamData alloc] init];
-            t.calculatedData = ctd;
+            for (RLMProperty *p in t.calculatedData.objectSchema.properties)
+            {
+                t.calculatedData[p.name] = [p defaultValue];
+            }
+            //CalculatedTeamData *ctd = [[CalculatedTeamData alloc] init];
+            //t.calculatedData = ctd;
+        }
+        if (t.uploadedData == nil)
+        {
+            for (RLMProperty *p in t.uploadedData.objectSchema.properties)
+            {
+                t.uploadedData[p.name] = [p defaultValue];
+            }
+
+            //UploadedTeamData *ud = [[UploadedTeamData alloc] init];
+            //t.uploadedData = ud;
         }
         CalculatedTeamData *cd = t.calculatedData;
         
@@ -517,8 +554,8 @@
         
         cd.avgNumMaxHeightStacks = [self avgNumMaxHeightStackesForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
         
-        cd.avgAgility = [self avgDriverAbilityOfTeam:t];
-        cd.driverAbility = [self avgDriverAbilityOfTeam:t];
+        cd.avgAgility = [self avgDriverAbilityForTeam:t];
+        cd.driverAbility = [self avgDriverAbilityForTeam:t];
         
         //Choose which one based on data
         //cd.avgStackPlacing = [self stackingAbilityTeamNew:t];
@@ -542,8 +579,14 @@
         
         //cd.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
         cd.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
+        
+        cd.predictedSeed = [self predictedTeleopScoreForTeam:t];
+        
+        cd.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
+        cd.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
+        
     }
-    
+    //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
     [[RLMRealm defaultRealm] commitWriteTransaction];
 }
 
@@ -620,7 +663,7 @@
     NSArray *alliance = @[team10000, team10001, team10002];
     
     NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10000]);
-    NSLog(@"Agility: %f", [self avgDriverAbilityOfTeam:team10000]);
+    NSLog(@"Agility: %f", [self avgDriverAbilityForTeam:team10000]);
     NSLog(@"Predicted Auto Score: %f", [self predictedAutoScoreForAlliance:alliance]);
     NSLog(@"Predicted Teleop Score: %f", [self predictedTeleopScoreForAlliance:alliance]);
 
