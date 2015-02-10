@@ -125,6 +125,26 @@
     }];
 }
 
+
+
+-(float)predictedAutoScoreForTeam:(Team *)team
+{
+    float stackedToteSet = 20*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked" withSpecificValue:3];
+    float containerSet = 0.0;
+    for (TeamInMatchData *TIMD in team.matchData)
+    {
+        if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
+    }
+    containerSet = 8 * containerSet / team.matchData.count; //before it was the number of times they moved more than three, now its the points
+    
+    float robotSet = team.calculatedData.isRobotMoveIntoAutoZonePercentage * 4;
+    
+    float toteSet = team.calculatedData.avgNumTotesMoveIntoAutoZone * 6;
+    
+    return stackedToteSet + containerSet + robotSet + toteSet;
+    
+}
+
 -(float)predictedTeleopScoreForTeam:(Team *)team
 {
     float avgTotesScore = 2*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"];
@@ -157,6 +177,11 @@
         predictedCOOP += [self predictedCOOPScoreForTeam:t];
     }
     return predictedCOOP;
+}
+
+-(float)predictedQualScoreForTeam:(Team *)team
+{
+    return [self predictedTeleopScoreForTeam:team] + [self predictedCOOPScoreForTeam:team] + [self predictedAutoScoreForTeam:team];
 }
 
 -(float)predictedQualScoreForAlliance:(NSArray *)alliance
@@ -476,16 +501,41 @@
     }];
 }
 
--(NSInteger *)totalScoreForTeam:(Team *)team
+-(NSInteger)totalScoreForTeam:(Team *)team
 {
+   
+    NSInteger totalScore = 0;
+    totalScore = 45;
+    for (TeamInMatchData *TIMD in team.matchData)
+    {
+        Match *m = TIMD.match;
+        for (Team *t in m.blueTeams) {
+            if (t == team) {
+                totalScore = totalScore + m.officialBlueScore;
+            }
+        }
+        for (Team *t in m.redTeams)
+        {
+            if (t == team)
+                totalScore = totalScore + m.officialRedScore;
+        }
+    }
+    
     //get the sum of the official Scores for the previous matches
-    return 0;
+    return totalScore;
 }
 
--(NSInteger *)predictedSeedForTeam:(Team *)team
+-(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
+{
+    NSInteger matchesPlayed = 0;
+    for (TeamInMatchData *TIMD in team.matchData) if (TIMD.match.officialBlueScore > 0 && TIMD.match.officialRedScore > 0) matchesPlayed = matchesPlayed + 1;
+    return team.matchData.count - matchesPlayed;
+}
+
+-(NSInteger)predictedTotalScoreForTeam:(Team *)team
 {
     //Get the totalScore, and add that to the sum of the predicted scores for future matches.
-    return 0;
+    return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self predictedQualScoreForTeam:team]);
 }
 
 /*
@@ -501,8 +551,10 @@
     RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
     
     [[RLMRealm defaultRealm] beginWriteTransaction];
+    
     for (Team *t in allTeams)
     {
+        /*
         if (t.calculatedData == nil)
         {
             CalculatedTeamData *ctd = [[CalculatedTeamData alloc] init];
@@ -524,6 +576,9 @@
             }
 
             //t.uploadedData = ud;
+        }*/
+        if (t.number == 10000) {
+        //
         }
         CalculatedTeamData *cd = t.calculatedData;
         
@@ -566,6 +621,9 @@
         //cd.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
 
         cd.reliability = [self reliabilityOfTeam:t];
+        
+        cd.totalScore = [self totalScoreForTeam:t];
+        cd.predictedTotalScore = [self predictedTotalScoreForTeam:t];
         
         cd.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
             NSArray  *ras = TIMD.uploadedData.reconAcquisitions;
@@ -671,15 +729,7 @@
 
     NSArray *alliance = @[team10000, team10001, team10002];
     
-    NSLog(@"Reliability: %f", [self reliabilityOfTeam:team10000]);
-    NSLog(@"Agility: %f", [self avgDriverAbilityForTeam:team10000]);
-    NSLog(@"Predicted Auto Score: %f", [self predictedAutoScoreForAlliance:alliance]);
-    NSLog(@"Predicted Teleop Score: %f", [self predictedTeleopScoreForAlliance:alliance]);
-
-    NSLog(@"Recon Ability: %f", [self reconAbilityForTeam:team10002]);
-    NSLog(@"Stacking ability new: %f", [self stackingAbilityTeamNew:team10001]);
-    NSLog(@"Stacking ability origional: %f", [self stackingAbilityOfTeamOrigional:team10001]);
-    NSLog(@"AverageTotes: %f", team10001.calculatedData.avgNumTotesStacked);
+    NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
 
 }
 
