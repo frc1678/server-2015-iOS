@@ -214,7 +214,7 @@
 
 
 // Finds stacking ability = sum of 3 stacking subscores with arbitrary coefficients
-- (float)stackingAbilityOfTeamOrigional:(Team *)team
+/*- (float)stackingAbilityOfTeamOrigional:(Team *)team
 {
     float part1 = [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
         return teamInMatchData.uploadedData.stackPlacing
@@ -223,7 +223,7 @@
     float part2 = STACKING_ABILITY_CONSTANT_AVG_HEIGHT * team.calculatedData.avgMaxReconHeight; // this doesn't actually exist... yet... to be continued...
 
     return part1 + part2;
-}
+}*/
 
 
 - (float)stackingAbilityTeamNew:(Team *)team
@@ -505,18 +505,17 @@
 {
    
     NSInteger totalScore = 0;
-    totalScore = 45;
     for (TeamInMatchData *TIMD in team.matchData)
     {
         Match *m = TIMD.match;
         for (Team *t in m.blueTeams) {
-            if (t == team) {
+            if (t.number == team.number) {
                 totalScore = totalScore + m.officialBlueScore;
             }
         }
         for (Team *t in m.redTeams)
         {
-            if (t == team)
+            if (t.number == team.number)
                 totalScore = totalScore + m.officialRedScore;
         }
     }
@@ -538,6 +537,23 @@
     return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self predictedQualScoreForTeam:team]);
 }
 
+-(float)firstPickAbilityForTeam:(Team *)team
+{
+    return (20*team.calculatedData.isStackedToteSetPercentage) + team.calculatedData.stackingAbility;
+}
+
+#define SECOND_PICK_ABILITY_CONSTANT 1
+-(float)secondPickAbilityForTeam:(Team *)team
+{
+    RLMResults *team1678Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"1678"]];
+    Team *team1678 = (Team *)[team1678Query firstObject];
+    float ourAvgMaxFieldReconHeight = team1678.calculatedData.avgMaxReconHeight;
+
+    return 4 * team.calculatedData.isRobotMoveIntoAutoZonePercentage +
+    20 * SECOND_PICK_ABILITY_CONSTANT * team.calculatedData.isStackedToteSetPercentage +
+    6 * team.calculatedData.avgNumTotesPickedUpFromGround -
+    6 * (ourAvgMaxFieldReconHeight + 1) * (team.calculatedData.avgNumStacksDamaged);
+}
 /*
  @property float firstPickAbility;
  @property float secondPickAbility;
@@ -597,10 +613,10 @@
         cd.avgNumReconLevels = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconLevels"];
         cd.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
         
-        cd.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"] * 100;
+        cd.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
         
-        cd.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"] * 100;
-        cd.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"] * 100;
+        cd.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
+        cd.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
         cd.reliability = 100 - cd.incapacitatedPercentage - cd.disabledPercentage;
         
         cd.avgAgility = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.agility"];
@@ -643,6 +659,8 @@
         cd.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
         
         cd.predictedSeed = [self predictedTeleopScoreForTeam:t];
+        cd.firstPickAbility = [self firstPickAbilityForTeam:t];
+        cd.secondPickAbility = [self secondPickAbilityForTeam:t];
         
         cd.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
         cd.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];

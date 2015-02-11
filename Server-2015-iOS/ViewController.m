@@ -35,7 +35,7 @@
 
 
 
-- (void) makeSmallTestingDB {
+- (void) makeSmallTestingDB { //Should this also create the calculated data for the teams?
     RLMRealm *realm = [RLMRealm defaultRealm];
     
     [realm beginWriteTransaction];
