@@ -542,7 +542,7 @@
     return (20*team.calculatedData.isStackedToteSetPercentage) + team.calculatedData.stackingAbility;
 }
 
-#define SECOND_PICK_ABILITY_CONSTANT 1
+#define SECOND_PICK_ABILITY_CONSTANT 0
 -(float)secondPickAbilityForTeam:(Team *)team
 {
     RLMResults *team1678Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"1678"]];
