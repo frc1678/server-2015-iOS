@@ -11,6 +11,8 @@
 @interface ViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UITextView *logTextView;
+-(void)logText:(NSString *)text;
+
 
 @end
 

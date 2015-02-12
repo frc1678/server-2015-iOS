@@ -29,7 +29,11 @@
     return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
+    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    dispatch_async(backgroundQueue, ^{
+
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
+    });
 }
 
 
@@ -211,7 +215,7 @@
 
 -(void)logText:(NSString *)text
 {
-    NSString *logString = [self.logTextView.text stringByAppendingFormat:@"\n%@", text];
+    NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
     self.logTextView.text = logString;
 }
 

@@ -20,11 +20,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445409395.747034"
+            timestampString = "445414846.962057"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "689"
-            endingLineNumber = "689"
+            startingLineNumber = "621"
+            endingLineNumber = "621"
             landmarkName = "-updateCalculatedData"
             landmarkType = "5">
          </BreakpointContent>
@@ -36,11 +36,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445405642.39503"
+            timestampString = "445414846.962057"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "492"
-            endingLineNumber = "492"
+            startingLineNumber = "493"
+            endingLineNumber = "493"
             landmarkName = "-predictedAutoScoreForAlliance:"
             landmarkType = "5">
          </BreakpointContent>
@@ -52,11 +52,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445409395.747034"
+            timestampString = "445414846.962057"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "695"
-            endingLineNumber = "695"
+            startingLineNumber = "689"
+            endingLineNumber = "689"
             landmarkName = "-updateCalculatedData"
             landmarkType = "5">
          </BreakpointContent>
@@ -68,11 +68,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "445407748.777973"
+            timestampString = "445413504.704012"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "203"
-            endingLineNumber = "203"
+            startingLineNumber = "207"
+            endingLineNumber = "207"
             landmarkName = "-reCalculate:"
             landmarkType = "5">
          </BreakpointContent>
@@ -84,11 +84,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "445407748.777973"
+            timestampString = "445413504.704012"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "186"
-            endingLineNumber = "186"
+            startingLineNumber = "190"
+            endingLineNumber = "190"
             landmarkName = "-startDatabaseOperations"
             landmarkType = "5">
          </BreakpointContent>
@@ -100,12 +100,28 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "445407767.773606"
+            timestampString = "445413504.704012"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "129"
-            endingLineNumber = "129"
+            startingLineNumber = "133"
+            endingLineNumber = "133"
             landmarkName = "-viewDidAppear:"
+            landmarkType = "5">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Server-2015-iOS/ServerMath.m"
+            timestampString = "445414846.962057"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "618"
+            endingLineNumber = "618"
+            landmarkName = "-updateCalculatedData"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -115,13 +131,13 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445409479.975678"
+            filePath = "Server-2015-iOS/ViewController.m"
+            timestampString = "445414996.474226"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "619"
-            endingLineNumber = "619"
-            landmarkName = "-updateCalculatedData"
+            startingLineNumber = "218"
+            endingLineNumber = "218"
+            landmarkName = "-logText:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
