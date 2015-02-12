@@ -580,10 +580,9 @@
 
 
 
--(void)updateCalculatedData
+-(void)updateCalculatedTeamData
 {
     RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
-    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
 
     
     
@@ -676,11 +675,14 @@
         t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
         
         [[RLMRealm defaultRealm] commitWriteTransaction];
-        ViewController *vc = [[ViewController alloc] init];
-        [vc logText:@"Test"];
         NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
         //Update UI
     }
+}
+-(void)updateCalculatedMatchData
+{
+    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
+
     for (Match *m in allMatches)
     {
         [[RLMRealm defaultRealm] beginWriteTransaction];
@@ -769,12 +771,6 @@
                                     @"4rs, 2rf+2t, 0":@14,
                                     @"4rs, 0, 0":@8
                                     };
-    
-    //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    //dispatch_async(backgroundQueue, ^{
-        [self updateCalculatedData];
-
-    //});
 
 
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];

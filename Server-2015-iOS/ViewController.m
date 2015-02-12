@@ -200,6 +200,10 @@
     @try {
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
+        [self logText:@"Beginning Team Calculations"];
+        [math updateCalculatedTeamData];
+        [self logText:@"Beginning Match Calculations"];
+        [math updateCalculatedMatchData];
         [self logText:@"Recalculated."];
 
     }
