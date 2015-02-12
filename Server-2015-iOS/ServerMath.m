@@ -21,6 +21,14 @@
 
 
 // O(n)
+/**
+ *  General Maximization function
+ *
+ *  @param xs the things to iterate threw that you are maxmizing over
+ *  @param f  the closure parameter, what to do with each x.
+ *
+ *  @return the maximim
+ */
 - (float)maximize:(NSArray *)xs function:(float(^)(id val))f {
     float max = -FLT_MAX;
     for (id x in xs) {
@@ -110,6 +118,7 @@
     }];
 }
 
+#warning This is terrible. Make it better
 -(float)predictedCOOPScoreForTeam:(Team *)team
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
@@ -164,7 +173,7 @@
     return predictedTeleop;
 }
 
--(float)predictedElimScoreForAlliance:(NSArray *)alliance
+-(float)predictedElimScoreForAlliance:(NSArray *)alliance //Probably wont ever use this one.
 {
     return [self predictedTeleopScoreForAlliance:alliance] + [self predictedAutoScoreForAlliance:alliance];
 }
@@ -489,6 +498,13 @@
     }];
 }
 
+-(NSString *)bestAutoStrategyForAlliance:(NSArray *)alliance
+{
+    return [self findMaximumObject:[self.coopActionDictionary allKeys] function:^float(id val) {
+        return [self lambda:alliance forCoopConditionString:val];
+    }];
+}
+
 - (float)avgAcquisitionTimeForNumRecons:(int)num forTeam:(Team *)team
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
@@ -537,6 +553,7 @@
     return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self predictedQualScoreForTeam:team]);
 }
 
+
 -(float)firstPickAbilityForTeam:(Team *)team
 {
     return (20*team.calculatedData.isStackedToteSetPercentage) + team.calculatedData.stackingAbility;
@@ -565,6 +582,8 @@
 -(void)updateCalculatedData
 {
     RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
+    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
+
     
     [[RLMRealm defaultRealm] beginWriteTransaction];
     
@@ -597,74 +616,97 @@
         //
         }
         CalculatedTeamData *cd = t.calculatedData;
-        
-        cd.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
-        cd.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
-        cd.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
-        cd.avgNumStacksDamaged = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numStacksDamaged"];
-        cd.avgNumTotesMoveIntoAutoZone = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesMovedIntoAutoZone"];
-        
-        cd.avgNumNoodlesContributed = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
-        cd.avgNumLitterThrownToOtherSide = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterThrownToOtherSide"];
-        cd.avgNumLitterDropped = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
-        
-        cd.avgNumReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsPickedUp"];
-        cd.avgNumReconsStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsStacked"];
-        cd.avgNumReconLevels = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconLevels"];
-        cd.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
-        
-        cd.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
-        
-        cd.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
-        cd.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
-        cd.reliability = 100 - cd.incapacitatedPercentage - cd.disabledPercentage;
-        
-        cd.avgAgility = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.agility"];
-        
-        cd.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
-        cd.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
-        cd.reconAbility = [self reconAbilityForTeam:t];
-        cd.reconReliability = [self reconReliabilityForTeam:t];
-        cd.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
-        
-        cd.avgNumMaxHeightStacks = [self avgNumMaxHeightStackesForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
-        
-        cd.avgAgility = [self avgDriverAbilityForTeam:t];
-        cd.driverAbility = [self avgDriverAbilityForTeam:t];
-        
-        //Choose which one based on data
-        //cd.avgStackPlacing = [self stackingAbilityTeamNew:t];
-        //cd.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
+        //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+        //dispatch_async(backgroundQueue, ^{
+            cd.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
+            cd.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
+            cd.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
+            cd.avgNumStacksDamaged = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numStacksDamaged"];
+            cd.avgNumTotesMoveIntoAutoZone = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesMovedIntoAutoZone"];
+            
+            cd.avgNumNoodlesContributed = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+            cd.avgNumLitterThrownToOtherSide = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterThrownToOtherSide"];
+            cd.avgNumLitterDropped = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
+            
+            cd.avgNumReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsPickedUp"];
+            cd.avgNumReconsStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsStacked"];
+            cd.avgNumReconLevels = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconLevels"];
+            cd.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
+            
+            cd.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
+            
+            cd.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
+            cd.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
+            cd.reliability = 100 - cd.incapacitatedPercentage - cd.disabledPercentage;
+            
+            cd.avgAgility = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.agility"];
+            
+            cd.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
+            cd.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+            cd.reconAbility = [self reconAbilityForTeam:t];
+            cd.reconReliability = [self reconReliabilityForTeam:t];
+            cd.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
+            
+            cd.avgNumMaxHeightStacks = [self avgNumMaxHeightStackesForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
+            
+            cd.avgAgility = [self avgDriverAbilityForTeam:t];
+            cd.driverAbility = [self avgDriverAbilityForTeam:t];
+            
+            //Choose which one based on data
+            //cd.avgStackPlacing = [self stackingAbilityTeamNew:t];
+            //cd.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
+            
+            cd.reliability = [self reliabilityOfTeam:t];
+            
+            cd.totalScore = [self totalScoreForTeam:t];
+            cd.predictedTotalScore = [self predictedTotalScoreForTeam:t];
+            
+            cd.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+                NSArray  *ras = TIMD.uploadedData.reconAcquisitions;
+                float totalTime = 0.0;
+                for (ReconAcquisition *ra in ras)
+                {
+                    totalTime += ra.time;
+                }
+                return totalTime/ras.count;
+            }];
+            
+            cd.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
+            
+            cd.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
+            
+            //cd.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
+            cd.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
+            
+            cd.predictedSeed = [self predictedTeleopScoreForTeam:t];
+            cd.firstPickAbility = [self firstPickAbilityForTeam:t];
+            cd.secondPickAbility = [self secondPickAbilityForTeam:t];
+            
+            cd.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
+            cd.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
 
-        cd.reliability = [self reliabilityOfTeam:t];
+        //});
         
-        cd.totalScore = [self totalScoreForTeam:t];
-        cd.predictedTotalScore = [self predictedTotalScoreForTeam:t];
-        
-        cd.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-            NSArray  *ras = TIMD.uploadedData.reconAcquisitions;
-            float totalTime = 0.0;
-            for (ReconAcquisition *ra in ras)
-            {
-                totalTime += ra.time;
-            }
-            return totalTime/ras.count;
-        }];
-        
-        cd.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
-        
-        cd.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
-        
-        //cd.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
-        cd.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
-        
-        cd.predictedSeed = [self predictedTeleopScoreForTeam:t];
-        cd.firstPickAbility = [self firstPickAbilityForTeam:t];
-        cd.secondPickAbility = [self secondPickAbilityForTeam:t];
-        
-        cd.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
-        cd.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
-        
+    }
+    for (Match *m in allMatches)
+    {
+        NSMutableArray *b = [[NSMutableArray alloc] init];
+        NSMutableArray *r = [[NSMutableArray alloc] init];
+        for (Team *t in m.blueTeams)
+        {
+            [b addObject:t];
+        }
+        for (Team *t in m.redTeams)
+        {
+            [r addObject:t];
+        }
+
+        NSArray *redAlliance = [[NSArray alloc] initWithArray:r];
+        NSArray *blueAlliance = [[NSArray alloc] initWithArray:b];
+        m.calculatedData.predictedRedScore = [self predictedQualScoreForAlliance:(NSArray *)redAlliance];
+        m.calculatedData.predictedBlueScore = [self predictedQualScoreForAlliance:(NSArray *)blueAlliance];
+        m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
+        m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
     }
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
     [[RLMRealm defaultRealm] commitWriteTransaction];
@@ -730,11 +772,11 @@
                                     @"4rs, 0, 0":@8
                                     };
     
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    dispatch_async(backgroundQueue, ^{
+    //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    //dispatch_async(backgroundQueue, ^{
         [self updateCalculatedData];
 
-    });
+    //});
 
 
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];

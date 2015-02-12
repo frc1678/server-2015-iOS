@@ -280,9 +280,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSError *error = nil;
     dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    dispatch_async(backgroundQueue, ^{
+    //dispatch_async(backgroundQueue, ^{
         self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
-    });
+    //});
         if (error) {
         NSLog(@"%@",error);
     }
@@ -407,19 +407,19 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSLog(@"%@",error);
         }
     }
-    dispatch_async(backgroundQueue, ^{
+    //dispatch_async(backgroundQueue, ^{
         [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
-    });
+    //});
 
 }
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
 
-    dispatch_async(backgroundQueue, ^{
+    //dispatch_async(backgroundQueue, ^{
     ServerMath *calculator = [[ServerMath alloc] init];
     [calculator beginMath];
-    });
+    //});
 }
 
 @end
