@@ -196,15 +196,29 @@
     }
 }
 
-- (IBAction)reCalculate:(id)sender {
+- (IBAction)reCalculateTeams:(id)sender {
     @try {
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
-        [self logText:@"Beginning Team Calculations"];
         [math updateCalculatedTeamData];
-        [self logText:@"Beginning Match Calculations"];
+        [self logText:@"Completed Team Calculations"];
+
+    }
+    @catch (DBException *exception) {
+        if (exception.name == DBExceptionName)
+        {
+            [self logText:@"Dropbox Exception Thrown"];
+            NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", exception.reason, exception.userInfo];
+            [self logText:logText];
+        }
+    }
+}
+- (IBAction)reCalculateMatches:(id)sender { // If necisary we can split this into the calculation of predicted scores and predicted strategies in two buttons
+    @try {
+        ServerMath *math = [[ServerMath alloc] init];
+        [math beginMath];
         [math updateCalculatedMatchData];
-        [self logText:@"Recalculated."];
+        [self logText:@"Completed Match Calculations"];
 
     }
     @catch (DBException *exception) {

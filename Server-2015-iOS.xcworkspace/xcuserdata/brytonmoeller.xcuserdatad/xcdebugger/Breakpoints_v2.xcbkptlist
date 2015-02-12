@@ -6,7 +6,7 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             scope = "0"
@@ -68,12 +68,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "445418168.96351"
+            timestampString = "445419842.675705"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "214"
-            endingLineNumber = "214"
-            landmarkName = "-reCalculate:"
+            startingLineNumber = "208"
+            endingLineNumber = "208"
+            landmarkName = "-reCalculateTeams:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -122,22 +122,6 @@
             startingLineNumber = "617"
             endingLineNumber = "617"
             landmarkName = "-updateCalculatedTeamData"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Server-2015-iOS/ViewController.m"
-            timestampString = "445418168.96351"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "227"
-            endingLineNumber = "227"
-            landmarkName = "-logText:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
