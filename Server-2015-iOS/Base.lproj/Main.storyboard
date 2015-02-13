@@ -43,61 +43,44 @@
                                     <action selector="restart:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="IgC-41-DuN"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQp-B2-Bpg">
-                                <rect key="frame" x="16" y="198" width="568" height="87"/>
-                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="87" id="g5o-O5-c1e"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="21"/>
-                                <state key="normal" title="Recalculate Teams">
-                                    <color key="titleColor" red="1" green="0.91993472600000004" blue="0.071786769129999997" alpha="1" colorSpace="calibratedRGB"/>
-                                </state>
-                                <connections>
-                                    <action selector="reCalculateTeams:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="CC5-cR-Ivf"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TEO-nH-ILT">
-                                <rect key="frame" x="16" y="110" width="568" height="80"/>
-                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="80" id="xCR-T7-PJ4"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="21"/>
-                                <state key="normal" title="Recalculate Matches">
-                                    <color key="titleColor" red="1" green="0.91993472600000004" blue="0.071786769129999997" alpha="1" colorSpace="calibratedRGB"/>
-                                </state>
-                                <connections>
-                                    <action selector="reCalculateMatches:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="yrN-d3-Ggf"/>
-                                </connections>
-                            </button>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
-                                <rect key="frame" x="16" y="293" width="568" height="287"/>
+                                <rect key="frame" x="16" y="205" width="568" height="375"/>
                                 <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                 <color key="textColor" red="0.24871494523959703" green="0.77777563909664937" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardAppearance="alert"/>
                             </textView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQp-B2-Bpg">
+                                <rect key="frame" x="16" y="110" width="568" height="87"/>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="87" id="g5o-O5-c1e"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="21"/>
+                                <state key="normal" title="Recalculate">
+                                    <color key="titleColor" red="1" green="0.91993472600000004" blue="0.071786769129999997" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="Recalculate:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="rAz-ak-Fdr"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="height" secondItem="cQp-B2-Bpg" secondAttribute="height" id="54q-xx-OWF"/>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="TEO-nH-ILT" secondAttribute="leading" id="CUY-yg-C8Y"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" id="Doc-fm-bLG"/>
-                            <constraint firstItem="TEO-nH-ILT" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="8" symbolic="YES" id="Drf-eh-akt"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="baseline" secondItem="Ddx-fh-c7f" secondAttribute="firstBaseline" id="F7A-XX-nn4"/>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="top" secondItem="TEO-nH-ILT" secondAttribute="bottom" constant="8" symbolic="YES" id="HN9-YA-oYV"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="KF1-bi-OsU"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="6hl-yu-Gps" secondAttribute="leading" id="Mog-4d-ZmE"/>
-                            <constraint firstItem="TEO-nH-ILT" firstAttribute="trailing" secondItem="Ddx-fh-c7f" secondAttribute="trailing" id="RDY-z4-zkU"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="NHG-Zj-FuL"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="8" id="PoO-Fy-l9W"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="Rqv-GO-dTO"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="Rve-gk-XHx"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="6hl-yu-Gps" secondAttribute="trailing" id="Ss9-XY-pr0"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="width" secondItem="Ddx-fh-c7f" secondAttribute="width" id="UgH-68-GTf"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" symbolic="YES" id="dSW-QQ-Xuf"/>
                             <constraint firstItem="6hl-yu-Gps" firstAttribute="top" secondItem="cQp-B2-Bpg" secondAttribute="bottom" constant="8" symbolic="YES" id="fyq-tw-h8f"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" symbolic="YES" id="hIl-ZJ-IWW"/>
-                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="TEO-nH-ILT" secondAttribute="leading" id="lhl-az-F4M"/>
-                            <constraint firstItem="TEO-nH-ILT" firstAttribute="trailing" secondItem="cQp-B2-Bpg" secondAttribute="trailing" id="raF-aB-kBn"/>
                             <constraint firstAttribute="bottom" secondItem="6hl-yu-Gps" secondAttribute="bottom" constant="20" symbolic="YES" id="xYk-jx-Tw9"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="baseline" secondItem="cQp-B2-Bpg" secondAttribute="firstBaseline" id="xvv-IY-105"/>
                         </constraints>

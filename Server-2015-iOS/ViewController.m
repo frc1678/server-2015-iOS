@@ -29,11 +29,8 @@
     return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    dispatch_async(backgroundQueue, ^{
-
+    
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-    });
 }
 
 
@@ -112,42 +109,55 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    @try {
-        self.logTextView.text = @"Hello, I'm the Citrus Server!";
-        [super viewDidAppear:animated];
-        //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-        //dispatch_async(backgroundQueue, ^{
+    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
+    dispatch_async(backgroundQueue, ^{
+        @try {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.logTextView.text = @"Hello, I'm the Citrus Server!";
+                [super viewDidAppear:animated];
+            });
             
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-        //});
-        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-        [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-        //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), backgroundQueue, ^{
+            //dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+            //dispatch_async(backgroundQueue, ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+            });
+            
+            //});
+            //[RLMRealm setDefaultRealmPath:@"realm.realm"];
+            [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
+            //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), backgroundQueue, ^{
             NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
             [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
             
-        //});
-    }
-    @catch (DBException *Exc) {
-        if (Exc.name == DBExceptionName)
-        {
-            [self logText:@"Dropbox Exception Thrown"];
-            NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", Exc.reason, Exc.userInfo];
-            [self logText:logText];
+            //});
         }
-    }
+        @catch (DBException *Exc) {
+            if (Exc.name == DBExceptionName)
+            {
+                [self logText:@"Dropbox Exception Thrown"];
+                NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", Exc.reason, Exc.userInfo];
+                [self logText:logText];
+            }
+        }
+    });
+    
     
     
     }
 - (IBAction)restart:(id)sender {
-    [self startDatabaseOperations];
-    [self logText:@"Restarted."];
-
+    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
+    dispatch_async(backgroundQueue, ^{
+        [self startDatabaseOperations];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self logText:@"Restarting."];
+        });
+    });
 }
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
-    
+    realm = [RLMRealm defaultRealm];
     RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
     NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
     //[ar addObject:@"hi"];
@@ -175,6 +185,8 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
+    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
+    dispatch_async(backgroundQueue, ^{
     @try {
         [self logText:@"Starting Database Operations"];
         [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
@@ -194,31 +206,15 @@
             [self logText:logText];
         }
     }
+    });
 }
 
-- (IBAction)reCalculateTeams:(id)sender {
+
+- (IBAction)Recalculate:(id)sender { // If necisary we can split this into the calculation of predicted scores and predicted strategies in two buttons
     @try {
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
-        [math updateCalculatedTeamData];
-        [self logText:@"Completed Team Calculations"];
-
-    }
-    @catch (DBException *exception) {
-        if (exception.name == DBExceptionName)
-        {
-            [self logText:@"Dropbox Exception Thrown"];
-            NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", exception.reason, exception.userInfo];
-            [self logText:logText];
-        }
-    }
-}
-- (IBAction)reCalculateMatches:(id)sender { // If necisary we can split this into the calculation of predicted scores and predicted strategies in two buttons
-    @try {
-        ServerMath *math = [[ServerMath alloc] init];
-        [math beginMath];
-        [math updateCalculatedMatchData];
-        [self logText:@"Completed Match Calculations"];
+        [self logText:@"Recalculating."];
 
     }
     @catch (DBException *exception) {
@@ -233,8 +229,10 @@
 
 -(void)logText:(NSString *)text
 {
-    NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
-    self.logTextView.text = logString;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
+        self.logTextView.text = logString;
+    });
 }
 
 @end

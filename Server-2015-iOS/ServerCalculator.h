@@ -17,6 +17,7 @@
 
 
 -(void)beginCalculations;
+-(void)timerFired;
 
 @end
 

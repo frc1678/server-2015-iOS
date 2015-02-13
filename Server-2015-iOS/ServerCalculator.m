@@ -100,18 +100,20 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  */
 -(void)beginCalculations
 {
-    
-    NSLog(@"Calcs");
-    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
-    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
-        
-        [self.timer invalidate];
-        self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
-        
-        
-        //Start 10 sec timer.
-        NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
-    }];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"Calcs");
+        //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
+        [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
+            
+            [self.timer invalidate];
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+            
+            
+            //Start 10 sec timer.
+            NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
+        }];
+    });
+    [self timerFired:self.timer];
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
@@ -138,11 +140,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     RLMRealm *realm = [RLMRealm defaultRealm];
     [self mergeChangePacketsIntoRealm:realm];
 
-    [realm beginWriteTransaction];
     
     [self recalculateValuesInRealm:realm];
     
-    [realm commitWriteTransaction];
     
 }
 /*
@@ -279,7 +279,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     NSError *error = nil;
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
+    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
     //dispatch_async(backgroundQueue, ^{
         self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
     //});
@@ -369,7 +369,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [realm commitWriteTransaction];
                     //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                 } @catch (NSException *e) {
-                    if ([[e name] isEqualToString:NSUndefinedKeyException]) {
+                    if ([[e name] isEqual:NSUndefinedKeyException]) {
                         //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
                         NSLog(@"One of the keys in File: %@, Object: %@, keyPath: %@ doesnt exist.", fileInfo.path.name, [objectToModify valueForKey:@"number"], keyPath);
                     } else {
