@@ -244,7 +244,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 newObject = object[head];
             }
             @catch (NSException *exception) {
-                NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+                NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
                 return;
             }
             
@@ -271,7 +271,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             object[head] = value;
         }
         @catch (NSException *exception) {
-            NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+            NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
         }
     }
 }

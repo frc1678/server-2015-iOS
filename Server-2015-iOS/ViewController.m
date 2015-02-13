@@ -131,6 +131,9 @@
             NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
             [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
             
+            unsigned long long maxFileCasheSize = [DBFilesystem sharedFilesystem].maxFileCacheSize;
+            [DBFilesystem sharedFilesystem].maxFileCacheSize = 0.0;
+            [DBFilesystem sharedFilesystem].maxFileCacheSize = maxFileCasheSize;
             //});
         }
         @catch (DBException *Exc) {
