@@ -6,7 +6,7 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             scope = "0"
@@ -20,28 +20,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445485344.77379"
+            timestampString = "445636114.742658"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "494"
-            endingLineNumber = "494"
+            startingLineNumber = "495"
+            endingLineNumber = "495"
             landmarkName = "-predictedAutoScoreForAlliance:"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445586540.143207"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "604"
-            endingLineNumber = "604"
-            landmarkName = "-updateCalculatedData"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -67,44 +51,14 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445586540.143207"
+            filePath = "Server-2015-iOS/ServerCalculator.m"
+            timestampString = "445632963.96291"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "619"
-            endingLineNumber = "619"
-            landmarkName = "-updateCalculatedData"
+            startingLineNumber = "296"
+            endingLineNumber = "296"
+            landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[ServerMath updateCalculatedMatchData]"
-                  moduleName = "Server-2015-iOS"
-                  urlString = "file:///Users/brytonmoeller/Desktop/Server-2015-iOS/Server-2015-iOS/ServerMath.m"
-                  timestampString = "445489154.61161"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "711"
-                  endingLineNumber = "711"
-                  offsetFromSymbolStart = "1968">
-               </Location>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[ServerMath updateCalculatedMatchData]"
-                  moduleName = "Server-2015-iOS"
-                  urlString = "file:///Users/brytonmoeller/Desktop/Server-2015-iOS/Server-2015-iOS/ServerMath.m"
-                  timestampString = "445489154.611808"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "711"
-                  endingLineNumber = "711"
-                  offsetFromSymbolStart = "2112">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -113,28 +67,28 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Server-2015-iOS/ServerMath.m"
-            timestampString = "445586540.143207"
+            filePath = "Server-2015-iOS/ServerCalculator.m"
+            timestampString = "445632376.756726"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "592"
-            endingLineNumber = "592"
-            landmarkName = "-updateCalculatedData"
+            startingLineNumber = "260"
+            endingLineNumber = "260"
+            landmarkName = "-setValue:forKeyPath:onRealmObject:onOriginalObject:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Server-2015-iOS/ServerCalculator.m"
-            timestampString = "445630577.811448"
+            timestampString = "445639914.954946"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "288"
-            endingLineNumber = "288"
+            startingLineNumber = "424"
+            endingLineNumber = "424"
             landmarkName = "-mergeChangePacketsIntoRealm:"
             landmarkType = "5">
          </BreakpointContent>

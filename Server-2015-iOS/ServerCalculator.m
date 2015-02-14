@@ -263,6 +263,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 for (RLMProperty *p in [newObject objectSchema].properties) {
                     newObject[p.name] = [p defaultValue];
                 }
+                if ([className  isEqual: @"TeamInMatchData"]) {
+                    [newObject setValue:[[Match alloc] init] forKey:@"match"];
+                    [newObject setValue:original forKey:@"team"];
+                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
+                    CalculatedTeamInMatchData *ctimd = [[CalculatedTeamInMatchData alloc] init];
+                    [newObject setValue:utimd forKey:@"uploadedData"];
+                    [newObject setValue:ctimd forKey:@"calculatedData"];
+                }
                 
                 
                 object[head] = newObject;
@@ -389,17 +397,35 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         } else {
             NSLog(@"Condition %@ not found in database!", filterString);
             //make it so that if the objects dont exist we can create them
-            /*if ([className  isEqual: @"Team"]) {
+            if ([className  isEqual: @"Team"]) {
+                [[RLMRealm defaultRealm] beginWriteTransaction];
                 Team *t = [[Team alloc] init];
                 t.name = @"noName";
                 t.number = [uniqueValue doubleValue];
                 t.seed = 10000;
                 TeamInMatchData *timd = [[TeamInMatchData alloc] init];
                 timd.team = t;
+                [t.matchData addObject:timd];
+                //RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
+                //TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                //[md addObject:timd];
+                CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
+                @try {
+                    [ctimd setValue:@0 forKey:@"predictedSeed"];
+                    [ctimd setValue:@0 forKey:@"totalScore"];
+                    [ctimd setValue:@"" forKey:@"mostCommonReconAcquisitionType"];
+                    [ctimd setValue:@"" forKey:@"reconAcquisitionTypes"];
+                    t.calculatedData = ctimd;
+
+                }
+                @catch (NSException *exception) {
+                    NSLog(@"Excetion creating team: %ld", (long)t.number);
+                }
+                [[RLMRealm defaultRealm] addObject:t];
+                [[RLMRealm defaultRealm] commitWriteTransaction];
+                //[[RLMRealm defaultRealm] addObject:t];
                 
-                t.matchData =
-                
-            }*/
+            }
         }
         //Moving change packet into processedChangePackets directory in DB
         NSString *name = [[NSString alloc] init];
