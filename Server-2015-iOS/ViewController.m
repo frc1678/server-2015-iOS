@@ -85,7 +85,12 @@
         match.match = [NSString stringWithFormat:@"TQ%d", i + 1];
         match.redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
         match.blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
-        
+        CalculatedMatchData *cd = [[CalculatedMatchData alloc] init];
+        cd.bestBlueAutoStrategy = @"";
+        cd.bestRedAutoStrategy = @"";
+        cd.predictedBlueScore = 0;
+        cd.predictedRedScore = 0;
+        match.calculatedData = cd;
         [realm addObject:match];
         
         [match.redTeams addObjects:[alliances objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 3)]]];
@@ -111,9 +116,11 @@
 {
     
         @try {
-                self.logTextView.text = @"Hello, I'm the Citrus Server!";
                 [super viewDidAppear:animated];
-            
+            self.logTextView.scrollsToTop = NO;
+            self.logTextView.text = @"Hello, I'm the Citrus Server!";
+
+
             
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
@@ -222,6 +229,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
         self.logTextView.text = logString;
+        [self.logTextView scrollRectToVisible:CGRectMake(0, 0, self.logTextView.frame.size.width, self.logTextView.frame.size.height * 20) animated:YES];
     });
 }
                        
@@ -236,10 +244,9 @@
     {
         NSString *logString = [[NSString alloc] initWithFormat:@"An Exception Has Been Thrown. \nName: %@\nReason: %@", e.name, e.reason];
         [self logText:logString];
-
     }
-
 }
+
 
 
 
