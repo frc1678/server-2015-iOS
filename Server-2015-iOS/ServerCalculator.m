@@ -114,6 +114,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
     }];
     NSLog(@"Done with begin calcs");
+
     //Download change packets
     //Parse JSON
     //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
@@ -128,6 +129,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 {
     self.timer = nil;
     NSLog(@"Starting new processing!\n");
+    
 
     [self updateWithChangePackets];
 }
@@ -139,13 +141,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 {
     RLMRealm *realm = [RLMRealm defaultRealm];
     [self mergeChangePacketsIntoRealm:realm];
-
-    [realm beginWriteTransaction];
-    
-    [self recalculateValuesInRealm:realm];
-    
-    [realm commitWriteTransaction];
-    
 }
 /*
  1. Value does not change.
@@ -249,7 +244,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 newObject = object[head];
             }
             @catch (NSException *exception) {
-                NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+                NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
                 return;
             }
             
@@ -276,18 +271,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             object[head] = value;
         }
         @catch (NSException *exception) {
-            NSLog(@"Invalid key %@ on object of type: %@", head, [[object objectSchema] className]);
+            NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
         }
     }
 }
 
 
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
-    NSError *error = nil;
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    dispatch_async(backgroundQueue, ^{
+    
+    
         self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
-    });
+    NSError *error = nil;
         if (error) {
         NSLog(@"%@",error);
     }
@@ -374,7 +368,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [realm commitWriteTransaction];
                     //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                 } @catch (NSException *e) {
-                    if ([[e name] isEqualToString:NSUndefinedKeyException]) {
+                    if ([[e name] isEqual:NSUndefinedKeyException]) {
                         //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
                         NSLog(@"One of the keys in File: %@, Object: %@, keyPath: %@ doesnt exist.", fileInfo.path.name, [objectToModify valueForKey:@"number"], keyPath);
                     } else {
@@ -412,19 +406,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSLog(@"%@",error);
         }
     }
-    dispatch_async(backgroundQueue, ^{
         [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
-    });
 
 }
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
 
-    dispatch_async(backgroundQueue, ^{
     ServerMath *calculator = [[ServerMath alloc] init];
     [calculator beginMath];
-    });
 }
 
 @end

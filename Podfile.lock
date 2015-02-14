@@ -24,13 +24,13 @@ CHECKOUT OPTIONS:
     :commit: 0259a70d43567122898d72f8103c9ee6911709a9
     :git: https://github.com/frc1678/CCDropboxRealmSync-iOS
   realm-database-2015:
-    :commit: 3b36d7ec3a936807458ba13681f430f12d61d912
+    :commit: d55c6b28e3d371346d5b4fbd42622c9820e1d90b
     :git: https://github.com/frc1678/realm-database-2015
 
 SPEC CHECKSUMS:
-  CCDropboxRealmSync-iOS: fdfa530aaea8406511d89324d2c4f6a129a2dd1e
+  CCDropboxRealmSync-iOS: 41efe40858f4fb1c16e983cfb044b4aeb0d21578
   Dropbox-Sync-API-SDK: 16aef545267acf60efdbecbfd1fbdf04d3ee5a7c
   Realm: aea25534b97be77995650c2339aa6ed010dfcc8a
-  realm-database-2015: 275004bd0b4685ce29acfbf3fbacc137b08b3bc2
+  realm-database-2015: 79dd9966fdd3bcee0710d48b51551d74ee5ddf1f
 
 COCOAPODS: 0.36.0.beta.1

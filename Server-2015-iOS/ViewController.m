@@ -29,13 +29,14 @@
     return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
+    
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
 
 
 
-- (void) makeSmallTestingDB {
+- (void) makeSmallTestingDB { //Should this also create the calculated data for the teams?
     RLMRealm *realm = [RLMRealm defaultRealm];
     
     [realm beginWriteTransaction];
@@ -108,21 +109,35 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    self.logTextView.text = @"Hello, I'm the Citrus Server!";
-    [super viewDidAppear:animated];
-    dispatch_queue_t backgroundQueue = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, NULL);
-    dispatch_async(backgroundQueue, ^{
+    
+        @try {
+                self.logTextView.text = @"Hello, I'm the Citrus Server!";
+                [super viewDidAppear:animated];
+            
+            
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+            //[RLMRealm setDefaultRealmPath:@"realm.realm"];
+            [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
+            NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
+            [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
+            
+            unsigned long long maxFileCasheSize = [DBFilesystem sharedFilesystem].maxFileCacheSize;
+            [DBFilesystem sharedFilesystem].maxFileCacheSize = 0.0;
+            [DBFilesystem sharedFilesystem].maxFileCacheSize = maxFileCasheSize;
         
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-    });
-        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-        [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), backgroundQueue, ^{
-        NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
-        [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
-
-    });
+        }
+        @catch (DBException *Exc) {
+            if (Exc.name == DBExceptionName)
+            {
+                [self logText:@"Dropbox Exception Thrown"];
+                NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", Exc.reason, Exc.userInfo];
+                [self logText:logText];
+            }
+        }
+  
+    
+    
     
     }
 - (IBAction)restart:(id)sender {
@@ -130,22 +145,30 @@
     
     [self logText:@"Restarting..."];
 
+
 }
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
-    
-    RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
-    NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
-    //[ar addObject:@"hi"];
-    for(Team *t in teamsFromDB) {
-        [ar addObject:t];
-        //NSLog(@"data: %@, t: %@", ar, t);
+    @try {
+        realm = [RLMRealm defaultRealm];
+        RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
+        NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
+        //[ar addObject:@"hi"];
+        for(Team *t in teamsFromDB) {
+            [ar addObject:t];
+            //NSLog(@"data: %@, t: %@", ar, t);
+        }
+        
+        [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
+        
+        NSLog(@"%lu teams!", (unsigned long)ar.count);
+        self.dataFromDropbox = ar;
     }
+    @catch (NSException *exception) {
+        [self logException:exception withMessage:@"Reload Data From Realm caused the exception"];
+    }
+ 
     
-    [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
-    
-    NSLog(@"%lu teams!", (unsigned long)ar.count);
-    self.dataFromDropbox = ar;
 }
 
 
@@ -161,27 +184,61 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
-    [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
-
-    //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
+    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
+    dispatch_async(backgroundQueue, ^{
+        [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
+        
+        //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
+        
+        //[self makeSmallTestingDB];
+        
+        ServerCalculator *calc = [[ServerCalculator alloc] init];
+        [calc beginCalculations];
+    });
     
-    //[self makeSmallTestingDB];
-
-   ServerCalculator *calc = [[ServerCalculator alloc] init];
-    [calc beginCalculations];
 }
 
 
-- (IBAction)reCalculate:(id)sender {
-    ServerMath *math = [[ServerMath alloc] init];
-    [math beginMath];
-    [self logText:@"Recalculating..."];
 
+
+- (IBAction)Recalculate:(id)sender {
+    @try {
+        ServerMath *math = [[ServerMath alloc] init];
+        [math beginMath];
+        [self logText:@"Recalculating."];
+
+    }
+    @catch (DBException *exception) {
+        if (exception.name == DBExceptionName)
+        {
+            [self logText:@"Dropbox Exception Thrown"];
+            NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", exception.reason, exception.userInfo];
+            [self logText:logText];
+        }
+    }
 }
 -(void)logText:(NSString *)text
 {
-    NSString *logString = [self.logTextView.text stringByAppendingFormat:@"\n%@", text];
-    self.logTextView.text = logString;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
+        self.logTextView.text = logString;
+    });
+}
+                       
+-(void)logException:(NSException *)e withMessage:(NSString *)message
+{
+    if (message) {
+        NSString *logString = [[NSString alloc] initWithFormat:@"%@\nName: %@\nReason: %@", message, e.name, e.reason];
+        [self logText:logString];
+
+    }
+    else
+    {
+        NSString *logString = [[NSString alloc] initWithFormat:@"An Exception Has Been Thrown. \nName: %@\nReason: %@", e.name, e.reason];
+        [self logText:logString];
+
+    }
+
 }
 
 

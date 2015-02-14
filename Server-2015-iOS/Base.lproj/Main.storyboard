@@ -20,12 +20,12 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ddx-fh-c7f">
-                                <rect key="frame" x="16" y="28" width="280" height="91"/>
+                                <rect key="frame" x="16" y="20" width="568" height="82"/>
                                 <color key="backgroundColor" red="1" green="0.91993472603237114" blue="0.071786769127427874" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
+                                    <constraint firstAttribute="height" constant="82" id="0lg-ag-et3"/>
                                     <constraint firstAttribute="height" constant="91" id="N1g-f6-Eka"/>
                                     <constraint firstAttribute="width" constant="280" id="fRC-n3-p2x"/>
-                                    <constraint firstAttribute="height" constant="91" id="h0h-O5-cq3"/>
                                     <constraint firstAttribute="width" constant="280" id="o8c-1k-czu"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="21"/>
@@ -43,62 +43,54 @@
                                     <action selector="restart:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="IgC-41-DuN"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQp-B2-Bpg">
-                                <rect key="frame" x="304" y="28" width="280" height="91"/>
-                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="21"/>
-                                <state key="normal" title="Recalculate">
-                                    <color key="titleColor" red="1" green="0.91993472600000004" blue="0.071786769129999997" alpha="1" colorSpace="calibratedRGB"/>
-                                </state>
-                                <connections>
-                                    <action selector="reCalculate:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="M7a-hS-8NM"/>
-                                </connections>
-                            </button>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Citrus Server" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="WRz-kV-m1c">
-                                <rect key="frame" x="16" y="137" width="568" height="113"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="113" id="KMK-Uz-OYf"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="48"/>
-                                <color key="textColor" red="0.35686274509803922" green="0.8901960784313725" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
-                                <rect key="frame" x="16" y="258" width="568" height="322"/>
+                                <rect key="frame" x="16" y="205" width="568" height="375"/>
                                 <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                 <color key="textColor" red="0.24871494523959703" green="0.77777563909664937" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardAppearance="alert"/>
                             </textView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQp-B2-Bpg">
+                                <rect key="frame" x="16" y="110" width="568" height="87"/>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="87" id="g5o-O5-c1e"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="21"/>
+                                <state key="normal" title="Recalculate">
+                                    <color key="titleColor" red="1" green="0.91993472600000004" blue="0.071786769129999997" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="Recalculate:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="rAz-ak-Fdr"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" id="29Q-YG-gLt"/>
-                            <constraint firstItem="6hl-yu-Gps" firstAttribute="leading" secondItem="WRz-kV-m1c" secondAttribute="leading" id="6fq-AW-Nf6"/>
-                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="98Y-Cx-e8z"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="height" secondItem="cQp-B2-Bpg" secondAttribute="height" id="54q-xx-OWF"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" id="Doc-fm-bLG"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="baseline" secondItem="Ddx-fh-c7f" secondAttribute="firstBaseline" id="F7A-XX-nn4"/>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="height" secondItem="Ddx-fh-c7f" secondAttribute="height" id="HcM-1Q-aA1"/>
-                            <constraint firstItem="6hl-yu-Gps" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="ImD-BP-s4r"/>
-                            <constraint firstItem="WRz-kV-m1c" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="P0I-hg-xHb"/>
-                            <constraint firstAttribute="bottom" secondItem="6hl-yu-Gps" secondAttribute="bottom" constant="20" symbolic="YES" id="QyO-CQ-VMK"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="KF1-bi-OsU"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="6hl-yu-Gps" secondAttribute="leading" id="Mog-4d-ZmE"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="NHG-Zj-FuL"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="8" id="PoO-Fy-l9W"/>
+                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="Rqv-GO-dTO"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="Rve-gk-XHx"/>
+                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="6hl-yu-Gps" secondAttribute="trailing" id="Ss9-XY-pr0"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="width" secondItem="Ddx-fh-c7f" secondAttribute="width" id="UgH-68-GTf"/>
-                            <constraint firstItem="WRz-kV-m1c" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="18" id="V72-Un-BnA"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" symbolic="YES" id="dSW-QQ-Xuf"/>
-                            <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="fRo-lr-RvB"/>
+                            <constraint firstItem="6hl-yu-Gps" firstAttribute="top" secondItem="cQp-B2-Bpg" secondAttribute="bottom" constant="8" symbolic="YES" id="fyq-tw-h8f"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" symbolic="YES" id="hIl-ZJ-IWW"/>
-                            <constraint firstItem="6hl-yu-Gps" firstAttribute="top" secondItem="WRz-kV-m1c" secondAttribute="bottom" constant="8" symbolic="YES" id="hXw-nv-Dfg"/>
-                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" id="jSt-4M-u3k"/>
-                            <constraint firstItem="6hl-yu-Gps" firstAttribute="trailing" secondItem="WRz-kV-m1c" secondAttribute="trailing" id="n4q-O5-TeW"/>
-                            <constraint firstItem="6hl-yu-Gps" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="sBo-Sd-HWI"/>
-                            <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="cQp-B2-Bpg" secondAttribute="top" id="xA4-ga-hKA"/>
+                            <constraint firstAttribute="bottom" secondItem="6hl-yu-Gps" secondAttribute="bottom" constant="20" symbolic="YES" id="xYk-jx-Tw9"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="baseline" secondItem="cQp-B2-Bpg" secondAttribute="firstBaseline" id="xvv-IY-105"/>
                         </constraints>
                         <variation key="default">
                             <mask key="constraints">
+                                <exclude reference="54q-xx-OWF"/>
                                 <exclude reference="dSW-QQ-Xuf"/>
                                 <exclude reference="xvv-IY-105"/>
-                                <exclude reference="P0I-hg-xHb"/>
                                 <exclude reference="F7A-XX-nn4"/>
+                                <exclude reference="UgH-68-GTf"/>
                                 <exclude reference="hIl-ZJ-IWW"/>
                             </mask>
                         </variation>
