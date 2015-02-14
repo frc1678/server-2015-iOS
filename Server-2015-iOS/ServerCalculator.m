@@ -213,6 +213,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         {
                             newObject[p.name] = [matchResults firstObject];
                         }
+                        else if (matchResults.count == 0)
+                        {
+                            //create new match object with all necisary datapoints (see creation of test database)
+                            //create team in match data objects for all the teams with necisary datas
+                            //
+                        }
                         else
                         {
                             NSLog(@"Error: %ld matches have the name %@", matchResults.count, head);
@@ -382,6 +388,18 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
         } else {
             NSLog(@"Condition %@ not found in database!", filterString);
+            //make it so that if the objects dont exist we can create them
+            /*if ([className  isEqual: @"Team"]) {
+                Team *t = [[Team alloc] init];
+                t.name = @"noName";
+                t.number = [uniqueValue doubleValue];
+                t.seed = 10000;
+                TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                timd.team = t;
+                
+                t.matchData =
+                
+            }*/
         }
         //Moving change packet into processedChangePackets directory in DB
         NSString *name = [[NSString alloc] init];

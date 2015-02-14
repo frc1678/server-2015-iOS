@@ -756,7 +756,7 @@
     
     
      RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
-     RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10001"]];
+     RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"9999"]];
      RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
      
      Team *team10000 = (Team *)[team10000Query firstObject];
@@ -766,7 +766,9 @@
      //NSArray *alliance = @[team10000, team10001, team10002];
     
     
-    NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
+        NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
+        NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
+
     [self updateCalculatedData];
     });
 }
