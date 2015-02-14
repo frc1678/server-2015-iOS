@@ -101,23 +101,26 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  */
 -(void)beginCalculations
 {
-    NSLog(@"Calcs");
-    
-    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
-    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
+    //dispatch_async(q, ^{
+        NSLog(@"Calcs");
         
-        [self.timer invalidate];
-        self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+        //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
+        [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
+            
+            [self.timer invalidate];
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+            
+            
+            //Start 10 sec timer.
+            NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
+        }];
+        NSLog(@"Done with begin calcs");
         
-        
-        //Start 10 sec timer.
-        NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
-    }];
-    NSLog(@"Done with begin calcs");
-
-    //Download change packets
-    //Parse JSON
-    //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
+        //Download change packets
+        //Parse JSON
+        //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
+   // });
+   
 }
 
 /**
