@@ -11,7 +11,7 @@
 #import <CCDropboxRealmSync-iOS/CCDropboxLinkingAppDelegate.h>
 #import "CCRealmSync.h"
 #import "RealmModels.h"
-#import "ServerCalculator.h"
+#import "ChangePacketGrarRaahraaar.h"
 #import "ServerMath.h"
 
 @interface ViewController ()
@@ -111,7 +111,13 @@
     
 }
 
-
+- (BOOL)connectedToNetwork  {
+    NSURL* url = [[NSURL alloc] initWithString:@"www.dropbox.com/"];
+    NSData* data = [NSData dataWithContentsOfURL:url];
+    if (data != nil)
+        return YES;
+    return NO;
+}
 - (void)viewDidAppear:(BOOL)animated
 {
     
@@ -119,15 +125,17 @@
                 [super viewDidAppear:animated];
             self.logTextView.scrollsToTop = NO;
             self.logTextView.text = @"Hello, I'm the Citrus Server!";
-
-
+            
+            if (![self connectedToNetwork]) {
+                [self logText:@"We cannot reach Dropbox.com"];
+            }
             
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
             //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-            [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
             NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
             [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
+            [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
             
             unsigned long long maxFileCasheSize = [DBFilesystem sharedFilesystem].maxFileCacheSize;
             [DBFilesystem sharedFilesystem].maxFileCacheSize = 0.0;
@@ -190,16 +198,16 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations
 {
-    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
-    dispatch_async(backgroundQueue, ^{
+    //dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
         
         //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
         
         //[self makeSmallTestingDB];
         
-        ServerCalculator *calc = [[ServerCalculator alloc] init];
-        [calc beginCalculations];
+        ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
+        [grar beginCalculations];
     });
     
 }

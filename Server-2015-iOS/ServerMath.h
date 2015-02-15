@@ -11,7 +11,6 @@
 @interface ServerMath : NSObject
 
 -(void)beginMath;
--(void)updateCalculatedTeamData;
 -(void)updateCalculatedMatchData;
 
 @end

@@ -9,12 +9,12 @@
 #import "ServerMath.h"
 #import "RealmModels.h"
 #import "UniqueKey.h"
-#import "ServerCalculator.h"
+#import "ChangePacketGrarRaahraaar.h"
 #import "ViewController.h"
 
 @interface ServerMath ()
 
-@property (nonatomic, weak) NSDictionary *coopActionDictionary;
+@property (nonatomic, strong) NSDictionary *coopActionDictionary;
 @property (nonatomic) BOOL currentlyCalculating;
 
 @end
@@ -321,7 +321,7 @@
 {
     float time = 0.0;
     NSString *mostCommonAcquisition = [self mostCommonAquisitionTypeForTeam:team];
-    NSInteger *mostCommonReconsAcquired = [[[mostCommonAcquisition stringByReplacingOccurrencesOfString:@" Side" withString:@""] stringByReplacingOccurrencesOfString:@" Middle" withString:@""] integerValue];
+    NSInteger mostCommonReconsAcquired = [[[mostCommonAcquisition stringByReplacingOccurrencesOfString:@" Side" withString:@""] stringByReplacingOccurrencesOfString:@" Middle" withString:@""] integerValue];
     
     for (TeamInMatchData *timd in team.matchData)
     {
@@ -329,6 +329,7 @@
         {
             if (ra.numReconsAcquired == mostCommonReconsAcquired)
             {
+                //Check that this invalid pointer conversion is not an issue
                 if (ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Middle"]) time += 1.0;
                 else if (!ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Side"]) time += 1.0;
             }
@@ -385,7 +386,6 @@
     float totalProbability = 1.0;
     NSString *totesToAutoZoneKeyPath = @"uploadedData.numTotesMovedIntoAutoZone";
     NSString *threeToteStackKeyPath = @"uploadedData.stackedToteSet";
-    NSString *reconsIntoAutoZoneKeyPath = @"uploadedData.numContainersMovedIntoAutoZone";
     if([action isEqualToString:@"1t"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:totesToAutoZoneKeyPath withSpecificValue:1.0];
     else if([action isEqualToString:@"3tk"]) totalProbability *= [self averageWithTeam:team withDatapointKeyPath:threeToteStackKeyPath];
     else if([action isEqualToString:@"1rs"]) totalProbability *= [self avgReconsFromStepForTeam:team withNumRecons:1];
@@ -405,7 +405,7 @@
         {
             reconsFromStep += ra.numReconsAcquired;
         }
-        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        long reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
         if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 0 && reconsFromField == 1)
         {
             return 1.0;
@@ -418,7 +418,7 @@
         {
             reconsFromStep += ra.numReconsAcquired;
         }
-        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        long reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
         if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 1 && reconsFromField == 1)
         {
             return 1.0;
@@ -431,7 +431,7 @@
         {
             reconsFromStep += ra.numReconsAcquired;
         }
-        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        long reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
         if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 2 && reconsFromField == 2)
         {
             return 1.0;
@@ -444,7 +444,7 @@
         {
             reconsFromStep += ra.numReconsAcquired;
         }
-        int reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
+        long reconsFromField = TIMD.uploadedData.numContainersMovedIntoAutoZone - reconsFromStep;
         if(TIMD.uploadedData.numTotesMovedIntoAutoZone == 3 && reconsFromField == 3)
         {
             return 1.0;
@@ -583,7 +583,6 @@
 {
     if (!self.currentlyCalculating) {
         self.currentlyCalculating = YES;
-        ServerCalculator *sc = [[ServerCalculator alloc] init];
         
         RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
         for (Team *t in allTeams)
@@ -632,7 +631,8 @@
             t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
             
             t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-                NSArray  *ras = TIMD.uploadedData.reconAcquisitions;
+                //Make sure this implicit conversion is not causing problems
+                NSArray *ras = [[NSArray alloc] initWithArray: TIMD.uploadedData.reconAcquisitions];
                 float totalTime = 0.0;
                 for (ReconAcquisition *ra in ras)
                 {
@@ -699,8 +699,7 @@
 
 - (void)beginMath
 {
-    dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
-    dispatch_async(backgroundQueue, ^{
+   
     NSLog(@"Starting Math");
     self.coopActionDictionary = @{
                                   @"1t, 1t, 1t":@8,
@@ -773,15 +772,17 @@
     
         NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
         NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
+    dispatch_async(dispatch_get_main_queue(), ^{
         @try {
             [self updateCalculatedData];
-
+            
         }
         @catch (NSException *exception) {
             NSLog(@"%@", exception);
         }
-        
     });
+    
+        
 }
 
 

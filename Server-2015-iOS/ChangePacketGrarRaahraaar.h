@@ -13,11 +13,11 @@
 #import "RealmModels.h"
 #import "UniqueKey.h"
 
-@interface ServerCalculator : NSObject
+@interface ChangePacketGrarRaahraaar : NSObject
 
 
 -(void)beginCalculations;
--(void)timerFired;
+-(void)timerFired:(NSTimer *)timer;
 
 - (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original;
 
