@@ -115,7 +115,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
         }];
         NSLog(@"Done with begin calcs");
-        
+    [self timerFired:self.timer];
         //Download change packets
         //Parse JSON
         //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT

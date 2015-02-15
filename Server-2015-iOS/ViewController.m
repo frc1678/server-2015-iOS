@@ -152,7 +152,6 @@
     
     [self logText:@"Restarting..."];
 
-
 }
 
 - (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
