@@ -16,6 +16,7 @@
 		195B9AD61A62EA86009A2FEF /* Server_2015_iOSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 195B9AD51A62EA86009A2FEF /* Server_2015_iOSTests.m */; };
 		195B9AE01A62F1EF009A2FEF /* default.png in Resources */ = {isa = PBXBuildFile; fileRef = 195B9ADF1A62F1EF009A2FEF /* default.png */; };
 		19847A281A72076100C525B1 /* UniqueKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 19847A271A72076100C525B1 /* UniqueKey.m */; };
+		19ACF4541A92A4020074F99E /* Logging.m in Sources */ = {isa = PBXBuildFile; fileRef = 19ACF4531A92A4020074F99E /* Logging.m */; };
 		19BD2CC71A7EAE2A00DD788F /* ServerMath.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BD2CC61A7EAE2A00DD788F /* ServerMath.m */; };
 		19D880F41A68CBD00051243C /* ChangePacketGrarRaahraaar.m in Sources */ = {isa = PBXBuildFile; fileRef = 19D880F31A68CBD00051243C /* ChangePacketGrarRaahraaar.m */; };
 		CAEF676CA2C18CA5EB4924DE /* libPods-Server-2015-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 166FAE544B134D51F3032594 /* libPods-Server-2015-iOS.a */; };
@@ -50,6 +51,8 @@
 		195B9ADF1A62F1EF009A2FEF /* default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = default.png; sourceTree = SOURCE_ROOT; };
 		19847A261A72076100C525B1 /* UniqueKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UniqueKey.h; sourceTree = "<group>"; };
 		19847A271A72076100C525B1 /* UniqueKey.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UniqueKey.m; sourceTree = "<group>"; };
+		19ACF4531A92A4020074F99E /* Logging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Logging.m; sourceTree = "<group>"; };
+		19ACF4551A92A40E0074F99E /* Logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Logging.h; sourceTree = "<group>"; };
 		19BD2CC51A7EAE2A00DD788F /* ServerMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ServerMath.h; sourceTree = "<group>"; };
 		19BD2CC61A7EAE2A00DD788F /* ServerMath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ServerMath.m; sourceTree = "<group>"; };
 		19D880F21A68CBD00051243C /* ChangePacketGrarRaahraaar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChangePacketGrarRaahraaar.h; sourceTree = "<group>"; };
@@ -107,6 +110,8 @@
 				19D880F31A68CBD00051243C /* ChangePacketGrarRaahraaar.m */,
 				19BD2CC51A7EAE2A00DD788F /* ServerMath.h */,
 				19BD2CC61A7EAE2A00DD788F /* ServerMath.m */,
+				19ACF4531A92A4020074F99E /* Logging.m */,
+				19ACF4551A92A40E0074F99E /* Logging.h */,
 				195B9AC31A62EA86009A2FEF /* Main.storyboard */,
 				195B9ADF1A62F1EF009A2FEF /* default.png */,
 				195B9AC61A62EA86009A2FEF /* Images.xcassets */,
@@ -304,6 +309,7 @@
 				19D880F41A68CBD00051243C /* ChangePacketGrarRaahraaar.m in Sources */,
 				19847A281A72076100C525B1 /* UniqueKey.m in Sources */,
 				195B9ABC1A62EA86009A2FEF /* main.m in Sources */,
+				19ACF4541A92A4020074F99E /* Logging.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

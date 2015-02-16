@@ -13,6 +13,7 @@
 #import "RealmModels.h"
 #import "ChangePacketGrarRaahraaar.h"
 #import "ServerMath.h"
+#import "Logging.h"
 
 @interface ViewController ()
 
@@ -121,45 +122,52 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     
-        @try {
-                [super viewDidAppear:animated];
-            self.logTextView.scrollsToTop = NO;
-            self.logTextView.text = @"Hello, I'm the Citrus Server!";
-            
-            if (![self connectedToNetwork]) {
-                [self logText:@"We don't have perfect internets??? or maybe we do"];
-            }
-            
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-            //[RLMRealm setDefaultRealmPath:@"realm.realm"];
-            NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
-            [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
-            [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
-            
-            unsigned long long maxFileCasheSize = [DBFilesystem sharedFilesystem].maxFileCacheSize;
-            [DBFilesystem sharedFilesystem].maxFileCacheSize = 0.0;
-            [DBFilesystem sharedFilesystem].maxFileCacheSize = maxFileCasheSize;
+    @try {
+        [super viewDidAppear:animated];
         
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logNotification:) name:LOG_TEXT_NOTIFICATION object:nil];
+        
+        self.logTextView.scrollsToTop = NO;
+        //self.logTextView.text = @"Hello, I'm the Citrus Server!";
+        
+        
+        if (![self connectedToNetwork]) {
+            [self logText:@"We don't have perfect internets??? or maybe we do" color:@"blue"];
         }
-        @catch (DBException *Exc) {
-            if (Exc.name == DBExceptionName)
-            {
-                [self logText:@"Dropbox Exception Thrown"];
-                NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", Exc.reason, Exc.userInfo];
-                [self logText:logText];
-            }
-        }
-  
-    
-    
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
+        NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
+        [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
+        [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
+        
+        unsigned long long maxFileCasheSize = [DBFilesystem sharedFilesystem].maxFileCacheSize;
+        [DBFilesystem sharedFilesystem].maxFileCacheSize = 0.0;
+        [DBFilesystem sharedFilesystem].maxFileCacheSize = maxFileCasheSize;
     
     }
+    @catch (DBException *Exc) {
+        if (Exc.name == DBExceptionName)
+        {
+            [self logText:@"Dropbox Exception Thrown" color:@"blue"];
+            NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", Exc.reason, Exc.userInfo];
+            [self logText:logText color:@"blue"];
+        }
+    }
+}
 - (IBAction)restart:(id)sender {
     [self startDatabaseOperations];
     
-    [self logText:@"Restarting..."];
+    [self logText:@"Restarting..." color:@"green"];
 
+}
+
+
+- (void)logNotification:(NSNotification *)note {
+    NSString *text = note.userInfo[LOG_TEXT_NOTIFICATION_TEXT_KEY];
+    NSString *color = note.userInfo[LOG_TEXT_COLOR_KEY];
+    [self logText:text color:color];
 }
 
 - (void)reloadDataWithData:(NSMutableArray *)data {
@@ -179,7 +187,7 @@
             self.dataFromDropbox = ar;
         }
         @catch (NSException *exception) {
-            [self logException:exception withMessage:@"Reload Data From Realm caused the exception"];
+            [self logException:exception withMessage:@"Reload Data From Realm caused the exception" color:@"blue"];
         }
 
     });
@@ -221,38 +229,102 @@
     @try {
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
-        [self logText:@"Recalculating."];
+        [self logText:@"Recalculating." color:@"green"];
 
     }
     @catch (DBException *exception) {
         if (exception.name == DBExceptionName)
         {
-            [self logText:@"Dropbox Exception Thrown"];
+            [self logText:@"Dropbox Exception Thrown" color:@"blue"];
             NSString *logText = [[NSString alloc] initWithFormat:@"Reason: %@ \n User Info: %@", exception.reason, exception.userInfo];
-            [self logText:logText];
+            [self logText:logText color:@"blue"];
         }
     }
 }
--(void)logText:(NSString *)text
+-(void)logText:(NSString *)text color:(NSString *)color
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *logString = [NSString stringWithFormat:@"%@\n%@", self.logTextView.text, text];
-        self.logTextView.text = logString;
+        if ([color isEqualToString:@"green"]) {
+            NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
+            
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor greenColor] range:NSMakeRange(0, newLog.length)];
+
+            [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
+
+            NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
+            [logString appendAttributedString:newLog];
+            
+                                                    
+            self.logTextView.attributedText = logString;
+        }
+        if ([color isEqualToString:@"blue"]) {
+            NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
+            
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor blueColor] range:NSMakeRange(0, newLog.length)];
+            
+            [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
+            
+            NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
+            [logString appendAttributedString:newLog];
+            
+            
+            self.logTextView.attributedText = logString;
+        }
+        if ([color isEqualToString:@"yellow"]) {
+            NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
+            
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor yellowColor] range:NSMakeRange(0, newLog.length)];
+            
+            [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
+            
+            NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
+            [logString appendAttributedString:newLog];
+            
+            
+            self.logTextView.attributedText = logString;
+        }
+        if ([color isEqualToString:@"red"]) {
+            NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
+            
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:NSMakeRange(0, newLog.length)];
+            
+            [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
+            
+            NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
+            [logString appendAttributedString:newLog];
+            
+            
+            self.logTextView.attributedText = logString;
+        }
+        if ([color isEqualToString:@"white"]) {
+            NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
+            
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(0, newLog.length)];
+            
+            [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
+            
+            NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
+            [logString appendAttributedString:newLog];
+            
+            
+            self.logTextView.attributedText = logString;
+        }
+
         [self.logTextView scrollRectToVisible:CGRectMake(0, 0, self.logTextView.frame.size.width, self.logTextView.frame.size.height * 20) animated:YES];
     });
 }
                        
--(void)logException:(NSException *)e withMessage:(NSString *)message
+-(void)logException:(NSException *)e withMessage:(NSString *)message color:(NSString *)color
 {
     if (message) {
         NSString *logString = [[NSString alloc] initWithFormat:@"%@\nName: %@\nReason: %@", message, e.name, e.reason];
-        [self logText:logString];
+        [self logText:logString color:color];
 
     }
     else
     {
         NSString *logString = [[NSString alloc] initWithFormat:@"An Exception Has Been Thrown. \nName: %@\nReason: %@", e.name, e.reason];
-        [self logText:logString];
+        [self logText:logString color:color];
     }
 }
 

@@ -14,6 +14,7 @@
 #import "RealmModels.h"
 #import "UniqueKey.h"
 #import "ServerMath.h"
+#import "Logging.h"
 
 /*
 @interface RLMProperty (DefaultValue)
@@ -122,7 +123,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             
             //Start 10 sec timer.
-            NSLog(@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME);
+            NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
+            NSLog(@"%@", logString);
+
+            Log(logString, @"green");
         }];
         NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
@@ -423,7 +427,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         [[RLMRealm defaultRealm] beginWriteTransaction];
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
-                            NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"Set Value For Key (recursive version) error: %@.\nKeyPath: %@.\nValueToChangeTo: %@\nFile Name: %@" XCODE_COLORS_RESET, setError, keyPath, valueToChangeTo, fileInfo.path.name);
+                            NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
+                            NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
+                            Log(log, @"yellow");
                         }
                         [[RLMRealm defaultRealm] commitWriteTransaction];
                             //
