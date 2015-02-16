@@ -47,6 +47,11 @@
 
 @end*/
 
+#define XCODE_COLORS_ESCAPE @"\033["
+
+#define XCODE_COLORS_RESET_FG  XCODE_COLORS_ESCAPE @"fg;" // Clear any foreground color
+#define XCODE_COLORS_RESET_BG  XCODE_COLORS_ESCAPE @"bg;" // Clear any background color
+#define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color
 
 @interface ChangePacketGrarRaahraaar ()
 
@@ -62,7 +67,8 @@
 typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     UnprocessedChangePackets,
     ProcessedChangePackets,
-    RealmDotRealm
+    RealmDotRealm,
+    InvalidChangePackets
 };
 
 /**
@@ -85,6 +91,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     {
         //return @"/Database File/realm.realm";
         return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+    }
+    else if(filePath == InvalidChangePackets)
+    {
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"Invalid"];
     }
     else
     {
@@ -152,10 +162,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 // Separates the keyPath into components and creates an array out o them
 // Finds UniqueKey-s and SemiUniqueKey-s among the components
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original
+- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original withReturn:(NSString *)r
 {
+    if (r != nil) {
+        return r;
+    }
+    NSString *rtError = r;
+    
     if (!value) {
         NSLog(@"value is not ok");
+        rtError = @"Value not OK";
+        return rtError;
     }
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
@@ -183,7 +200,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         newObject = item;
                         break;
                     }
-                    else if ([[item valueForKeyPath:[item semiUniqueKey]] isEqualToString:head])
+                    else if ([[item valueForKeyPath:[item semiUniqueKey]] isEqual:head])
                     {
                         newObject = item;
                         break;
@@ -192,6 +209,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 else
                 {
                     NSLog(@"Oh no, %@ doesnt conform to unique key or semi unique key protocols!", item);
+                    rtError = [NSString stringWithFormat:@"%@ doesnt conform to unique or semiunique key protocols", item];
+                    return rtError;
                 }
             }
             
@@ -224,6 +243,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         else
                         {
                             NSLog(@"Error: %ld matches have the name %@", matchResults.count, head);
+                            rtError = [NSString stringWithFormat:@"Error: %ld matches have the name %@", matchResults.count, head];
+                            return rtError;
                         }
                     }
                     else
@@ -234,16 +255,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    [self setValue:head forKeyPath:[newObject uniqueKey] onRealmObject:newObject onOriginalObject:original];
+                    return [self setValue:head forKeyPath:[newObject uniqueKey] onRealmObject:newObject onOriginalObject:original withReturn:nil];
                 }
                 else if([newObject conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original];
+                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withReturn:nil];
                 }
                 
                 [array addObject:newObject];
             }
-            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original];
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withReturn:nil];
         }
         else
         {
@@ -253,7 +274,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
             @catch (NSException *exception) {
                 NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
-                return;
+                rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
+                return rtError;
             }
             
             if(!newObject)
@@ -277,7 +299,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 object[head] = newObject;
             }
-            [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original];
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withReturn:nil];
         }
         
     }
@@ -288,8 +310,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
         @catch (NSException *exception) {
             NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
+            rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
+            return rtError;
         }
     }
+    return nil;
 }
 
 
@@ -320,11 +345,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //        continue;
             
             error = nil;
-            
-            DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&error];
+#warning already Open
+           
+            DBError *dbError = nil;
+            DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&dbError];
             //        NSLog(@"File %@, status: %@", fileInfo.path, file.status);
             
-            if (error) {
+            if (dbError) {
                 NSLog(@"%@",error);
             }
             
@@ -332,10 +359,18 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             if (error) {
                 NSLog(@"%@",error);
             }
-            [file close];
+            if(file.open) [file close];
             
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = nil;
+                if (data == nil)
+                {
+                    NSLog(@"Empty change packet");
+                    NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
+                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
+
+                    return;
+                }
                 NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
                 if (error) {
                     NSLog(@"%@",error);
@@ -361,6 +396,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 } else {
                     NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
                     NSLog(@"The file that has the issue is: %@", JSONfile);
+                    NSString *emptyName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
+                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
                     return;
                 }
                 //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
@@ -384,7 +421,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                         [[RLMRealm defaultRealm] beginWriteTransaction];
-                        [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify];
+                        NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
+                        if (setError != nil) {
+                            NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"Set Value For Key (recursive version) error: %@.\nKeyPath: %@.\nValueToChangeTo: %@\nFile Name: %@" XCODE_COLORS_RESET, setError, keyPath, valueToChangeTo, fileInfo.path.name);
+                        }
                         [[RLMRealm defaultRealm] commitWriteTransaction];
                             //
                         

@@ -19,7 +19,7 @@
 -(void)beginCalculations;
 -(void)timerFired:(NSTimer *)timer;
 
-- (void)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original;
+- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original withReturn:(NSString *)r;
 
 @end
 

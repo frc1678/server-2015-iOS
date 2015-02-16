@@ -162,26 +162,28 @@
 
 }
 
-- (void)reloadDataFromRealm:(RLMRealm *)realm withData:(NSMutableArray *)data {
-    @try {
-        realm = [RLMRealm defaultRealm];
-        RLMResults *teamsFromDB = [Team allObjectsInRealm:realm];
-        NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
-        //[ar addObject:@"hi"];
-        for(Team *t in teamsFromDB) {
-            [ar addObject:t];
-            //NSLog(@"data: %@, t: %@", ar, t);
+- (void)reloadDataWithData:(NSMutableArray *)data {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            RLMResults *teamsFromDB = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
+            NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
+            //[ar addObject:@"hi"];
+            for(Team *t in teamsFromDB) {
+                [ar addObject:t];
+                //NSLog(@"data: %@, t: %@", ar, t);
+            }
+            
+            [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
+            
+            NSLog(@"%lu teams!", (unsigned long)ar.count);
+            self.dataFromDropbox = ar;
         }
-        
-        [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
-        
-        NSLog(@"%lu teams!", (unsigned long)ar.count);
-        self.dataFromDropbox = ar;
-    }
-    @catch (NSException *exception) {
-        [self logException:exception withMessage:@"Reload Data From Realm caused the exception"];
-    }
- 
+        @catch (NSException *exception) {
+            [self logException:exception withMessage:@"Reload Data From Realm caused the exception"];
+        }
+
+    });
+    
     
 }
 
@@ -200,7 +202,7 @@
 {
     //dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [self reloadDataFromRealm:[RLMRealm defaultRealm] withData:self.dataFromDropbox];
+        [self reloadDataWithData:self.dataFromDropbox];
         
         //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
         
