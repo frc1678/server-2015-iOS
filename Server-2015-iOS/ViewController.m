@@ -127,7 +127,7 @@
             self.logTextView.text = @"Hello, I'm the Citrus Server!";
             
             if (![self connectedToNetwork]) {
-                [self logText:@"We cannot reach Dropbox.com"];
+                [self logText:@"We don't have perfect internets??? or maybe we do"];
             }
             
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];

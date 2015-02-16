@@ -583,7 +583,8 @@
 {
     if (!self.currentlyCalculating) {
         self.currentlyCalculating = YES;
-        
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+
         RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
         for (Team *t in allTeams)
         {
@@ -591,7 +592,6 @@
                 //
             }
             //CalculatedTeamData *t.calculatedData = t.calculatedData;
-            [[RLMRealm defaultRealm] beginWriteTransaction];
             
             t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
             t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
@@ -632,13 +632,12 @@
             
             t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
                 //Make sure this implicit conversion is not causing problems
-                NSArray *ras = [[NSArray alloc] initWithArray: TIMD.uploadedData.reconAcquisitions];
                 float totalTime = 0.0;
-                for (ReconAcquisition *ra in ras)
+                for (ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
                 {
                     totalTime += ra.time;
                 }
-                return totalTime/ras.count;
+                return totalTime/TIMD.uploadedData.reconAcquisitions.count;
             }];
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
@@ -651,7 +650,6 @@
             t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
             t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
             
-            [[RLMRealm defaultRealm] commitWriteTransaction];
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             //Update UI
             
@@ -659,17 +657,17 @@
             
             
         }
+        [[RLMRealm defaultRealm] commitWriteTransaction];
         [self updateCalculatedMatchData];
-        self.currentlyCalculating = NO;
     }
 }
 -(void)updateCalculatedMatchData
 {
+    [[RLMRealm defaultRealm] beginWriteTransaction];
     RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
-    
+
     for (Match *m in allMatches)
     {
-        [[RLMRealm defaultRealm] beginWriteTransaction];
         
         NSMutableArray *b = [[NSMutableArray alloc] init];
         NSMutableArray *r = [[NSMutableArray alloc] init];
@@ -688,12 +686,14 @@
         m.calculatedData.predictedBlueScore = [self predictedQualScoreForAlliance:(NSArray *)blueAlliance];
         m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
         m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
-        [[RLMRealm defaultRealm] commitWriteTransaction];
         
         NSLog(@"Match: %@ has been calculated.", m.match);
         //Update UI
         
     }
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+    self.currentlyCalculating = NO;
+
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
 

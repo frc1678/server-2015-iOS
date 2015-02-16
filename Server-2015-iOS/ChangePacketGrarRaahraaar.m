@@ -142,8 +142,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  */
 -(void)updateWithChangePackets
 {
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [self mergeChangePacketsIntoRealm:realm];
+    [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
 /*
  1. Value does not change.
@@ -335,137 +334,140 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
             [file close];
             
-            NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-            if (error) {
-                NSLog(@"%@",error);
-            }
-            
-            
-            NSString *className = JSONfile[@"class"];
-            NSString *uniqueValue = JSONfile[@"uniqueValue"];
-            
-            Class class = NSClassFromString(className);
-            NSString *filterString = nil;
-            if([class conformsToProtocol:@protocol(UniqueKey)]) {
-                NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
-                RLMObjectSchema *schema = realm.schema[className];
-                RLMPropertyType uniqueValueType = schema[uniqueKey].type;
-                
-                if (uniqueValueType == RLMPropertyTypeString) {
-                    filterString = [NSString stringWithFormat:@"%@ == '%@'", uniqueKey, uniqueValue]; // build the string to query Realm with.
-                } else {
-                    filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSError *error = nil;
+                NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+                if (error) {
+                    NSLog(@"%@",error);
                 }
                 
-            } else {
-                NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
-                NSLog(@"The file that has the issue is: %@", JSONfile);
-                continue;
-            }
-            //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
-            // Query for the matching unique objects
-            //Queries Realm based on a uniqueKey and uniqueValue from the JSON
-            
-            RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
-            
-            if(objectToModify) {
-                for(NSMutableDictionary *change in JSONfile[@"changes"])
-                {
-                    NSString *keyPath = change[@"keyToChange"];
-                    NSString *valueToChangeTo = change[@"valueToChangeTo"];
+                
+                NSString *className = JSONfile[@"class"];
+                NSString *uniqueValue = JSONfile[@"uniqueValue"];
+                
+                Class class = NSClassFromString(className);
+                NSString *filterString = nil;
+                if([class conformsToProtocol:@protocol(UniqueKey)]) {
+                    NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
+                    RLMObjectSchema *schema = [RLMRealm defaultRealm].schema[className];
+                    RLMPropertyType uniqueValueType = schema[uniqueKey].type;
                     
-                    //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
+                    if (uniqueValueType == RLMPropertyTypeString) {
+                        filterString = [NSString stringWithFormat:@"%@ == '%@'", uniqueKey, uniqueValue]; // build the string to query Realm with.
+                    } else {
+                        filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
+                    }
                     
-                    // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
-                    
-                    //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
-                    //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
-                    //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                    @try{
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [realm beginWriteTransaction];
-                            [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify];
-                            [realm commitWriteTransaction];
+                } else {
+                    NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
+                    NSLog(@"The file that has the issue is: %@", JSONfile);
+                    return;
+                }
+                //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
+                // Query for the matching unique objects
+                //Queries Realm based on a uniqueKey and uniqueValue from the JSON
+                
+                RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+                
+                
+                if(objectToModify) {
+                    for(NSMutableDictionary *change in JSONfile[@"changes"])
+                    {
+                        NSString *keyPath = change[@"keyToChange"];
+                        NSString *valueToChangeTo = change[@"valueToChangeTo"];
+                        
+                        //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
+                        
+                        // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
+                        
+                        //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
+                        //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
+                        //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
+                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify];
+                        [[RLMRealm defaultRealm] commitWriteTransaction];
                             //
-                        });
                         
                         //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
-                    } @catch (NSException *e) {
-                        if ([[e name] isEqual:NSUndefinedKeyException]) {
-                            //https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Protocols/NSKeyValueCoding_Protocol/index.html
-                            NSLog(@"One of the keys in File: %@, Object: %@, keyPath: %@ doesnt exist.", fileInfo.path.name, [objectToModify valueForKey:@"number"], keyPath);
-                        } else {
-                            [[NSException exceptionWithName:[e name]
-                                                     reason:[e reason]
-                                                   userInfo:[e userInfo]]
-                             raise];
-                            NSLog(@"Oh, no! We raised some other exception!");
-                        }
+                        
+                    }
+                    
+                } else {
+                    NSLog(@"Condition %@ not found in database!", filterString);
+                    //make it so that if the objects dont exist we can create them
+                    if ([className isEqual: @"Team"]) {
+                        
+                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        Team *t = [[Team alloc] init];
+                        t.name = @"noName";
+                        t.number = [uniqueValue intValue];
+                        t.seed = 10000;
+                        TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                        timd.team = t;
+                        [t.matchData addObject:timd];
+                        
+                        RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
+                        t.matchData = md;
+                        
+                        CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
+                        ctimd.predictedSeed = 0;
+                        ctimd.totalScore = 0;
+                        ctimd.mostCommonReconAcquisitionType = @"";
+                        ctimd.reconAcquisitionTypes = @"";
+                        t.calculatedData = ctimd;
+                        
+                        UploadedTeamData *utd = [[UploadedTeamData alloc] init];
+                        utd.pitOrganization = @"";
+                        utd.drivetrain = @"";
+                        utd.typesWheels = @"";
+                        t.uploadedData = utd;
+                        
+                        [[RLMRealm defaultRealm] addObject:t];
+                        [[RLMRealm defaultRealm] commitWriteTransaction];
+                        
+                        
+                        
                     }
                 }
-            } else {
-                NSLog(@"Condition %@ not found in database!", filterString);
-                //make it so that if the objects dont exist we can create them
-                if ([className  isEqual: @"Team"]) {
-                    
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [[RLMRealm defaultRealm] beginWriteTransaction];
-                    Team *t = [[Team alloc] init];
-                    t.name = @"noName";
-                    t.number = [uniqueValue doubleValue];
-                    t.seed = 10000;
-                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    timd.team = t;
-                    [t.matchData addObject:timd];
-                    //RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
-                    //TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    //[md addObject:timd];
-                    CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
+                
+                
+                
+                
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    //Moving change packet into processedChangePackets directory in DB
+                    NSString *name = [[NSString alloc] init];
+                    name = fileInfo.path.name;
+                    NSLog(@"Finished Processing %@", name);
+                    NSError *error = nil;
                     @try {
-                        [ctimd setValue:@0 forKey:@"predictedSeed"];
-                        [ctimd setValue:@0 forKey:@"totalScore"];
-                        [ctimd setValue:@"" forKey:@"mostCommonReconAcquisitionType"];
-                        [ctimd setValue:@"" forKey:@"reconAcquisitionTypes"];
-                        t.calculatedData = ctimd;
+                        NSString *toName = name;
+                        while (true) {
+                            error = nil;
+                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:toName] error:&error];
+                            if(error.code == DBErrorExists) {
+                                toName = [toName stringByReplacingOccurrencesOfString:@".json" withString:@" copy.json"];
+                            } else {
+                                break;
+                            }
+                            NSLog(@"%@", error);
+                        }
                         
                     }
                     @catch (NSException *exception) {
-                        NSLog(@"Excetion creating team: %ld", (long)t.number);
+                        NSLog(@"%@", exception);
+                        NSLog(@"%@",error);
                     }
-                    [[RLMRealm defaultRealm] addObject:t];
-                    [[RLMRealm defaultRealm] commitWriteTransaction];
-                    //[[RLMRealm defaultRealm] addObject:t];
                 });
-                
-                    
-                    
-                }
-            }
-            //Moving change packet into processedChangePackets directory in DB
-            NSString *name = [[NSString alloc] init];
-            name = fileInfo.path.name;
-            NSLog(@"Finished Processing %@", name);
-            @try {
-                NSString *toName = name;
-                while (true) {
-                    error = nil;
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:toName] error:&error];
-                    if(error.code == DBErrorExists) {
-                        toName = [toName stringByReplacingOccurrencesOfString:@".json" withString:@" copy.json"];
-                    } else {
-                        break;
-                    }
-                    NSLog(@"%@", error);
-                }
-                
-            }
-            @catch (NSException *exception) {
-                NSLog(@"%@", exception);
-                NSLog(@"%@",error);
-            }
+            });
+            
+            
+            
         }
 
-        [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+        });
 
     });
     
