@@ -14,7 +14,7 @@
 
 @interface ServerMath ()
 
-@property (nonatomic, strong) NSDictionary *coopActionDictionary;
+@property (nonatomic, strong) NSDictionary *autoActionDictionary;
 @property (nonatomic) BOOL currentlyCalculating;
 
 @end
@@ -120,7 +120,6 @@
     }];
 }
 
-#warning This is terrible. Make it better
 -(float)predictedCOOPScoreForTeam:(Team *)team
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
@@ -136,6 +135,48 @@
     }];
 }
 
+-(float)predictedCOOPScoreForMatch:(Match *)match
+{
+    return [self avgCoopForAlliance:match.redTeams andOtherAlliance:match.blueTeams];
+}
+
+-(float)avgTotesInCOOPForTeam:(Team *)team
+{
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd, Match *m) {
+        float avg = 0.0;
+        
+        for(TeamInMatchData *timd in team.matchData)
+        {
+            for(CoopAction *ca in timd.uploadedData.coopActions)
+            {
+                if (ca.didSucceed) {
+                    avg += ca.numTotes;
+                }
+            }
+            avg = avg/timd.uploadedData.coopActions.count;
+        }
+        return avg/team.matchData.count;
+    }];
+}
+
+-(float)avgCoopForAlliance:(NSArray *)alliance andOtherAlliance:(NSArray *)otherAlliance
+{
+    int totalTotesPredictedForAlliance = 0;
+    for(Team *t in alliance)
+    {
+        totalTotesPredictedForAlliance += [self avgTotesInCOOPForTeam:t];
+    }
+    totalTotesPredictedForAlliance = MAX(totalTotesPredictedForAlliance, 3);
+    
+    int totalTotesPredictedForOtherAlliance = 0;
+    for(Team *t in alliance)
+    {
+        totalTotesPredictedForOtherAlliance += [self avgTotesInCOOPForTeam:t];
+    }
+    totalTotesPredictedForAlliance = MAX(totalTotesPredictedForOtherAlliance, 3);
+    
+    return MAX(((totalTotesPredictedForOtherAlliance + totalTotesPredictedForAlliance)/4) * 40, 40);
+}
 
 
 -(float)predictedAutoScoreForTeam:(Team *)team
@@ -468,13 +509,13 @@
  
  *  @return The value of the lambda function for an alliance in auto.
  */
--(float)lambda:(NSArray *)alliance forCoopConditionString:(NSString *)coopConditionString
+-(float)lambda:(NSArray *)alliance forAutoConditionString:(NSString *)autoConditionString
 {
     //determine the order of dificulty of the coop actions in the coop condition string
     //generate the key paths for the hardest and second hardest actions
     NSMutableArray *mutableAlliance = [alliance mutableCopy];
     float totalProbability = 1.0;
-    NSArray *actions = [coopConditionString componentsSeparatedByString:@", "];
+    NSArray *actions = [autoConditionString componentsSeparatedByString:@", "];
     // Actions are sorted in order of difficulty, so we iterate in order of difficulty
     for (NSString *action in actions) {
         totalProbability *= [self maximize:mutableAlliance function:^float(id val) {
@@ -492,9 +533,9 @@
 
 - (float)predictedAutoScoreForAlliance:(NSArray *)alliance
 {
-    return [self maximize:[self.coopActionDictionary allKeys] function:^float(NSString *condition) {
-        float probability = [self lambda:alliance forCoopConditionString:condition];
-        float totalPoints = [self.coopActionDictionary[condition] floatValue];
+    return [self maximize:[self.autoActionDictionary allKeys] function:^float(NSString *condition) {
+        float probability = [self lambda:alliance forAutoConditionString:condition];
+        float totalPoints = [self.autoActionDictionary[condition] floatValue];
         if(probability > 0.0) NSLog(@"condition: %@, points: %f, probability: %f", condition, totalPoints ,probability);
         return probability * totalPoints;
     }];
@@ -502,8 +543,8 @@
 
 -(NSString *)bestAutoStrategyForAlliance:(NSArray *)alliance
 {
-    return [self findMaximumObject:[self.coopActionDictionary allKeys] function:^float(id val) {
-        return [self lambda:alliance forCoopConditionString:val];
+    return [self findMaximumObject:[self.autoActionDictionary allKeys] function:^float(id val) {
+        return [self lambda:alliance forAutoConditionString:val];
     }];
 }
 
@@ -701,7 +742,7 @@
 {
    
     NSLog(@"Starting Math");
-    self.coopActionDictionary = @{
+    self.autoActionDictionary = @{
                                   @"1t, 1t, 1t":@8,
                                   @"1rf, 1rf, 1rf":@6,
                                   @"1rs, 1rs, 1rs":@6,
