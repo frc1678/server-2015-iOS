@@ -129,14 +129,10 @@
         
         self.logTextView.scrollsToTop = NO;
         //self.logTextView.text = @"Hello, I'm the Citrus Server!";
-        
-        
-        if (![self connectedToNetwork]) {
-            [self logText:@"We don't have perfect internets??? or maybe we do" color:@"blue"];
-        }
+
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations) name:CC_REALM_SETUP_NOTIFICATION object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations:) name:CC_REALM_SETUP_NOTIFICATION object:nil];
         //[RLMRealm setDefaultRealmPath:@"realm.realm"];
         NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
         [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
@@ -157,7 +153,7 @@
     }
 }
 - (IBAction)restart:(id)sender {
-    [self startDatabaseOperations];
+    [self startDatabaseOperations:nil];
     
     [self logText:@"Restarting..." color:@"green"];
 
@@ -206,7 +202,7 @@
 }
 
 //we should make this one giant abstraction tree with incredible naming
--(void)startDatabaseOperations
+-(void)startDatabaseOperations:(NSNotification *)note
 {
     //dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{

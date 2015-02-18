@@ -11,6 +11,7 @@
 #import "UniqueKey.h"
 #import "ChangePacketGrarRaahraaar.h"
 #import "ViewController.h"
+#import "Logging.h"
 
 @interface ServerMath ()
 
@@ -94,6 +95,9 @@
             t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
+            NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
+            Log(logString, @"green");
+            
             //Update UI
             
             
@@ -104,6 +108,7 @@
         [self updateCalculatedMatchData];
     }
 }
+
 -(void)updateCalculatedMatchData
 {
     [[RLMRealm defaultRealm] beginWriteTransaction];
@@ -125,13 +130,12 @@
         
         NSArray *redAlliance = [[NSArray alloc] initWithArray:r];
         NSArray *blueAlliance = [[NSArray alloc] initWithArray:b];
-        m.calculatedData.predictedRedScore = [self predictedQualScoreForAlliance:(NSArray *)redAlliance];
-        m.calculatedData.predictedBlueScore = [self predictedQualScoreForAlliance:(NSArray *)blueAlliance];
+        m.calculatedData.predictedRedScore = [self predictedElimScoreForAlliance:(NSArray *)redAlliance] + [self predictedCOOPScoreForMatch:m];
+        m.calculatedData.predictedBlueScore = [self predictedElimScoreForAlliance:(NSArray *)blueAlliance] + [self predictedCOOPScoreForMatch:m];
         m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
         m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
         
         NSLog(@"Match: %@ has been calculated.", m.match);
-        //Update UI
         
     }
     [[RLMRealm defaultRealm] commitWriteTransaction];
@@ -290,6 +294,16 @@
     return minObject;
 }
 
+- (float)playedMatchesCountForTeam:(Team *)team
+{
+    float totalplayed = 0.0;
+    for (TeamInMatchData *timd in team.matchData)
+    {
+        if (timd.match.officialBlueScore > 0 && timd.match.officialRedScore > 0) totalplayed += 1.0;
+    }
+    return totalplayed;
+}
+
 /**
  *  Lets you find the average value of a calculated datapoint for a team, devided by all of the matches the team has played in.
  *
@@ -307,7 +321,7 @@
     {
         total += block(teamInMatchData, teamInMatchData.match);
     }
-    return total/[team.matchData count];
+    return total/[self playedMatchesCountForTeam:team];
 }
 
 /**
@@ -319,13 +333,12 @@
  *  @return The average.
  */
 
-/* I DONT THINK THAT THIS MAKES SENSE.
 - (float)averageCalculatedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(CalculatedTeamData *))block {
     float total = 0.0;
     CalculatedTeamData *cd = team.calculatedData;
     total += block(cd);
-    return total/[team.matchData count];
-}*/
+    return total/[self playedMatchesCountForTeam:team];
+}
 
 /**
  *  The average value of a datapoint for a team.
@@ -500,7 +513,7 @@
     {
         if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
     }
-    containerSet = 8 * containerSet / team.matchData.count; //before it was the number of times they moved more than three, now its the points
+    containerSet = 8 * containerSet / [self playedMatchesCountForTeam:team]; //before it was the number of times they moved more than three, now its the points
     
     float robotSet = team.calculatedData.isRobotMoveIntoAutoZonePercentage * 4;
     
@@ -560,7 +573,7 @@
             }
             avg = avg/timd.uploadedData.coopActions.count;
         }
-        return avg/team.matchData.count;
+        return avg/[self playedMatchesCountForTeam:team];
     }];
 }
 
@@ -635,8 +648,8 @@
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
 {
-    NSInteger matchesPlayed = 0;
-    for (TeamInMatchData *TIMD in team.matchData) if (TIMD.match.officialBlueScore > 0 && TIMD.match.officialRedScore > 0) matchesPlayed = matchesPlayed + 1;
+    NSInteger matchesPlayed = [self playedMatchesCountForTeam:team];
+    
     return team.matchData.count - matchesPlayed;
 }
 
@@ -661,6 +674,8 @@
 {
     return [self predictedTeleopScoreForTeam:team] + [self predictedCOOPScoreForTeam:team] + [self predictedAutoScoreForTeam:team];
 }
+
+
 
 #pragma mark ______________________________________________________________
 
@@ -797,7 +812,7 @@
         }
         time /= timd.uploadedData.reconAcquisitions.count;
     }
-    return time /= team.matchData.count;
+    return time /= [self playedMatchesCountForTeam:team];
 }
 
 
@@ -891,7 +906,7 @@
  */
 -(float)avgNumMaxHeightStackesForTeam:(Team *)team
 {
-    return ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"]/team.calculatedData.avgMaxFieldToteHeight)/team.matchData.count;
+    return ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"]/team.calculatedData.avgMaxFieldToteHeight)/[self playedMatchesCountForTeam:team];
 }
 
 
