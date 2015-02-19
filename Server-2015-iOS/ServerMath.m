@@ -30,7 +30,7 @@
         self.currentlyCalculating = YES;
         
         self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
-    
+        
         [[RLMRealm defaultRealm] beginWriteTransaction];
         
         RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
@@ -75,12 +75,8 @@
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
             t.calculatedData.totalScore = [self totalScoreForTeam:t];
             t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
-            if(t.number == 1678) {
-            self.totalScoresOfTeams[@(t.number)] = @50;
-            }
-            else {
-                self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
-            }
+            self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
+            
             
             t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
                 //Make sure this implicit conversion is not causing problems
