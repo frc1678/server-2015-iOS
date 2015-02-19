@@ -17,6 +17,7 @@
 
 @property (nonatomic, strong) NSDictionary *autoActionDictionary;
 @property (nonatomic) BOOL currentlyCalculating;
+@property (nonatomic, strong) NSMutableDictionary *totalScoresOfTeams;
 
 @end
 
@@ -27,6 +28,9 @@
 {
     if (!self.currentlyCalculating) {
         self.currentlyCalculating = YES;
+        
+        self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
+    
         [[RLMRealm defaultRealm] beginWriteTransaction];
         
         RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
@@ -55,24 +59,28 @@
             t.calculatedData.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
             t.calculatedData.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
             
-            t.calculatedData.reliability = 100 - t.calculatedData.incapacitatedPercentage - t.calculatedData.disabledPercentage;
-            t.calculatedData.avgAgility = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.agility"];
+            t.calculatedData.reliability = [self reliabilityOfTeam:t];
             t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
-            t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+            t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/[self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
             t.calculatedData.reconAbility = [self reconAbilityForTeam:t];
             
             t.calculatedData.reconReliability = [self reconReliabilityForTeam:t];
             t.calculatedData.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
-            t.calculatedData.avgNumMaxHeightStacks = [self avgNumMaxHeightStackesForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
+            t.calculatedData.avgNumMaxHeightStacks = [self avgNumMaxHeightStacksForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
             t.calculatedData.avgAgility = [self avgDriverAbilityForTeam:t];
             
             t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
             //Choose which one based on data
             t.calculatedData.avgStackPlacing = [self stackingAbilityTeamNew:t];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
-            t.calculatedData.reliability = [self reliabilityOfTeam:t];
             t.calculatedData.totalScore = [self totalScoreForTeam:t];
             t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
+            if(t.number == 1678) {
+            self.totalScoresOfTeams[@(t.number)] = @50;
+            }
+            else {
+                self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
+            }
             
             t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
                 //Make sure this implicit conversion is not causing problems
@@ -104,6 +112,27 @@
             
             
         }
+        NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.totalScoresOfTeams allValues]] array] mutableCopy];
+        
+        NSArray *sortedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        NSInteger predictedSeed = 1;
+        //NSMutableDictionary *scoresToNumbers = [[NSMutableDictionary alloc] initWithObjects:[self.totalScoresOfTeams allValues] forKeys:[self.totalScoresOfTeams allKeys]];
+        
+        
+        
+        for (NSNumber *score in sortedScores)
+        {
+            NSArray *numbers = [self.totalScoresOfTeams allKeysForObject:score];
+            for (NSNumber *number in numbers)
+            {
+                RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
+                Team *tm = (Team *)[tq firstObject];
+                tm.calculatedData.predictedSeed = predictedSeed;
+                predictedSeed++;
+            }
+        }
+        
+        
         [[RLMRealm defaultRealm] commitWriteTransaction];
         [self updateCalculatedMatchData];
     }
@@ -149,11 +178,11 @@
     
     NSLog(@"Starting Math");
     self.autoActionDictionary = @{
-                                  @"1t, 1t, 1t":@8,
-                                  @"1rf, 1rf, 1rf":@6,
-                                  @"1rs, 1rs, 1rs":@6,
-                                  @"1rs, 1rs, 1rf":@6,
-                                  @"1rs, 1rf, 1rf":@6,
+                                  @"1t, 1t, 1t":@6,
+                                  @"1rf, 1rf, 1rf":@8,
+                                  @"1rs, 1rs, 1rs":@8,
+                                  @"1rs, 1rs, 1rf":@8,
+                                  @"1rs, 1rf, 1rf":@8,
                                   @"1rs, 0, 0":@0,
                                   
                                   @"1rf+1t, 1rf+1t, 1rf+1t":@14,
@@ -201,7 +230,7 @@
                                   @"4rs, 3tk, 0":@28,
                                   @"4rs, 3rf+3t, 0":@14,
                                   @"4rs, 2rf+2t, 1rf+1t":@14,
-                                  @"4rs, 2rf+2t, 0":@14,
+                                  @"4rs, 2rf+2t, 0":@8,
                                   @"4rs, 0, 0":@8
                                   };
     
@@ -587,16 +616,16 @@
     {
         totalTotesPredictedForAlliance += [self avgTotesInCOOPForTeam:t];
     }
-    totalTotesPredictedForAlliance = MAX(totalTotesPredictedForAlliance, 3);
+    totalTotesPredictedForAlliance = MIN(totalTotesPredictedForAlliance, 3);
     
     int totalTotesPredictedForOtherAlliance = 0;
     for(Team *t in alliance)
     {
         totalTotesPredictedForOtherAlliance += [self avgTotesInCOOPForTeam:t];
     }
-    totalTotesPredictedForAlliance = MAX(totalTotesPredictedForOtherAlliance, 3);
+    totalTotesPredictedForAlliance = MIN(totalTotesPredictedForOtherAlliance, 3);
     
-    return MAX(((totalTotesPredictedForOtherAlliance + totalTotesPredictedForAlliance)/4) * 40, 40);
+    return MIN(((totalTotesPredictedForOtherAlliance + totalTotesPredictedForAlliance)/4) * 40, 40);
 }
 
 
@@ -622,6 +651,8 @@
 }
 
 #pragma mark - General
+
+
 
 -(NSInteger)totalScoreForTeam:(Team *)team
 {
@@ -686,7 +717,7 @@
  */
 - (float)avgDriverAbilityForTeam:(Team *)team
 {
-    return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.agility"] / 2;
+    return [self averageWithTeam:team withDatapointKeyPath:@"uploadedData.agility"] / 3;
 }
 
 /**
@@ -778,10 +809,12 @@
     {
         mostCommonReconAquisition = @"3 ";
     }
-    else
+    else if (fourCount >= threeCount && fourCount >= twoCount && fourCount >= oneCount)
     {
         mostCommonReconAquisition = @"4 ";
     }
+    else mostCommonReconAquisition = @"";
+    
     if (middleCount > sideCount)
     {
         mostCommonReconAquisition = [mostCommonReconAquisition stringByAppendingString:@"Middle"];
@@ -887,7 +920,7 @@
         numTotesStacked += teamInMatchData.uploadedData.numTotesStacked;
         numReconsStacked += teamInMatchData.uploadedData.numReconsStacked;
         maxFieldToteHeight += teamInMatchData.uploadedData.maxFieldToteHeight;
-        maxReconsStackHeight += team.calculatedData.avgMaxReconHeight;
+        maxReconsStackHeight += teamInMatchData.uploadedData.maxReconHeight;
         numLitterDropped += teamInMatchData.uploadedData.numLitterDropped;
         numNoodlesContributed += teamInMatchData.uploadedData.numNoodlesContributed;
     }
@@ -904,7 +937,7 @@
 /**
  *  The average number of stacks at the highest height that the team has stacked this competition.
  */
--(float)avgNumMaxHeightStackesForTeam:(Team *)team
+-(float)avgNumMaxHeightStacksForTeam:(Team *)team
 {
     return ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"]/team.calculatedData.avgMaxFieldToteHeight)/[self playedMatchesCountForTeam:team];
 }

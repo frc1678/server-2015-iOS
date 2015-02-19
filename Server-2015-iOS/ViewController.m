@@ -15,7 +15,7 @@
 #import "ServerMath.h"
 #import "Logging.h"
 
-@interface ViewController ()
+@interface ViewController () <UIAlertViewDelegate>
 
 @property (nonatomic, strong) NSMutableArray *dataFromDropbox;
 
@@ -34,7 +34,32 @@
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
+- (void)emptyRealmDatabase
+{
+    UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Clear?" message:@"Are you sure you want to make the realm database empty? Like 0 bytes?" delegate:self cancelButtonTitle:@"No, Dont Empty it." otherButtonTitles:@"Yes, I'm sure", nil];
+    
+    [clearAlertView show];
+}
 
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if ([alertView.title isEqualToString:@"Clear?"]) {
+        if (buttonIndex == 0) {
+            Log(@"Not Clearing", @"yellow");
+        }
+        else if (buttonIndex == 1) {
+            Log(@"Clearing", @"yellow");
+            unsigned long long max = [[DBFilesystem sharedFilesystem] maxFileCacheSize];
+            [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:0];
+            [[DBFilesystem sharedFilesystem] deletePath:[self dropboxFilePath] error:nil];
+            [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
+        }
+        else {
+            NSLog(@"Unknown Button");
+        }
+    }
+    
+}
 
 
 - (void) makeSmallTestingDB { //Should this also create the calculated data for the teams?
@@ -113,7 +138,7 @@
 }
 
 - (BOOL)connectedToNetwork  {
-    NSURL* url = [[NSURL alloc] initWithString:@"www.dropbox.com/"];
+    NSURL* url = [[NSURL alloc] initWithString:@"http://this-page-intentionally-left-blank.org/"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     if (data != nil)
         return YES;
@@ -206,6 +231,9 @@
 {
     //dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+        //[self emptyRealmDatabase];
+        
         [self reloadDataWithData:self.dataFromDropbox];
         
         //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
