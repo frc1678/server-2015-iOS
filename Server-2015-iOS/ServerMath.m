@@ -61,7 +61,10 @@
             
             t.calculatedData.reliability = [self reliabilityOfTeam:t];
             t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
+            
+#warning Talk to Colin.
             t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/[self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
+            
             t.calculatedData.reconAbility = [self reconAbilityForTeam:t];
             
             t.calculatedData.reconReliability = [self reconReliabilityForTeam:t];
@@ -71,6 +74,8 @@
             
             t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
             //Choose which one based on data
+            
+#warning Talk to Colin.
             t.calculatedData.avgStackPlacing = [self stackingAbilityTeamNew:t];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
             t.calculatedData.totalScore = [self totalScoreForTeam:t];
@@ -87,12 +92,13 @@
                 }
                 return totalTime/TIMD.uploadedData.reconAcquisitions.count;
             }];
+            
+#warning Talk to Colin.
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
             //t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
             t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
             
-            t.calculatedData.predictedSeed = [self predictedTeleopScoreForTeam:t];
             t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
             t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
             t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
@@ -835,8 +841,8 @@
             if (ra.numReconsAcquired == mostCommonReconsAcquired)
             {
                 //Check that this invalid pointer conversion is not an issue
-                if (ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Middle"]) time += 1.0;
-                else if (!ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Side"]) time += 1.0;
+                if (ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Middle"]) time += ra.time;
+                else if (!ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Side"]) time += ra.time;
             }
         }
         time /= timd.uploadedData.reconAcquisitions.count;

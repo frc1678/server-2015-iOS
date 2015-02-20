@@ -18,6 +18,7 @@
 @interface ViewController () <UIAlertViewDelegate>
 
 @property (nonatomic, strong) NSMutableArray *dataFromDropbox;
+@property (nonatomic, strong) NSTimer *timer;
 
 
 @end
@@ -139,22 +140,41 @@
 
 - (BOOL)connectedToNetwork  {
     NSURL* url = [[NSURL alloc] initWithString:@"http://this-page-intentionally-left-blank.org/"];
+    NSURL* url2 = [[NSURL alloc] initWithString:@"http://http://www.blankwebsite.com/"];
+
     NSData* data = [NSData dataWithContentsOfURL:url];
-    if (data != nil)
+    NSData* data2 = [NSData dataWithContentsOfURL:url2];
+
+    if (data != nil || data2 != nil)
         return YES;
     return NO;
 }
+
+#define WAIT_TIME 10.0
+-(void)checkInternet:(NSTimer *)timer
+{
+    [self.timer invalidate];
+    if(![self connectedToNetwork])
+    {
+        [self logText:@"No Network Connection" color:@"red"];
+
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(checkInternet:) userInfo:nil repeats:NO];        
+    }
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
-    
+    [self checkInternet:self.timer];
+
     @try {
         [super viewDidAppear:animated];
+        
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logNotification:) name:LOG_TEXT_NOTIFICATION object:nil];
         
         self.logTextView.scrollsToTop = NO;
         //self.logTextView.text = @"Hello, I'm the Citrus Server!";
-
+        
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations:) name:CC_REALM_SETUP_NOTIFICATION object:nil];
@@ -178,6 +198,10 @@
     }
 }
 - (IBAction)restart:(id)sender {
+    if(![self connectedToNetwork])
+    {
+        [self logText:@"No Network Connection" color:@"red"];
+    }
     [self startDatabaseOperations:nil];
     
     [self logText:@"Restarting..." color:@"green"];
@@ -250,6 +274,10 @@
 
 
 - (IBAction)Recalculate:(id)sender {
+    if(![self connectedToNetwork])
+    {
+        [self logText:@"No Network Connection" color:@"red"];
+    }
     @try {
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
@@ -333,8 +361,9 @@
             
             self.logTextView.attributedText = logString;
         }
-
-        [self.logTextView scrollRectToVisible:CGRectMake(0, 0, self.logTextView.frame.size.width, self.logTextView.frame.size.height * 20) animated:YES];
+        
+        [self.logTextView scrollRangeToVisible:NSMakeRange([self.logTextView.text length] - 1, 0)];
+        
     });
 }
                        
