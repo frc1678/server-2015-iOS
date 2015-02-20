@@ -95,7 +95,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == InvalidChangePackets)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"Invalid"];
+        return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"];
     }
     else
     {
@@ -172,7 +172,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         return r;
     }
     NSString *rtError = r;
-    
+
     if (!value) {
         NSLog(@"value is not ok");
         rtError = @"Value not OK";
@@ -430,6 +430,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
                             NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
+                            NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
+                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                         }
                         [[RLMRealm defaultRealm] commitWriteTransaction];
                             //
