@@ -23,6 +23,18 @@
 
 @implementation ServerMath
 
+-(BOOL)isInvalidFloat:(float)value
+{
+    if (isnan(value)) {
+        return YES;
+    }
+    if (value > 10000.0 || value < -10000.0)
+    {
+        return YES;
+    }
+    return NO;
+}
+
 #pragma mark - High Level
 -(void)updateCalculatedData
 {
@@ -39,7 +51,6 @@
             if (t.number == 10000) {
                 //
             }
-            //CalculatedTeamData *t.calculatedData = t.calculatedData;
             
             t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
             t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
@@ -90,6 +101,7 @@
                 {
                     totalTime += ra.time;
                 }
+                if (TIMD.uploadedData.reconAcquisitions.count == 0) return 50000.0;
                 return totalTime/TIMD.uploadedData.reconAcquisitions.count;
             }];
             
@@ -118,9 +130,6 @@
         
         NSArray *sortedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
         NSInteger predictedSeed = 1;
-        //NSMutableDictionary *scoresToNumbers = [[NSMutableDictionary alloc] initWithObjects:[self.totalScoresOfTeams allValues] forKeys:[self.totalScoresOfTeams allKeys]];
-        
-        
         
         for (NSNumber *score in sortedScores)
         {
@@ -133,6 +142,7 @@
                 predictedSeed++;
             }
         }
+        
         
         
         [[RLMRealm defaultRealm] commitWriteTransaction];
@@ -347,10 +357,18 @@
 {
     
     float total = 0.0;
+    float playedMatches = [self playedMatchesCountForTeam:team];
     
     for(TeamInMatchData *teamInMatchData in team.matchData)
     {
+        if (block(teamInMatchData, teamInMatchData.match) == 50000.0) {
+            playedMatches -= 1.0;
+            continue;
+        }
         total += block(teamInMatchData, teamInMatchData.match);
+    }
+    if (playedMatches == 0.0) {
+        return 0.0;
     }
     return total/[self playedMatchesCountForTeam:team];
 }
@@ -367,8 +385,13 @@
 - (float)averageCalculatedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(CalculatedTeamData *))block {
     float total = 0.0;
     CalculatedTeamData *cd = team.calculatedData;
+    float playedMatches = [self playedMatchesCountForTeam:team];
+    if (block(cd) == 50000.0) playedMatches -= 1.0;
     total += block(cd);
-    return total/[self playedMatchesCountForTeam:team];
+    if ([self playedMatchesCountForTeam:team] == 0.0) {
+        return 0.0;
+    }
+    return total/playedMatches;
 }
 
 /**
@@ -544,6 +567,9 @@
     {
         if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
     }
+    if ([self playedMatchesCountForTeam:team] == 0.0) {
+        return 0.0;
+    }
     containerSet = 8 * containerSet / [self playedMatchesCountForTeam:team]; //before it was the number of times they moved more than three, now its the points
     
     float robotSet = team.calculatedData.isRobotMoveIntoAutoZonePercentage * 4;
@@ -571,6 +597,9 @@
             {
                 avgCoop += 30.0;
             }
+        }
+        if (TIMD.uploadedData.coopActions.count == 0) {
+            return 50000.0;
         }
         return avgCoop/TIMD.uploadedData.coopActions.count;
     }];
@@ -602,7 +631,13 @@
                     avg += ca.numTotes;
                 }
             }
+            if (timd.uploadedData.coopActions.count == 0) {
+                return 0.0;
+            }
             avg = avg/timd.uploadedData.coopActions.count;
+        }
+        if ([self playedMatchesCountForTeam:team] == 0.0) {
+            return 0.0;
         }
         return avg/[self playedMatchesCountForTeam:team];
     }];
@@ -769,6 +804,9 @@
         {
             if (RA.numReconsAcquired == num) average += RA.time;
         }
+        if (TIMD.uploadedData.coopActions.count == 0) {
+            return 50000.0;
+        }
         return average/TIMD.uploadedData.reconAcquisitions.count;
     }];
 }
@@ -833,9 +871,9 @@
     float time = 0.0;
     NSString *mostCommonAcquisition = [self mostCommonAquisitionTypeForTeam:team];
     NSInteger mostCommonReconsAcquired = [[[mostCommonAcquisition stringByReplacingOccurrencesOfString:@" Side" withString:@""] stringByReplacingOccurrencesOfString:@" Middle" withString:@""] integerValue];
-    
     for (TeamInMatchData *timd in team.matchData)
     {
+        float numCOOPActions = timd.uploadedData.reconAcquisitions.count;
         for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
         {
             if (ra.numReconsAcquired == mostCommonReconsAcquired)
@@ -845,7 +883,14 @@
                 else if (!ra.acquiredMiddle && [mostCommonAcquisition containsString:@"Side"]) time += ra.time;
             }
         }
-        time /= timd.uploadedData.reconAcquisitions.count;
+        if (timd.uploadedData.coopActions.count == 0) {
+            numCOOPActions -= 1.0;
+        }
+        time /= numCOOPActions;
+
+    }
+    if ([self playedMatchesCountForTeam:team] == 100.0) {
+        return 0.0;
     }
     return time /= [self playedMatchesCountForTeam:team];
 }
@@ -861,6 +906,9 @@
     {
         reconsStacked += teamInMatchData.uploadedData.numReconsStacked;
         reconsPickedUp += teamInMatchData.uploadedData.numReconsPickedUp;
+    }
+    if (reconsPickedUp == 0) {
+        return 0.0;
     }
     return reconsStacked / reconsPickedUp;
 }
@@ -909,6 +957,9 @@
  */
 - (float)stackingAbilityTeamNew:(Team *)team
 {
+    if (team.number == 114) {
+        //
+    }
     float numTotesStacked = 0;
     float numReconsStacked = 0;
     float maxFieldToteHeight = 0;
@@ -931,7 +982,9 @@
     4 * (MIN(numTotesStacked / maxFieldToteHeight, numReconsStacked / matches))*(maxReconsStackHeight / matches) +
     6 * (MIN (MIN(numTotesStacked / maxFieldToteHeight, numReconsStacked / matches), MIN(10 - numLitterDropped, numNoodlesContributed / matches) )
          );
-    
+    if ([self isInvalidFloat:score]) {
+        return 0.0;
+    }
     return score;
 }
 
@@ -941,21 +994,10 @@
  */
 -(float)avgNumMaxHeightStacksForTeam:(Team *)team
 {
+    if ([self playedMatchesCountForTeam:team] == 0) {
+        return 0.0;
+    }
     return ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"]/team.calculatedData.avgMaxFieldToteHeight)/[self playedMatchesCountForTeam:team];
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @end
