@@ -620,26 +620,42 @@
         return avgCoop/TIMD.uploadedData.coopActions.count;
     }];
 }*/
--(float)calculatedCOOPScoreForMatch:(Match *)match andTeam:(Team *)team
+-(float)calculatedCOOPScoreForMatch:(Match *)match
 {
-    RLMResults *timdResults = [[TeamInMatchData objectsWhere:[NSString stringWithFormat:@"%@ == %@ AND %@ == %ld", [Match uniqueKey], match.match, [Team uniqueKey], (long)team.number]] firstObject];
-    
-    TeamInMatchData *TIMD = (TeamInMatchData *)timdResults;
-    
     int maxBottomTotes = 0;
-    int maxTopTotes = 0;
-    for (CoopAction *ca in TIMD.uploadedData.coopActions)
+    int totalTopTotes = 0;
+    int totalTotes = 0;
+    for(TeamInMatchData *TIMD in match.teamInMatchDatas)
     {
-        if (!ca.onTop) {
-            maxBottomTotes += MAX(ca.numTotes, maxBottomTotes);
-        }
-        else if(ca.onTop)
+        for (CoopAction *ca in TIMD.uploadedData.coopActions)
         {
-            maxTopTotes += MAX(ca.numTotes, maxTopTotes);
+            if (ca.didSucceed) {
+                if (!ca.onTop) {
+                    maxBottomTotes += MAX(ca.numTotes, maxBottomTotes);
+                }
+                else if(ca.onTop)
+                {
+                    totalTopTotes += ca.numTotes;
+                }
+                totalTotes += ca.numTotes;
+            }
         }
-        
     }
-    
+    if (totalTopTotes + maxBottomTotes >= 4) {
+        return 40.0;
+    }
+    else if(totalTotes >= 4)
+    {
+        return 20.0;
+    }
+    return 0.0;
+}
+
+-(float)predictedCOOPScoreForTeam:(Team *)team
+{
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+        return [self calculatedCOOPScoreForMatch:match];
+    }];
 }
 
 /**
