@@ -48,11 +48,11 @@
 
 @end*/
 
-#define XCODE_COLORS_ESCAPE @"\033["
+/*#define XCODE_COLORS_ESCAPE @"\033["
 
 #define XCODE_COLORS_RESET_FG  XCODE_COLORS_ESCAPE @"fg;" // Clear any foreground color
 #define XCODE_COLORS_RESET_BG  XCODE_COLORS_ESCAPE @"bg;" // Clear any background color
-#define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color
+#define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color*/
 
 @interface ChangePacketGrarRaahraaar ()
 
@@ -246,8 +246,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         }
                         else
                         {
-                            NSLog(@"Error: %ld matches have the name %@", matchResults.count, head);
-                            rtError = [NSString stringWithFormat:@"Error: %ld matches have the name %@", matchResults.count, head];
+                            NSLog(@"Error: %ld matches have the name %@", (unsigned long)matchResults.count, head);
+                            rtError = [NSString stringWithFormat:@"Error: %ld matches have the name %@", (unsigned long)matchResults.count, head];
                             return rtError;
                         }
                     }
@@ -365,7 +365,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
             if(file.open) [file close];
             
-            dispatch_async(dispatch_get_main_queue(), ^{
+            //dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = nil;
                 if (data == nil)
                 {
@@ -428,7 +428,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
-                            NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
+                            //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
                             NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
@@ -481,12 +481,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 
                 
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                     //Moving change packet into processedChangePackets directory in DB
                     NSString *name = [[NSString alloc] init];
                     name = fileInfo.path.name;
                     NSLog(@"Finished Processing %@", name);
-                    NSError *error = nil;
+                    error = nil;
                     @try {
                         NSString *toName = name;
                         while (true) {
@@ -505,17 +505,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         NSLog(@"%@", exception);
                         NSLog(@"%@",error);
                     }
-                });
-            });
+                //});
+            //});
             
             
             
         }
 
         
-        dispatch_async(dispatch_get_main_queue(), ^{
             [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
-        });
+    
 
     });
     
@@ -524,8 +523,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
 
-    ServerMath *calculator = [[ServerMath alloc] init];
-    [calculator beginMath];
-}
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        ServerMath *calculator = [[ServerMath alloc] init];
+        [calculator beginMath];
+
+    });
+    }
 
 @end

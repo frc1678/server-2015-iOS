@@ -115,7 +115,8 @@
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
-            Log(logString, @"green");
+                Log(logString, @"green");
+            
             
             //Update UI
             
@@ -149,12 +150,12 @@
 
 -(void)updateCalculatedMatchData
 {
-    [[RLMRealm defaultRealm] beginWriteTransaction];
     RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
     
     for (Match *m in allMatches)
     {
-        
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+
         NSMutableArray *b = [[NSMutableArray alloc] init];
         NSMutableArray *r = [[NSMutableArray alloc] init];
         for (Team *t in m.blueTeams)
@@ -173,10 +174,11 @@
         m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
         m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
         
-        NSLog(@"Match: %@ has been calculated.", m.match);
-        
+        NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
+        Log(logString, @"green");
+        [[RLMRealm defaultRealm] commitWriteTransaction];
+
     }
-    [[RLMRealm defaultRealm] commitWriteTransaction];
     self.currentlyCalculating = NO;
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
@@ -257,7 +259,6 @@
     
     NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
     NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
-    dispatch_async(dispatch_get_main_queue(), ^{
         @try {
             [self updateCalculatedData];
             
@@ -265,7 +266,6 @@
         @catch (NSException *exception) {
             NSLog(@"%@", exception);
         }
-    });
     
     
 }
@@ -620,6 +620,8 @@
         return avgCoop/TIMD.uploadedData.coopActions.count;
     }];
 }*/
+
+
 -(float)calculatedCOOPScoreForMatch:(Match *)match
 {
     int maxBottomTotes = 0;
@@ -665,7 +667,29 @@
  */
 -(float)predictedCOOPScoreForMatch:(Match *)match
 {
-    return [self avgCoopForAlliance:match.redTeams andOtherAlliance:match.blueTeams];
+    float maxAverageCOOP = 0.0;
+    float secondMaxAverageCOOP = 0.0;
+    float avgAvgCOOP;
+    NSMutableArray *avgCoopScores = [[NSMutableArray alloc] init];
+    for (Team *team in match.blueTeams)
+    {
+        [avgCoopScores addObject:@([self predictedCOOPScoreForTeam:team])];
+    }
+    for (Team *team in match.redTeams)
+    {
+        [avgCoopScores addObject:@([self predictedCOOPScoreForTeam:team])];
+    }
+    for(id score in avgCoopScores)
+    {
+        maxAverageCOOP = MAX([score floatValue], maxAverageCOOP);
+    }
+    [avgCoopScores removeObject:@(maxAverageCOOP)];
+    for(id score in avgCoopScores)
+    {
+        secondMaxAverageCOOP = MAX([score floatValue], secondMaxAverageCOOP);
+    }
+    avgAvgCOOP = (maxAverageCOOP + secondMaxAverageCOOP)/2;
+    return avgAvgCOOP;
 }
 
 /**

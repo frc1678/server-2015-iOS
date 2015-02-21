@@ -198,10 +198,7 @@
     }
 }
 - (IBAction)restart:(id)sender {
-    if(![self connectedToNetwork])
-    {
-        [self logText:@"No Network Connection" color:@"red"];
-    }
+    [self checkInternet:self.timer];
     [self startDatabaseOperations:nil];
     
     [self logText:@"Restarting..." color:@"green"];
@@ -216,7 +213,7 @@
 }
 
 - (void)reloadDataWithData:(NSMutableArray *)data {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    //dispatch_async(dispatch_get_main_queue(), ^{
         @try {
             RLMResults *teamsFromDB = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
             NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
@@ -235,7 +232,7 @@
             [self logException:exception withMessage:@"Reload Data From Realm caused the exception" color:@"blue"];
         }
 
-    });
+    //});
     
     
 }
@@ -274,13 +271,14 @@
 
 
 - (IBAction)Recalculate:(id)sender {
-    if(![self connectedToNetwork])
-    {
-        [self logText:@"No Network Connection" color:@"red"];
-    }
+    [self checkInternet:self.timer];
+
     @try {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
         ServerMath *math = [[ServerMath alloc] init];
         [math beginMath];
+        });
         [self logText:@"Recalculating." color:@"green"];
 
     }
