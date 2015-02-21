@@ -73,8 +73,7 @@
             t.calculatedData.reliability = [self reliabilityOfTeam:t];
             t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
             
-#warning Talk to Colin.
-            t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/[self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
+            t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"] + [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]);
             
             t.calculatedData.reconAbility = [self reconAbilityForTeam:t];
             
@@ -86,8 +85,7 @@
             t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
             //Choose which one based on data
             
-#warning Talk to Colin.
-            t.calculatedData.avgStackPlacing = [self stackingAbilityTeamNew:t];
+            t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
             t.calculatedData.totalScore = [self totalScoreForTeam:t];
             t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
@@ -105,7 +103,6 @@
                 return totalTime/TIMD.uploadedData.reconAcquisitions.count;
             }];
             
-#warning Talk to Colin.
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
             //t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
@@ -370,7 +367,7 @@
     if (playedMatches == 0.0) {
         return 0.0;
     }
-    return total/[self playedMatchesCountForTeam:team];
+    return total/playedMatches;
 }
 
 /**
@@ -426,6 +423,25 @@
         }
         return 0.0;
     }];
+}
+
+-(float)loopThrewCOOPActionsForTeam:(Team *)team WithDatapointBlock:(float(^)(CoopAction *, Match *))block
+
+{
+    float total = 0.0;
+    float playedMatches = [self playedMatchesCountForTeam:team];
+    
+    for(TeamInMatchData *teamInMatchData in team.matchData)
+    {
+        for(CoopAction *ca in teamInMatchData.uploadedData.coopActions)
+        {
+            total += block(ca, teamInMatchData.match);
+        }
+    }
+    if (playedMatches == 0.0) {
+        return 0.0;
+    }
+    return total/playedMatches;
 }
 
 #pragma mark - Predicted Scores
@@ -587,7 +603,7 @@
  *
  *  @return The average # points.
  */
--(float)predictedCOOPScoreForTeam:(Team *)team
+/*-(float)predictedCOOPScoreForTeam:(Team *)team
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         float avgCoop = 0.0;
@@ -603,6 +619,27 @@
         }
         return avgCoop/TIMD.uploadedData.coopActions.count;
     }];
+}*/
+-(float)calculatedCOOPScoreForMatch:(Match *)match andTeam:(Team *)team
+{
+    RLMResults *timdResults = [[TeamInMatchData objectsWhere:[NSString stringWithFormat:@"%@ == %@ AND %@ == %ld", [Match uniqueKey], match.match, [Team uniqueKey], (long)team.number]] firstObject];
+    
+    TeamInMatchData *TIMD = (TeamInMatchData *)timdResults;
+    
+    int maxBottomTotes = 0;
+    int maxTopTotes = 0;
+    for (CoopAction *ca in TIMD.uploadedData.coopActions)
+    {
+        if (!ca.onTop) {
+            maxBottomTotes += MAX(ca.numTotes, maxBottomTotes);
+        }
+        else if(ca.onTop)
+        {
+            maxTopTotes += MAX(ca.numTotes, maxTopTotes);
+        }
+        
+    }
+    
 }
 
 /**
