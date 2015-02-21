@@ -28,7 +28,7 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"pitScouter.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     
@@ -178,7 +178,6 @@
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startDatabaseOperations:) name:CC_REALM_SETUP_NOTIFICATION object:nil];
-        //[RLMRealm setDefaultRealmPath:@"realm.realm"];
         NSLog(@"View did appear%@", CC_DROPBOX_APP_DELEGATE);
         [CC_DROPBOX_APP_DELEGATE possiblyLinkFromController:self];
         [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];

@@ -69,6 +69,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     UnprocessedChangePackets,
     ProcessedChangePackets,
     RealmDotRealm,
+    PitScoutDotRealm,
     InvalidChangePackets
 };
 
@@ -92,6 +93,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     {
         //return @"/Database File/realm.realm";
         return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+    }
+    else if(filePath == PitScoutDotRealm)
+    {
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"pitScouter.realm"];
+
     }
     else if(filePath == InvalidChangePackets)
     {

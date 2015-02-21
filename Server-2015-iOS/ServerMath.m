@@ -12,177 +12,22 @@
 #import "ChangePacketGrarRaahraaar.h"
 #import "ViewController.h"
 #import "Logging.h"
+#import "HTMLParser.h"
 
 @interface ServerMath ()
 
 @property (nonatomic, strong) NSDictionary *autoActionDictionary;
 @property (nonatomic) BOOL currentlyCalculating;
+@property (nonatomic, strong) NSMutableDictionary *predictedTotalScoresOfTeams;
 @property (nonatomic, strong) NSMutableDictionary *totalScoresOfTeams;
 
 @end
 
 @implementation ServerMath
 
--(BOOL)isInvalidFloat:(float)value
-{
-    if (isnan(value)) {
-        return YES;
-    }
-    if (value > 10000.0 || value < -10000.0)
-    {
-        return YES;
-    }
-    return NO;
-}
+
 
 #pragma mark - High Level
--(void)updateCalculatedData
-{
-    if (!self.currentlyCalculating) {
-        self.currentlyCalculating = YES;
-        
-        self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
-        
-        [[RLMRealm defaultRealm] beginWriteTransaction];
-        
-        RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
-        for (Team *t in allTeams)
-        {
-            if (t.number == 10000) {
-                //
-            }
-            
-            t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
-            t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
-            t.calculatedData.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
-            t.calculatedData.avgNumStacksDamaged = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numStacksDamaged"];
-            t.calculatedData.avgNumTotesMoveIntoAutoZone = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesMovedIntoAutoZone"];
-            
-            t.calculatedData.avgNumNoodlesContributed = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
-            t.calculatedData.avgNumLitterThrownToOtherSide = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterThrownToOtherSide"];
-            t.calculatedData.avgNumLitterDropped = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
-            t.calculatedData.avgNumReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsPickedUp"];
-            t.calculatedData.avgNumReconsStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsStacked"];
-            
-            t.calculatedData.avgNumReconLevels = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconLevels"];
-            t.calculatedData.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
-            t.calculatedData.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
-            t.calculatedData.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
-            t.calculatedData.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
-            
-            t.calculatedData.reliability = [self reliabilityOfTeam:t];
-            t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
-            
-            t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"] + [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]);
-            
-            t.calculatedData.reconAbility = [self reconAbilityForTeam:t];
-            
-            t.calculatedData.reconReliability = [self reconReliabilityForTeam:t];
-            t.calculatedData.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
-            t.calculatedData.avgNumMaxHeightStacks = [self avgNumMaxHeightStacksForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
-            t.calculatedData.avgAgility = [self avgDriverAbilityForTeam:t];
-            
-            t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
-            //Choose which one based on data
-            
-            t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
-            //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
-            t.calculatedData.totalScore = [self totalScoreForTeam:t];
-            t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
-            self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
-            
-            
-            t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-                //Make sure this implicit conversion is not causing problems
-                float totalTime = 0.0;
-                for (ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
-                {
-                    totalTime += ra.time;
-                }
-                if (TIMD.uploadedData.reconAcquisitions.count == 0) return 50000.0;
-                return totalTime/TIMD.uploadedData.reconAcquisitions.count;
-            }];
-            
-            t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
-            t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
-            //t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
-            t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
-            
-            t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
-            t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
-            t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
-            t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
-            
-            NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
-            NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
-                Log(logString, @"green");
-            
-            
-            //Update UI
-            
-            
-            
-            
-        }
-        NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.totalScoresOfTeams allValues]] array] mutableCopy];
-        
-        NSArray *sortedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
-        NSInteger predictedSeed = 1;
-        
-        for (NSNumber *score in sortedScores)
-        {
-            NSArray *numbers = [self.totalScoresOfTeams allKeysForObject:score];
-            for (NSNumber *number in numbers)
-            {
-                RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
-                Team *tm = (Team *)[tq firstObject];
-                tm.calculatedData.predictedSeed = predictedSeed;
-                predictedSeed++;
-            }
-        }
-        
-        
-        
-        [[RLMRealm defaultRealm] commitWriteTransaction];
-        [self updateCalculatedMatchData];
-    }
-}
-
--(void)updateCalculatedMatchData
-{
-    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
-    
-    for (Match *m in allMatches)
-    {
-        [[RLMRealm defaultRealm] beginWriteTransaction];
-
-        NSMutableArray *b = [[NSMutableArray alloc] init];
-        NSMutableArray *r = [[NSMutableArray alloc] init];
-        for (Team *t in m.blueTeams)
-        {
-            [b addObject:t];
-        }
-        for (Team *t in m.redTeams)
-        {
-            [r addObject:t];
-        }
-        
-        NSArray *redAlliance = [[NSArray alloc] initWithArray:r];
-        NSArray *blueAlliance = [[NSArray alloc] initWithArray:b];
-        m.calculatedData.predictedRedScore = [self predictedElimScoreForAlliance:(NSArray *)redAlliance] + [self predictedCOOPScoreForMatch:m];
-        m.calculatedData.predictedBlueScore = [self predictedElimScoreForAlliance:(NSArray *)blueAlliance] + [self predictedCOOPScoreForMatch:m];
-        m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
-        m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
-        
-        NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
-        Log(logString, @"green");
-        [[RLMRealm defaultRealm] commitWriteTransaction];
-
-    }
-    self.currentlyCalculating = NO;
-    
-    //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
-}
 
 - (void)beginMath
 {
@@ -248,29 +93,246 @@
     
     RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
     RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"9999"]];
-    RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
+    //RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
     
     Team *team10000 = (Team *)[team10000Query firstObject];
     Team *team10001 = (Team *)[team10001Query firstObject];
-    Team *team10002 = (Team *)[team10002Query firstObject];
+    //Team *team10002 = (Team *)[team10002Query firstObject];
     
     //NSArray *alliance = @[team10000, team10001, team10002];
     
     
     NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
     NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
-        @try {
-            [self updateCalculatedData];
-            
-        }
-        @catch (NSException *exception) {
-            NSLog(@"%@", exception);
-        }
+    @try {
+        [self updateCalculatedData];
+        
+    }
+    @catch (NSException *exception) {
+        NSLog(@"%@", exception);
+    }
     
     
 }
 
+
+-(void)updateCalculatedData
+{
+    if (!self.currentlyCalculating) {
+        self.currentlyCalculating = YES;
+        
+        self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
+        self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+        
+        RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
+        for (Team *t in allTeams)
+        {
+            if (t.number == 10000) {
+                //
+            }
+            
+            t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
+            t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
+            t.calculatedData.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
+            t.calculatedData.avgNumStacksDamaged = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numStacksDamaged"];
+            t.calculatedData.avgNumTotesMoveIntoAutoZone = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesMovedIntoAutoZone"];
+            
+            t.calculatedData.avgNumNoodlesContributed = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
+            t.calculatedData.avgNumLitterThrownToOtherSide = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterThrownToOtherSide"];
+            t.calculatedData.avgNumLitterDropped = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"];
+            t.calculatedData.avgNumReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsPickedUp"];
+            t.calculatedData.avgNumReconsStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconsStacked"];
+            
+            t.calculatedData.avgNumReconLevels = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numReconLevels"];
+            t.calculatedData.avgMaxReconHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxReconHeight"];
+            t.calculatedData.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
+            t.calculatedData.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
+            t.calculatedData.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
+            
+            t.calculatedData.reliability = [self reliabilityOfTeam:t];
+            t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
+            if([self isInvalidFloat:[self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"] + [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]) ])
+            {
+                t.calculatedData.noodleReliability = 1.0;
+            }
+            else
+            {
+                t.calculatedData.noodleReliability = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"] + [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]);
+            }
+            
+            
+            t.calculatedData.reconAbility = [self reconAbilityForTeam:t];
+            
+            t.calculatedData.reconReliability = [self reconReliabilityForTeam:t];
+            t.calculatedData.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
+            t.calculatedData.avgNumMaxHeightStacks = [self avgNumMaxHeightStacksForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
+            t.calculatedData.avgAgility = [self avgDriverAbilityForTeam:t];
+            
+            t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
+            //Choose which one based on data
+            
+            t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
+            //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
+            t.calculatedData.totalScore = [self totalScoreForTeam:t];
+            t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
+            self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
+            self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
+            
+            
+            t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+                //Make sure this implicit conversion is not causing problems
+                float totalTime = 0.0;
+                for (ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+                {
+                    totalTime += ra.time;
+                }
+                if (TIMD.uploadedData.reconAcquisitions.count == 0) return 50000.0;
+                return totalTime/TIMD.uploadedData.reconAcquisitions.count;
+            }];
+            
+            t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
+            t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
+            //t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
+            t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
+            
+            t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
+            t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
+            t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
+            t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
+            
+            NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
+            NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
+                Log(logString, @"green");
+            
+            
+            //Update UI
+            
+            
+            
+            
+        }
+        
+        //Calculating Predicted Seeds
+        NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.predictedTotalScoresOfTeams allValues]] array] mutableCopy];
+        
+        NSArray *sortedPredictedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        NSInteger predictedSeed = 1;
+        
+        for (NSNumber *predictedScore in sortedPredictedScores)
+        {
+            NSArray *numbers = [self.predictedTotalScoresOfTeams allKeysForObject:predictedScore];
+            for (NSNumber *number in numbers)
+            {
+                RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
+                Team *tm = (Team *)[tq firstObject];
+                tm.calculatedData.predictedSeed = predictedSeed;
+                predictedSeed++;
+            }
+        }
+        //Calculating actual Seeds
+        NSMutableArray *totalScores = [[[NSOrderedSet orderedSetWithArray:[self.totalScoresOfTeams allValues]] array] mutableCopy];
+        
+        NSArray *sortedScores = [[[totalScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        NSInteger seed = 1;
+        
+        for (NSNumber *score in sortedScores)
+        {
+            NSArray *numbers = [self.predictedTotalScoresOfTeams allKeysForObject:score];
+            for (NSNumber *number in numbers)
+            {
+                RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
+                Team *tm = (Team *)[tq firstObject];
+                tm.seed = seed;
+                seed++;
+            }
+        }
+        
+        
+        [[RLMRealm defaultRealm] commitWriteTransaction];
+        [self updateCalculatedMatchData];
+    }
+}
+
+-(void)updateCalculatedMatchData
+{
+    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
+    
+    for (Match *m in allMatches)
+    {
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+
+        NSMutableArray *b = [[NSMutableArray alloc] init];
+        NSMutableArray *r = [[NSMutableArray alloc] init];
+        for (Team *t in m.blueTeams)
+        {
+            [b addObject:t];
+        }
+        for (Team *t in m.redTeams)
+        {
+            [r addObject:t];
+        }
+        
+        NSArray *redAlliance = [[NSArray alloc] initWithArray:r];
+        NSArray *blueAlliance = [[NSArray alloc] initWithArray:b];
+        m.calculatedData.predictedRedScore = [self predictedElimScoreForAlliance:(NSArray *)redAlliance] + [self predictedCOOPScoreForMatch:m];
+        m.calculatedData.predictedBlueScore = [self predictedElimScoreForAlliance:(NSArray *)blueAlliance] + [self predictedCOOPScoreForMatch:m];
+        m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
+        m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
+        
+        NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
+        Log(logString, @"green");
+        [[RLMRealm defaultRealm] commitWriteTransaction];
+
+    }
+    self.currentlyCalculating = NO;
+    
+    //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
+}
+
+#define SEED_URL @"http://www2.usfirst.org/2014comp/events/TXDA/rankings.html"
+-(void)getSeeds
+{
+    
+    
+    /* WOOOOOOO, NOT PARSING HTML!!!!!!!!!
+    NSURL *url = [NSURL URLWithString:SEED_URL];
+    NSError *error = nil;
+    NSStringEncoding encoding;
+    NSString *rawHTML = [[NSString alloc] initWithContentsOfURL:url
+                                                     usedEncoding:&encoding
+                                                            error:&error];
+    
+    HTMLParser *parser = [[HTMLParser alloc] initWithString:rawHTML error:&error];
+    
+    if (error) {
+        NSLog(@"Error: %@", error);
+        return;
+    }
+    
+    HTMLNode *HTMLbody = [parser body];
+    HTMLNode *table = [HTMLbody findChildrenWithAttribute:@"style" matchingName:@"background: black none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial; width: 100%;" allowPartial:NO][1];
+    
+    HTMLNode *tableBody = [table findChildTag:@"tbody"];
+    */
+    
+    
+}
+
+
 #pragma mark - General Methods
+
+-(BOOL)isInvalidFloat:(float)value
+{
+    if (isnan(value)) {
+        return YES;
+    }
+    if (value > 10000.0 || value < -10000.0)
+    {
+        return YES;
+    }
+    return NO;
+}
 /**
  *  General Maximization function
  *
@@ -966,7 +1028,8 @@
         time /= numCOOPActions;
 
     }
-    if ([self playedMatchesCountForTeam:team] == 100.0) {
+    
+    if ([self isInvalidFloat:(time /= [self playedMatchesCountForTeam:team])]) {
         return 0.0;
     }
     return time /= [self playedMatchesCountForTeam:team];
