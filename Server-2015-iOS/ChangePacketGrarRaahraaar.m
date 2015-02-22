@@ -87,7 +87,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == PitScoutDotRealm)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"pitScouter.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database.realm"];
 
     }
     else if(filePath == InvalidChangePackets)
@@ -322,6 +322,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
         NSError *error = nil;
         if (error) {
@@ -385,7 +386,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 NSString *filterString = nil;
                 if([class conformsToProtocol:@protocol(UniqueKey)]) {
                     NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
-                    RLMObjectSchema *schema = [RLMRealm defaultRealm].schema[className];
+                    RLMObjectSchema *schema = realm.schema[className];
                     RLMPropertyType uniqueValueType = schema[uniqueKey].type;
                     
                     if (uniqueValueType == RLMPropertyTypeString) {
@@ -421,7 +422,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
                         //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                        RLMRealm *realm = [RLMRealm defaultRealm];
+                        //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
@@ -466,6 +467,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         utd.pitOrganization = @"";
                         utd.drivetrain = @"";
                         utd.typesWheels = @"";
+                        utd.programmingLanguage = @"";
+                        utd.pitNotes = @"";
+                        utd.weight = 0;
+                        utd.withholdingAllowanceUsed = 0;
+                        utd.canMountMechanism = false;
                         t.uploadedData = utd;
                         
                         [realm addObject:t];

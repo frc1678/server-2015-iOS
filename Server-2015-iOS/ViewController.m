@@ -28,7 +28,7 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"pitScouter.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     
