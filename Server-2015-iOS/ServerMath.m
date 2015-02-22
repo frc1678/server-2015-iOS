@@ -807,7 +807,7 @@
     {
         totalTotesPredictedForOtherAlliance += [self avgTotesInCOOPForTeam:t];
     }
-    totalTotesPredictedForAlliance = MIN(totalTotesPredictedForOtherAlliance, 3);
+    totalTotesPredictedForOtherAlliance = MIN(totalTotesPredictedForOtherAlliance, 3);
     
     return MIN(((totalTotesPredictedForOtherAlliance + totalTotesPredictedForAlliance)/4) * 40, 40);
 }
@@ -826,7 +826,7 @@
 
 -(float)predictedTeleopScoreForAlliance:(NSArray *)alliance
 {
-    float predictedTeleop;
+    float predictedTeleop = 0.0;
     for (Team *t in alliance)
     {
         predictedTeleop += [self predictedTeleopScoreForTeam:t];
@@ -961,12 +961,12 @@
 
 - (NSString *)mostCommonAquisitionTypeForTeam:(Team *)team
 {
-    int *oneCount;
-    int *twoCount;
-    int *threeCount;
-    int *fourCount;
-    int *sideCount;
-    int *middleCount;
+    int *oneCount = 0;
+    int *twoCount = 0;
+    int *threeCount = 0;
+    int *fourCount = 0;
+    int *sideCount = 0;
+    int *middleCount = 0;
     for (TeamInMatchData *timd in team.matchData)
     {
         for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
