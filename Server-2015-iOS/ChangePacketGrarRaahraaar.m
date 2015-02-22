@@ -16,19 +16,9 @@
 #import "ServerMath.h"
 #import "Logging.h"
 
-/*
-@interface RLMProperty (DefaultValue)
-- (id) defaultValue;
-@end
- */
 
-/*@implementation RLMProperty (DefaultValue)
+@implementation RLMProperty (DefaultValue)
 
-*
- *  Sorts the input data by type. If bool, double, float, or int returns [NSNumber numberWithInt:0]. If array, data, date, or string initializes them.
- *
- *  @return returns a default object of the appropriate type
- 
 - (id) defaultValue
 {
     if(self.type == RLMPropertyTypeBool || self.type == RLMPropertyTypeDouble || self.type == RLMPropertyTypeFloat || self.type == RLMPropertyTypeInt) {
@@ -46,7 +36,8 @@
     }
 }
 
-@end*/
+@end
+
 
 /*#define XCODE_COLORS_ESCAPE @"\033["
 
