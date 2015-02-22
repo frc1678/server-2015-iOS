@@ -251,7 +251,7 @@
             [realm commitWriteTransaction];
             
             //Update UI
-            
+            [self wait];
             
             
             

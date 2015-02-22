@@ -421,7 +421,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
                         //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        RLMRealm *realm = [RLMRealm defaultRealm];
+                        [realm beginWriteTransaction];
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
@@ -430,7 +431,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                         }
-                        [[RLMRealm defaultRealm] commitWriteTransaction];
+                        [realm commitWriteTransaction];
                             //
                         
                         //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
@@ -441,8 +442,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     NSLog(@"Condition %@ not found in database!", filterString);
                     //make it so that if the objects dont exist we can create them
                     if ([className isEqual: @"Team"]) {
-                        
-                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        RLMRealm *realm = [RLMRealm defaultRealm];
+                        [realm beginWriteTransaction];
                         Team *t = [[Team alloc] init];
                         t.name = @"noName";
                         t.number = [uniqueValue intValue];
@@ -467,8 +468,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         utd.typesWheels = @"";
                         t.uploadedData = utd;
                         
-                        [[RLMRealm defaultRealm] addObject:t];
-                        [[RLMRealm defaultRealm] commitWriteTransaction];
+                        [realm addObject:t];
+                        [realm commitWriteTransaction];
                         
                         
                         
@@ -510,7 +511,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
 
         
-            [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+            [self recalculateValuesInRealm:nil];
     
 
     });
