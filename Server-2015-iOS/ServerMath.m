@@ -20,9 +20,33 @@
 @property (nonatomic, strong) NSMutableDictionary *predictedTotalScoresOfTeams;
 @property (nonatomic, strong) NSMutableDictionary *totalScoresOfTeams;
 
+@property (nonatomic, strong) NSMutableDictionary *probabilityThatTeamMemo;
+@property (nonatomic, strong) NSMutableDictionary *predictedTeleopScoreForTeamMemo;
 @end
 
 @implementation ServerMath
+
+- (NSMutableDictionary *)probabilityThatTeamMemo
+{
+    if(!_probabilityThatTeamMemo) {
+        _probabilityThatTeamMemo = [[NSMutableDictionary alloc] init];
+    }
+    return _probabilityThatTeamMemo;
+}
+
+- (NSMutableDictionary *)predictedTeleopScoreForTeamMemo
+{
+    if(!_predictedTeleopScoreForTeamMemo) {
+        _predictedTeleopScoreForTeamMemo = [[NSMutableDictionary alloc] init];
+    }
+    return _predictedTeleopScoreForTeamMemo;
+}
+
+- (void) clearMemos
+{
+    [self.probabilityThatTeamMemo removeAllObjects];
+    [self.predictedTeleopScoreForTeamMemo removeAllObjects];
+}
 
 
 
@@ -118,12 +142,13 @@
 -(void)updateCalculatedData
 {
     if (!self.currentlyCalculating) {
+        [self clearMemos];
+        
         self.currentlyCalculating = YES;
         
         self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
         self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
         RLMRealm *realm = [RLMRealm defaultRealm];
-        [realm beginWriteTransaction];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
         for (Team *t in allTeams)
@@ -132,6 +157,8 @@
                 //
             }
             
+            [realm beginWriteTransaction];
+
             t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
             t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
             t.calculatedData.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
@@ -183,7 +210,8 @@
             t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
                 //Make sure this implicit conversion is not causing problems
                 float totalTime = 0.0;
-                for (ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+                RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+                for (ReconAcquisition *ra in recons)
                 {
                     totalTime += ra.time;
                 }
@@ -205,6 +233,7 @@
             NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
                 Log(logString, @"green");
             
+            [realm commitWriteTransaction];
             
             //Update UI
             
@@ -226,7 +255,11 @@
             {
                 RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
                 Team *tm = (Team *)[tq firstObject];
+                
+                [realm beginWriteTransaction];
                 tm.calculatedData.predictedSeed = predictedSeed;
+                [realm commitWriteTransaction];
+                
                 predictedSeed++;
             }
         }
@@ -243,14 +276,19 @@
             {
                 RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
                 Team *tm = (Team *)[tq firstObject];
+                
+                [realm beginWriteTransaction];
                 tm.seed = seed;
+                [realm commitWriteTransaction];
+                
                 seed++;
             }
         }
         
         
-        [realm commitWriteTransaction];
         [self updateCalculatedMatchData];
+//        [realm commitWriteTransaction];
+
     }
 }
 
@@ -261,29 +299,36 @@
     
     for (Match *m in allMatches)
     {
-        [realm beginWriteTransaction];
 
+        RLMArray<Team> *blueTeams = m.blueTeams;
+        RLMArray<Team> *redTeams = m.redTeams;
+        
         NSMutableArray *b = [[NSMutableArray alloc] init];
         NSMutableArray *r = [[NSMutableArray alloc] init];
-        for (Team *t in m.blueTeams)
+        for (Team *t in blueTeams)
         {
             [b addObject:t];
         }
-        for (Team *t in m.redTeams)
+        for (Team *t in redTeams)
         {
             [r addObject:t];
         }
         
         NSArray *redAlliance = [[NSArray alloc] initWithArray:r];
         NSArray *blueAlliance = [[NSArray alloc] initWithArray:b];
+        
+        [realm beginWriteTransaction];
+
         m.calculatedData.predictedRedScore = [self predictedElimScoreForAlliance:(NSArray *)redAlliance] + [self predictedCOOPScoreForMatch:m];
         m.calculatedData.predictedBlueScore = [self predictedElimScoreForAlliance:(NSArray *)blueAlliance] + [self predictedCOOPScoreForMatch:m];
         m.calculatedData.bestRedAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)redAlliance];
         m.calculatedData.bestBlueAutoStrategy = [self bestAutoStrategyForAlliance:(NSArray *)blueAlliance];
         
+        [realm commitWriteTransaction];
+        
         NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
         Log(logString, @"green");
-        [realm commitWriteTransaction];
+//        [realm commitWriteTransaction];
 
     }
     self.currentlyCalculating = NO;
@@ -358,7 +403,7 @@
  *
  *  @return The object that was found to be the 'max'
  */
-- (id)findMaximumObject:(NSArray *)xs function:(float(^)(id val))f {
+- (NSArray *)findMaximumObject:(NSArray *)xs function:(float(^)(id val))f {
     float max = -FLT_MAX;
     id maxObject = nil;
     for (id x in xs) {
@@ -369,7 +414,7 @@
             max = y;
         }
     }
-    return maxObject;
+    return @[maxObject, @(max)];
 }
 
 /**
@@ -397,14 +442,17 @@
     return minObject;
 }
 
+#warning This algorithm is WRONG - it will discard a match that a team plays in if either alliance gets 0 points.
 - (float)playedMatchesCountForTeam:(Team *)team
 {
-    float totalplayed = 0.0;
-    for (TeamInMatchData *timd in team.matchData)
-    {
-        if (timd.match.officialBlueScore > 0 && timd.match.officialRedScore > 0) totalplayed += 1.0;
-    }
-    return totalplayed;
+//    float totalplayed = 0.0;
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    return (float)[[matchData objectsWhere:@"match.officialBlueScore > 0 && match.officialRedScore > 0"] count];
+//    for (TeamInMatchData *timd in matchData)
+//    {
+//        if (timd.match.officialBlueScore > 0 && timd.match.officialRedScore > 0) totalplayed += 1.0;
+//    }
+//    return totalplayed;
 }
 
 /**
@@ -420,14 +468,18 @@
     
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
     
-    for(TeamInMatchData *teamInMatchData in team.matchData)
+    for(TeamInMatchData *teamInMatchData in matchData)
     {
-        if (block(teamInMatchData, teamInMatchData.match) == 50000.0) {
+        float result = block(teamInMatchData, teamInMatchData.match);
+        
+#warning == 50000.0 is a not great idea technically, and looks really messy
+        if (result == 50000.0) {
             playedMatches -= 1.0;
             continue;
         }
-        total += block(teamInMatchData, teamInMatchData.match);
+        total += result;
     }
     if (playedMatches == 0.0) {
         return 0.0;
@@ -448,9 +500,13 @@
     float total = 0.0;
     CalculatedTeamData *cd = team.calculatedData;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    if (block(cd) == 50000.0) playedMatches -= 1.0;
-    total += block(cd);
-    if ([self playedMatchesCountForTeam:team] == 0.0) {
+    
+    float result = block(cd);
+    
+    
+    if (result == 50000.0) playedMatches -= 1.0;
+    total += result;
+    if (playedMatches == 0.0) {
         return 0.0;
     }
     return total/playedMatches;
@@ -495,10 +551,11 @@
 {
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    
-    for(TeamInMatchData *teamInMatchData in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for(TeamInMatchData *teamInMatchData in matchData)
     {
-        for(CoopAction *ca in teamInMatchData.uploadedData.coopActions)
+        RLMArray<CoopAction> *coopActions = teamInMatchData.uploadedData.coopActions;
+        for(CoopAction *ca in coopActions)
         {
             total += block(ca, teamInMatchData.match);
         }
@@ -518,7 +575,7 @@
     __weak id weakSelf = self;
     return [self findMaximumObject:[self.autoActionDictionary allKeys] function:^float(id val) {
         return [weakSelf lambda:alliance forAutoConditionString:val];
-    }];
+    }][0];
 }
 
 
@@ -527,6 +584,13 @@
  */
 -(float)probabilityThatTeam:(Team *)team doesActionFromActionString:(NSString *)action
 {
+    NSString *memoKey = [NSString stringWithFormat:@"%d-%@", (int)team.number, action];
+    NSNumber *memoResult = self.probabilityThatTeamMemo[memoKey];
+    
+    if (memoResult) {
+        return [memoResult floatValue];
+    }
+    
     float totalProbability = 1.0;
     NSString *totesToAutoZoneKeyPath = @"uploadedData.numTotesMovedIntoAutoZone";
     NSString *threeToteStackKeyPath = @"uploadedData.stackedToteSet";
@@ -545,7 +609,8 @@
     //ARG, ABSTRACT THIS!!!!
     else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
-        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for(ReconAcquisition *ra in recons)
         {
             reconsFromStep += ra.numReconsAcquired;
         }
@@ -558,7 +623,8 @@
     }];
     else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
-        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for(ReconAcquisition *ra in recons)
         {
             reconsFromStep += ra.numReconsAcquired;
         }
@@ -571,7 +637,8 @@
     }];
     else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
-        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for(ReconAcquisition *ra in recons)
         {
             reconsFromStep += ra.numReconsAcquired;
         }
@@ -584,7 +651,8 @@
     }];
     else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         int reconsFromStep = 0;
-        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for(ReconAcquisition *ra in recons)
         {
             reconsFromStep += ra.numReconsAcquired;
         }
@@ -595,6 +663,9 @@
         }
         return 0.0;
     }];
+    
+    self.probabilityThatTeamMemo[memoKey] = @(totalProbability);
+    
     return totalProbability;
 }
 
@@ -619,12 +690,12 @@
     // Actions are sorted in order of difficulty, so we iterate in order of difficulty
     __weak id weakSelf = self;
     for (NSString *action in actions) {
-        totalProbability *= [weakSelf maximize:mutableAlliance function:^float(id val) {
+        NSArray *maxData = [weakSelf findMaximumObject:mutableAlliance function:^float(id val) {
             return [weakSelf probabilityThatTeam:val doesActionFromActionString:action];
         }];
-        Team *teamToRemove = [self findMaximumObject:mutableAlliance function:^float(id val) {
-            return [weakSelf probabilityThatTeam:val doesActionFromActionString:action];
-        }];
+        
+        totalProbability *= [maxData[1] floatValue];
+        Team *teamToRemove = maxData[0];
         [mutableAlliance removeObject:teamToRemove];
     }
     
@@ -647,7 +718,8 @@
 {
     float stackedToteSet = 20*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked" withSpecificValue:3];
     float containerSet = 0.0;
-    for (TeamInMatchData *TIMD in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for (TeamInMatchData *TIMD in matchData)
     {
         if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
     }
@@ -695,9 +767,11 @@
     int maxBottomTotes = 0;
     int totalTopTotes = 0;
     int totalTotes = 0;
-    for(TeamInMatchData *TIMD in match.teamInMatchDatas)
+    RLMArray<TeamInMatchData> *teamInMatchDatas = match.teamInMatchDatas;
+    for(TeamInMatchData *TIMD in teamInMatchDatas)
     {
-        for (CoopAction *ca in TIMD.uploadedData.coopActions)
+        RLMArray<CoopAction> *coopActions = TIMD.uploadedData.coopActions;
+        for (CoopAction *ca in coopActions)
         {
             if (ca.didSucceed) {
                 if (!ca.onTop) {
@@ -740,24 +814,30 @@
     float secondMaxAverageCOOP = 0.0;
     float avgAvgCOOP;
     NSMutableArray *avgCoopScores = [[NSMutableArray alloc] init];
-    for (Team *team in match.blueTeams)
+    RLMArray<Team> *blueTeams = match.blueTeams;
+    RLMArray<Team> *redTeams = match.redTeams;
+    
+    for (Team *team in blueTeams)
     {
         [avgCoopScores addObject:@([self predictedCOOPScoreForTeam:team])];
     }
-    for (Team *team in match.redTeams)
+    for (Team *team in redTeams)
     {
         [avgCoopScores addObject:@([self predictedCOOPScoreForTeam:team])];
     }
+    
     for(id score in avgCoopScores)
     {
         maxAverageCOOP = MAX([score floatValue], maxAverageCOOP);
     }
     [avgCoopScores removeObject:@(maxAverageCOOP)];
+    
     for(id score in avgCoopScores)
     {
         secondMaxAverageCOOP = MAX([score floatValue], secondMaxAverageCOOP);
     }
     avgAvgCOOP = (maxAverageCOOP + secondMaxAverageCOOP)/2;
+    
     return avgAvgCOOP;
 }
 
@@ -770,9 +850,11 @@
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd, Match *m) {
         float avg = 0.0;
         
-        for(TeamInMatchData *timd in team.matchData)
+        RLMArray<TeamInMatchData> *matchData = team.matchData;
+        for(TeamInMatchData *timd in matchData)
         {
-            for(CoopAction *ca in timd.uploadedData.coopActions)
+            RLMArray<CoopAction> *coopActions = timd.uploadedData.coopActions;
+            for(CoopAction *ca in coopActions)
             {
                 if (ca.didSucceed) {
                     avg += ca.numTotes;
@@ -817,11 +899,21 @@
 
 -(float)predictedTeleopScoreForTeam:(Team *)team
 {
+    NSNumber *memoKey = @(team.number);
+    NSNumber *memoValue = self.predictedTeleopScoreForTeamMemo[memoKey];
+    if(memoValue) {
+        return [memoValue floatValue];
+    }
+    
     float avgTotesScore = 2*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"];
     float avgReconLevelsScore = 4*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numReconLevels"];
     float avgNoodleScore = 6*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numNoodlesContributed"];
     
-    return avgTotesScore + avgReconLevelsScore + avgNoodleScore;
+    float val = avgTotesScore + avgReconLevelsScore + avgNoodleScore;
+    
+    self.predictedTeleopScoreForTeamMemo[memoKey] = @(val);
+    
+    return val;
 }
 
 -(float)predictedTeleopScoreForAlliance:(NSArray *)alliance
@@ -842,18 +934,23 @@
 {
     
     NSInteger totalScore = 0;
-    for (TeamInMatchData *TIMD in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for (TeamInMatchData *TIMD in matchData)
     {
         Match *m = TIMD.match;
-        for (Team *t in m.blueTeams) {
+        RLMArray<Team> *blueTeams = m.blueTeams;
+        RLMArray<Team> *redTeams = m.redTeams;
+        for (Team *t in blueTeams) {
             if (t.number == team.number) {
                 totalScore = totalScore + m.officialBlueScore;
             }
         }
-        for (Team *t in m.redTeams)
+        
+        for (Team *t in redTeams)
         {
-            if (t.number == team.number)
+            if (t.number == team.number) {
                 totalScore = totalScore + m.officialRedScore;
+            }
         }
     }
     
@@ -947,7 +1044,8 @@
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
         float average = 0.0;
-        for (ReconAcquisition *RA in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for (ReconAcquisition *RA in recons)
         {
             if (RA.numReconsAcquired == num) average += RA.time;
         }
@@ -967,9 +1065,11 @@
     int *fourCount = 0;
     int *sideCount = 0;
     int *middleCount = 0;
-    for (TeamInMatchData *timd in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for (TeamInMatchData *timd in matchData)
     {
-        for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = timd.uploadedData.reconAcquisitions;
+        for (ReconAcquisition *ra in recons)
         {
             if (ra.numReconsAcquired == 1) oneCount++;
             else if (ra.numReconsAcquired == 2) twoCount++;
@@ -1018,10 +1118,12 @@
     float time = 0.0;
     NSString *mostCommonAcquisition = [self mostCommonAquisitionTypeForTeam:team];
     NSInteger mostCommonReconsAcquired = [[[mostCommonAcquisition stringByReplacingOccurrencesOfString:@" Side" withString:@""] stringByReplacingOccurrencesOfString:@" Middle" withString:@""] integerValue];
-    for (TeamInMatchData *timd in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for (TeamInMatchData *timd in matchData)
     {
         float numCOOPActions = timd.uploadedData.reconAcquisitions.count;
-        for (ReconAcquisition *ra in timd.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = timd.uploadedData.reconAcquisitions;
+        for (ReconAcquisition *ra in recons)
         {
             if (ra.numReconsAcquired == mostCommonReconsAcquired)
             {
@@ -1050,7 +1152,8 @@
     float reconsStacked = 0.0;
     float reconsPickedUp = 0.0;
     
-    for(TeamInMatchData *teamInMatchData in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for(TeamInMatchData *teamInMatchData in matchData)
     {
         reconsStacked += teamInMatchData.uploadedData.numReconsStacked;
         reconsPickedUp += teamInMatchData.uploadedData.numReconsPickedUp;
@@ -1071,7 +1174,8 @@
 -(float)avgReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
-        for(ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        for(ReconAcquisition *ra in recons)
         {
             if(ra.numReconsAcquired == num) {
                 //NSLog(@"YO: %d", num);
@@ -1116,7 +1220,8 @@
     float numNoodlesContributed = 0;
     float matches = [team.matchData count];
     
-    for (TeamInMatchData *teamInMatchData in team.matchData)
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    for (TeamInMatchData *teamInMatchData in matchData)
     {
         numTotesStacked += teamInMatchData.uploadedData.numTotesStacked;
         numReconsStacked += teamInMatchData.uploadedData.numReconsStacked;
