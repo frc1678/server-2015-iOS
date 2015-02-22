@@ -197,10 +197,13 @@
     }
 }
 - (IBAction)restart:(id)sender {
-    [self checkInternet:self.timer];
-    [self startDatabaseOperations:nil];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [self checkInternet:self.timer];
+        [self startDatabaseOperations:nil];
+        
+        [self logText:@"Restarting..." color:@"green"];
+    });
     
-    [self logText:@"Restarting..." color:@"green"];
 
 }
 
@@ -249,20 +252,17 @@
 //we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations:(NSNotification *)note
 {
-    //dispatch_queue_t backgroundQueue = dispatch_queue_create("backgroundQueue", NULL);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        
-        //[self emptyRealmDatabase];
-        
+    dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
-        
-        //NSLog(@"ALL THE DHATUHZ: %@", allTheData);
-        
         //[self makeSmallTestingDB];
-        
+
         ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
         [grar beginCalculations];
     });
+    
+    
+    
+    
     
 }
 

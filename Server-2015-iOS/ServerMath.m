@@ -22,6 +22,7 @@
 
 @property (nonatomic, strong) NSMutableDictionary *probabilityThatTeamMemo;
 @property (nonatomic, strong) NSMutableDictionary *predictedTeleopScoreForTeamMemo;
+@property (nonatomic, strong) NSTimer *waitTimer;
 @end
 
 @implementation ServerMath
@@ -48,13 +49,26 @@
     [self.predictedTeleopScoreForTeamMemo removeAllObjects];
 }
 
+#define WAIT_TIME 5
+-(void)wait
+{
+    [self.waitTimer invalidate];
+    self.waitTimer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+
+}
+
+-(void)exitWait:(NSTimer *)timer
+{
+    NSLog(@"Done waiting");
+    return;
+}
+
 
 
 #pragma mark - High Level
 
 - (void)beginMath
 {
-    
     NSLog(@"Starting Math");
     self.autoActionDictionary = @{
                                   @"1t, 1t, 1t":@6,
@@ -143,6 +157,8 @@
 {
     if (!self.currentlyCalculating) {
         [self clearMemos];
+        Log(@"Starting Math", @"green");
+
         
         self.currentlyCalculating = YES;
         
@@ -207,7 +223,7 @@
             self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
             
             
-            t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+            t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD) {
                 //Make sure this implicit conversion is not causing problems
                 float totalTime = 0.0;
                 RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
@@ -231,7 +247,6 @@
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
-                Log(logString, @"green");
             
             [realm commitWriteTransaction];
             
@@ -285,7 +300,7 @@
             }
         }
         
-        
+        Log(@"Finished Calculating Team Data, Predicted Seeds, And Actual Seeds.", @"green");
         [self updateCalculatedMatchData];
 //        [realm commitWriteTransaction];
 
@@ -326,12 +341,12 @@
         
         [realm commitWriteTransaction];
         
-        NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
-        Log(logString, @"green");
 //        [realm commitWriteTransaction];
 
     }
     self.currentlyCalculating = NO;
+    Log(@"Finished Calculating Matches", @"green");
+    [self wait];
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
@@ -442,7 +457,6 @@
     return minObject;
 }
 
-#warning This algorithm is WRONG - it will discard a match that a team plays in if either alliance gets 0 points.
 - (float)playedMatchesCountForTeam:(Team *)team
 {
 //    float totalplayed = 0.0;
@@ -463,7 +477,7 @@
  *
  *  @return The average.
  */
-- (float)averageUploadedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *, Match *))block
+- (float)averageUploadedDataWithTeam:(Team *)team WithDatapointBlock:(float(^)(TeamInMatchData *))block
 {
     
     float total = 0.0;
@@ -472,7 +486,7 @@
     
     for(TeamInMatchData *teamInMatchData in matchData)
     {
-        float result = block(teamInMatchData, teamInMatchData.match);
+        float result = block(teamInMatchData);
         
 #warning == 50000.0 is a not great idea technically, and looks really messy
         if (result == 50000.0) {
@@ -521,7 +535,7 @@
  *  @return The average.
  */
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath {
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data) {
         return [[data valueForKeyPath:keyPath] floatValue];
     }];
 }
@@ -537,7 +551,7 @@
  */
 - (float)averageWithTeam:(Team *)team withDatapointKeyPath:(NSString *)keyPath withSpecificValue:(float)value {
     
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *data) {
         if([[data valueForKeyPath:keyPath] floatValue] == value)
         {
             return 1.0;
@@ -607,7 +621,7 @@
     //Next, you use the number of recons aquired from field to figure out which of the second three it is.
     
     //ARG, ABSTRACT THIS!!!!
-    else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"1rf"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         int reconsFromStep = 0;
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for(ReconAcquisition *ra in recons)
@@ -621,7 +635,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"1rf+1t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         int reconsFromStep = 0;
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for(ReconAcquisition *ra in recons)
@@ -635,7 +649,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"2rf+2t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         int reconsFromStep = 0;
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for(ReconAcquisition *ra in recons)
@@ -649,7 +663,7 @@
         }
         return 0.0;
     }];
-    else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    else if([action isEqualToString:@"3rf+3t"]) totalProbability *= [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         int reconsFromStep = 0;
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for(ReconAcquisition *ra in recons)
@@ -798,8 +812,8 @@
 -(float)predictedCOOPScoreForTeam:(Team *)team
 {
     __weak id weakSelf = self;
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        return [weakSelf calculatedCOOPScoreForMatch:match];
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData) {
+        return [weakSelf calculatedCOOPScoreForMatch:teamInMatchData.match];
     }];
 }
 
@@ -847,7 +861,7 @@
 -(float)avgTotesInCOOPForTeam:(Team *)team
 {
     __weak id weakSelf = self;
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd) {
         float avg = 0.0;
         
         RLMArray<TeamInMatchData> *matchData = team.matchData;
@@ -1007,7 +1021,7 @@
  */
 - (float)reliabilityOfTeam:(Team *)team
 {
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData) {
         if(teamInMatchData.uploadedData.disabled || teamInMatchData.uploadedData.incapacitated)
         {
             return 0.0;
@@ -1042,7 +1056,7 @@
 
 - (float)avgAcquisitionTimeForNumRecons:(int)num forTeam:(Team *)team
 {
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         float average = 0.0;
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for (ReconAcquisition *RA in recons)
@@ -1173,7 +1187,7 @@
 
 -(float)avgReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
 {
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
         for(ReconAcquisition *ra in recons)
         {

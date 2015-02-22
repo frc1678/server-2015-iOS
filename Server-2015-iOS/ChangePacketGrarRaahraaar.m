@@ -123,7 +123,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
             NSLog(@"%@", logString);
 
-            Log(logString, @"green");
         }];
         NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
@@ -142,6 +141,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 -(void)timerFired:(NSTimer *)timer
 {
     self.timer = nil;
+    Log(@"Starting New Processing", @"green");
     NSLog(@"Starting new processing!\n");
     
 
