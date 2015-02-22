@@ -515,8 +515,9 @@
 
 -(NSString *)bestAutoStrategyForAlliance:(NSArray *)alliance
 {
+    __weak id weakSelf = self;
     return [self findMaximumObject:[self.autoActionDictionary allKeys] function:^float(id val) {
-        return [self lambda:alliance forAutoConditionString:val];
+        return [weakSelf lambda:alliance forAutoConditionString:val];
     }];
 }
 
@@ -616,12 +617,13 @@
     float totalProbability = 1.0;
     NSArray *actions = [autoConditionString componentsSeparatedByString:@", "];
     // Actions are sorted in order of difficulty, so we iterate in order of difficulty
+    __weak id weakSelf = self;
     for (NSString *action in actions) {
-        totalProbability *= [self maximize:mutableAlliance function:^float(id val) {
-            return [self probabilityThatTeam:val doesActionFromActionString:action];
+        totalProbability *= [weakSelf maximize:mutableAlliance function:^float(id val) {
+            return [weakSelf probabilityThatTeam:val doesActionFromActionString:action];
         }];
         Team *teamToRemove = [self findMaximumObject:mutableAlliance function:^float(id val) {
-            return [self probabilityThatTeam:val doesActionFromActionString:action];
+            return [weakSelf probabilityThatTeam:val doesActionFromActionString:action];
         }];
         [mutableAlliance removeObject:teamToRemove];
     }
@@ -632,9 +634,10 @@
 
 - (float)predictedAutoScoreForAlliance:(NSArray *)alliance
 {
+    __weak ServerMath *weakSelf = self;
     return [self maximize:[self.autoActionDictionary allKeys] function:^float(NSString *condition) {
-        float probability = [self lambda:alliance forAutoConditionString:condition];
-        float totalPoints = [self.autoActionDictionary[condition] floatValue];
+        float probability = [weakSelf lambda:alliance forAutoConditionString:condition];
+        float totalPoints = [weakSelf.autoActionDictionary[condition] floatValue];
         if(probability > 0.0) NSLog(@"condition: %@, points: %f, probability: %f", condition, totalPoints ,probability);
         return probability * totalPoints;
     }];
@@ -720,8 +723,9 @@
 
 -(float)predictedCOOPScoreForTeam:(Team *)team
 {
+    __weak id weakSelf = self;
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *teamInMatchData, Match *match) {
-        return [self calculatedCOOPScoreForMatch:match];
+        return [weakSelf calculatedCOOPScoreForMatch:match];
     }];
 }
 
@@ -762,6 +766,7 @@
  */
 -(float)avgTotesInCOOPForTeam:(Team *)team
 {
+    __weak id weakSelf = self;
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd, Match *m) {
         float avg = 0.0;
         
@@ -781,7 +786,7 @@
         if ([self playedMatchesCountForTeam:team] == 0.0) {
             return 0.0;
         }
-        return avg/[self playedMatchesCountForTeam:team];
+        return avg/[weakSelf playedMatchesCountForTeam:team];
     }];
 }
 
