@@ -123,9 +123,10 @@
         
         self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
         self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
-        [[RLMRealm defaultRealm] beginWriteTransaction];
+        RLMRealm *realm = [RLMRealm defaultRealm];
+        [realm beginWriteTransaction];
         
-        RLMResults *allTeams = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
+        RLMResults *allTeams = [Team allObjectsInRealm:realm];
         for (Team *t in allTeams)
         {
             if (t.number == 10000) {
@@ -249,18 +250,19 @@
         }
         
         
-        [[RLMRealm defaultRealm] commitWriteTransaction];
+        [realm commitWriteTransaction];
         [self updateCalculatedMatchData];
     }
 }
 
 -(void)updateCalculatedMatchData
 {
-    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    RLMResults *allMatches = [Match allObjectsInRealm:realm];
     
     for (Match *m in allMatches)
     {
-        [[RLMRealm defaultRealm] beginWriteTransaction];
+        [realm beginWriteTransaction];
 
         NSMutableArray *b = [[NSMutableArray alloc] init];
         NSMutableArray *r = [[NSMutableArray alloc] init];
@@ -282,20 +284,22 @@
         
         NSString *logString = [NSString stringWithFormat:@"Match: %@ has been calculated.", m.match];
         Log(logString, @"green");
-        [[RLMRealm defaultRealm] commitWriteTransaction];
+        [realm commitWriteTransaction];
 
     }
     self.currentlyCalculating = NO;
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
-
+/*
 #define SEED_URL @"http://www2.usfirst.org/2014comp/events/TXDA/rankings.html"
 -(void)getSeeds
 {
     
     
-    /* WOOOOOOO, NOT PARSING HTML!!!!!!!!!
+    WOOOOOOO, NOT PARSING HTML!!!!!!!!!
+    
+ 
     NSURL *url = [NSURL URLWithString:SEED_URL];
     NSError *error = nil;
     NSStringEncoding encoding;
@@ -314,10 +318,10 @@
     HTMLNode *table = [HTMLbody findChildrenWithAttribute:@"style" matchingName:@"background: black none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial; width: 100%;" allowPartial:NO][1];
     
     HTMLNode *tableBody = [table findChildTag:@"tbody"];
-    */
+ 
     
     
-}
+}*/
 
 
 #pragma mark - General Methods
