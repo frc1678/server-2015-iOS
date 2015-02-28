@@ -50,10 +50,14 @@
 }
 
 #define WAIT_TIME 5
--(void)wait
+-(void)wait:(float)time
 {
     [self.waitTimer invalidate];
-    self.waitTimer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+    if (!time)
+    {
+        time = 5.0;
+    }
+    self.waitTimer = [NSTimer scheduledTimerWithTimeInterval:time target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
 
 }
 
@@ -128,19 +132,19 @@
                                   };
     
     
-    RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10000"]];
-    RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"9999"]];
+    //RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"1533"]];
+    //RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"2950"]];
     //RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
     
-    Team *team10000 = (Team *)[team10000Query firstObject];
-    Team *team10001 = (Team *)[team10001Query firstObject];
+    //Team *team10000 = (Team *)[team10000Query firstObject];
+    //Team *team10001 = (Team *)[team10001Query firstObject];
     //Team *team10002 = (Team *)[team10002Query firstObject];
     
     //NSArray *alliance = @[team10000, team10001, team10002];
     
     
-    NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
-    NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
+    //NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
+    //NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
     @try {
         [self updateCalculatedData];
         
@@ -217,7 +221,7 @@
             
             t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
-            t.calculatedData.totalScore = [self totalScoreForTeam:t];
+            t.calculatedData.totalScore = [self averageTotalScoreForTeam:t];
             t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
             self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
@@ -237,21 +241,21 @@
             
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
-            //t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
+            t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
             t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
             
             t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
             t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
             t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
             t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
+            t.calculatedData.avgCounterChokeholdTime = [self avgAcquisitionTimeForNumRecons:2 forTeam:t];
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
-            NSString *logString = [NSString stringWithFormat:@"Team: %ld, %@ has been calculated.", (long)t.number, t.name];
             
             [realm commitWriteTransaction];
             
             //Update UI
-            [self wait];
+            //[self wait:3.0];
             
             
             
@@ -265,6 +269,7 @@
         
         for (NSNumber *predictedScore in sortedPredictedScores)
         {
+            
             NSArray *numbers = [self.predictedTotalScoresOfTeams allKeysForObject:predictedScore];
             for (NSNumber *number in numbers)
             {
@@ -286,7 +291,7 @@
         
         for (NSNumber *score in sortedScores)
         {
-            NSArray *numbers = [self.predictedTotalScoresOfTeams allKeysForObject:score];
+            NSArray *numbers = [self.totalScoresOfTeams allKeysForObject:score];
             for (NSNumber *number in numbers)
             {
                 RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
@@ -346,7 +351,7 @@
     }
     self.currentlyCalculating = NO;
     Log(@"Finished Calculating Matches", @"green");
-    [self wait];
+    [self wait:5.0];
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
@@ -488,7 +493,6 @@
     {
         float result = block(teamInMatchData);
         
-#warning == 50000.0 is a not great idea technically, and looks really messy
         if (result == 50000.0) {
             playedMatches -= 1.0;
             continue;
@@ -970,6 +974,11 @@
     
     //get the sum of the official Scores for the previous matches
     return totalScore;
+}
+
+-(float)averageTotalScoreForTeam:(Team *)team
+{
+    return [self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team];
 }
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team

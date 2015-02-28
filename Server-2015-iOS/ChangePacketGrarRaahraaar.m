@@ -50,6 +50,7 @@
 @property (nonatomic, strong) NSMutableArray *changePackets;
 @property (nonatomic, strong) NSTimer *timer;
 @property (nonatomic, strong) NSArray *unprocessedFiles;
+@property (nonatomic) int currentMatch;
 
 @end
 
@@ -87,7 +88,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == PitScoutDotRealm)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"pancakes.realm"];
 
     }
     else if(filePath == InvalidChangePackets)
@@ -237,9 +238,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         }
                         else if (matchResults.count == 0)
                         {
-                            //create new match object with all necisary datapoints (see creation of test database)
-                            //create team in match data objects for all the teams with necisary datas
-                            //
+                            Match *match = [[Match alloc] init];
+                            self.currentMatch = self.currentMatch + 1;
+                            match.match = [NSString stringWithFormat:@"NTQ%d", self.currentMatch];
+                            match.redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+                            match.blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+                            
                         }
                         else
                         {
@@ -347,7 +351,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //        continue;
             
             error = nil;
-#warning already Open
            
             DBError *dbError = nil;
             DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&dbError];

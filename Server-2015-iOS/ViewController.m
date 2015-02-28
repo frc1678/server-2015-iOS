@@ -28,7 +28,7 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"pancakes.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     
