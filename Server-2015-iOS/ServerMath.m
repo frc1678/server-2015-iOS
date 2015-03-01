@@ -201,7 +201,7 @@
             t.calculatedData.stackingAbility = [self stackingAbilityTeamNew:t]; //figure out which method for this gets better numbers
             if([self isInvalidFloat:[self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]/([self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numLitterDropped"] + [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numNoodlesContributed"]) ])
             {
-                t.calculatedData.noodleReliability = 1.0;
+                t.calculatedData.noodleReliability = 0.0;
             }
             else
             {
@@ -241,6 +241,7 @@
             
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
+            t.calculatedData.reconAcquisitionTypes = [self listOfReconAcquisitionTypesForTeam:t];
             t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
             t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
             
@@ -460,6 +461,21 @@
         }
     }
     return minObject;
+}
+
+- (NSString *)stringFromComponentsOfMutableArray:(NSMutableArray *)array
+{
+    NSString *returnString = [[NSString alloc] init];
+    for (NSString *string in array)
+    {
+        [returnString stringByAppendingString:string];
+        [returnString stringByAppendingString:@", "];
+    }
+    if (returnString.length > 0)
+    {
+        returnString = [returnString substringFromIndex:returnString.length - 2];
+    }
+    return returnString;
 }
 
 - (float)playedMatchesCountForTeam:(Team *)team
@@ -1063,6 +1079,41 @@
 
 #pragma mark - Recon Stuff
 
+-(NSString *)listOfReconAcquisitionTypesForTeam:(Team *)team
+{
+    NSString *reconAcquisitionTypes = [[NSString alloc] init];
+    NSMutableArray *reconAcquisitionArray = [[NSMutableArray alloc] init];
+    
+    if(team.matchData.count == 0) return @"none";
+    for (TeamInMatchData *TIMD in team.matchData)
+    {
+        if(TIMD.uploadedData.reconAcquisitions.count == 0) return @"none";
+        for (ReconAcquisition *ra in TIMD.uploadedData.reconAcquisitions)
+        {
+            NSString *raString = [[NSString alloc] init];
+            [raString stringByAppendingFormat:@"%ld ", (long)ra.numReconsAcquired];
+            if (ra.acquiredMiddle) {
+                [raString stringByAppendingString:@"Middle"];
+            }
+            else [raString stringByAppendingString:@"Side"];
+            [reconAcquisitionArray addObject:raString];
+        }
+    }
+    reconAcquisitionArray = [[[NSSet setWithArray:reconAcquisitionArray] allObjects] mutableCopy]; //removing duplicates
+    
+    [reconAcquisitionArray sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
+        int firstNumber = [[obj1 substringFromIndex:1] intValue];
+        int secondNumber = [[obj2 substringFromIndex:1] intValue];
+        if (firstNumber == secondNumber) return NSOrderedSame;
+        else if (firstNumber > secondNumber) return NSOrderedDescending;
+        else return NSOrderedAscending; // second number > first number
+    }];
+    
+    reconAcquisitionTypes = [self stringFromComponentsOfMutableArray:reconAcquisitionArray];
+    return reconAcquisitionTypes;
+}
+
+
 - (float)avgAcquisitionTimeForNumRecons:(int)num forTeam:(Team *)team
 {
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
@@ -1105,7 +1156,11 @@
             else sideCount++;
         }
     }
+    
     NSString *mostCommonReconAquisition;
+    if (oneCount == 0 && twoCount == 0 && threeCount && fourCount == 0) {
+        return @"none";
+    }
     //WOOOOOOOOOO, Dat Manual Sorting Tho!!!
     if(oneCount >= twoCount && oneCount >= threeCount && oneCount >= fourCount)
     {
@@ -1124,6 +1179,8 @@
         mostCommonReconAquisition = @"4 ";
     }
     else mostCommonReconAquisition = @"";
+    
+    if (middleCount == 0 && sideCount == 0) return @"none";
     
     if (middleCount > sideCount)
     {
@@ -1273,6 +1330,7 @@
     if ([self playedMatchesCountForTeam:team] == 0) {
         return 0.0;
     }
+    if (team.calculatedData.avgMaxFieldToteHeight == 0.0) return 0.0;
     return ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked"]/team.calculatedData.avgMaxFieldToteHeight)/[self playedMatchesCountForTeam:team];
 }
 
