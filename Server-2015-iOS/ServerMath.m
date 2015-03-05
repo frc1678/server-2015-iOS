@@ -250,6 +250,8 @@
             t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
             t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
             t.calculatedData.avgCounterChokeholdTime = [self avgAcquisitionTimeForNumRecons:2 forTeam:t];
+            t.calculatedData.avgStepReconsAcquiredInAuto = [self avgNumStepReconsForTeam:t];
+            t.calculatedData.stepReconSuccessRateInAuto = [self avgReconSuccessRateForTeam:t];
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             
@@ -390,6 +392,14 @@
 
 
 #pragma mark - General Methods
+
+-(float)valid:(float)value orDefault:(float)def
+{
+    if ([self isInvalidFloat:value]) {
+        return def;
+    }
+    return value;
+}
 
 -(BOOL)isInvalidFloat:(float)value
 {
@@ -1249,6 +1259,30 @@
     return [self averageCalculatedDataWithTeam:team WithDatapointBlock:^float(CalculatedTeamData *cd) {
         return cd.avgMaxReconHeight;
     }] * [self reconReliabilityForTeam:team];
+}
+
+-(float)avgNumStepReconsForTeam:(Team *)team
+{
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        int total = 0;
+        for (ReconAcquisition *ra in recons)
+        {
+            total += ra.numReconsAcquired;
+        }
+        return total;
+    }] / 2.0; // deviding by 2 because both super and regular scout collects recon acquisitions
+}
+
+-(float)avgReconSuccessRateForTeam:(Team *)team
+{
+    float avgSuccesses = [self avgNumStepReconsForTeam:team];
+    return [self valid:
+            (
+             avgSuccesses /
+             ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numStepReconAcquisitionsFailed"] + avgSuccesses)
+            )
+             orDefault:0.0];
 }
 
 -(float)avgReconsFromStepForTeam:(Team *)team withNumRecons:(int)num

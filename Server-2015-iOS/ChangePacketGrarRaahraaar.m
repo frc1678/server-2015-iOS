@@ -88,7 +88,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == PitScoutDotRealm)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"pancakes.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"database.realm"];
 
     }
     else if(filePath == InvalidChangePackets)
