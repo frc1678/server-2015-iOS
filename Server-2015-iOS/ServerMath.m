@@ -221,8 +221,8 @@
             
             t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
-            t.calculatedData.totalScore = [self averageTotalScoreForTeam:t];
-            t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
+            t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
+            t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
             self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
             
@@ -393,12 +393,32 @@
 
 #pragma mark - General Methods
 
--(float)valid:(float)value orDefault:(float)def
+-(float)validFloat:(float)value orDefault:(float)def
 {
     if ([self isInvalidFloat:value]) {
         return def;
     }
     return value;
+}
+
+-(int)validInt:(int)value orDefault:(int)def
+{
+    if ([self isInvalidInt:value]) {
+        return def;
+    }
+    return value;
+}
+
+-(BOOL)isInvalidInt:(int)value
+{
+    if (isnan(value)) {
+        return YES;
+    }
+    if (value > 10000 || value < -10000)
+    {
+        return YES;
+    }
+    return NO;
 }
 
 -(BOOL)isInvalidFloat:(float)value
@@ -974,10 +994,10 @@
 
 
 
--(NSInteger)totalScoreForTeam:(Team *)team
+-(int)totalScoreForTeam:(Team *)team
 {
     
-    NSInteger totalScore = 0;
+    int totalScore = 0;
     RLMArray<TeamInMatchData> *matchData = team.matchData;
     for (TeamInMatchData *TIMD in matchData)
     {
@@ -1277,7 +1297,7 @@
 -(float)avgReconSuccessRateForTeam:(Team *)team
 {
     float avgSuccesses = [self avgNumStepReconsForTeam:team];
-    return [self valid:
+    return [self validFloat:
             (
              avgSuccesses /
              ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numStepReconAcquisitionsFailed"] + avgSuccesses)
