@@ -221,8 +221,8 @@
             
             t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
             //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
-            t.calculatedData.totalScore = [self averageTotalScoreForTeam:t];
-            t.calculatedData.predictedTotalScore = [self predictedTotalScoreForTeam:t];
+            t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
+            t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
             self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
             
@@ -250,6 +250,8 @@
             t.calculatedData.avgThreeChokeholdTime = [self avgAcquisitionTimeForNumRecons:3 forTeam:t];
             t.calculatedData.avgFourChokeholdTime = [self avgAcquisitionTimeForNumRecons:4 forTeam:t];
             t.calculatedData.avgCounterChokeholdTime = [self avgAcquisitionTimeForNumRecons:2 forTeam:t];
+            t.calculatedData.avgStepReconsAcquiredInAuto = [self avgNumStepReconsForTeam:t];
+            t.calculatedData.stepReconSuccessRateInAuto = [self avgReconSuccessRateForTeam:t];
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             
@@ -389,6 +391,34 @@
 
 
 #pragma mark - General Methods
+
+-(float)validFloat:(float)value orDefault:(float)def
+{
+    if ([self isInvalidFloat:value]) {
+        return def;
+    }
+    return value;
+}
+
+-(int)validInt:(int)value orDefault:(int)def
+{
+    if ([self isInvalidInt:value]) {
+        return def;
+    }
+    return value;
+}
+
+-(BOOL)isInvalidInt:(int)value
+{
+    if (isnan(value)) {
+        return YES;
+    }
+    if (value > 10000 || value < -10000)
+    {
+        return YES;
+    }
+    return NO;
+}
 
 -(BOOL)isInvalidFloat:(float)value
 {
@@ -963,10 +993,10 @@
 
 
 
--(NSInteger)totalScoreForTeam:(Team *)team
+-(int)totalScoreForTeam:(Team *)team
 {
     
-    NSInteger totalScore = 0;
+    int totalScore = 0;
     RLMArray<TeamInMatchData> *matchData = team.matchData;
     for (TeamInMatchData *TIMD in matchData)
     {
@@ -1248,6 +1278,30 @@
     return [self averageCalculatedDataWithTeam:team WithDatapointBlock:^float(CalculatedTeamData *cd) {
         return cd.avgMaxReconHeight;
     }] * [self reconReliabilityForTeam:team];
+}
+
+-(float)avgNumStepReconsForTeam:(Team *)team
+{
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
+        RLMArray<ReconAcquisition> *recons = TIMD.uploadedData.reconAcquisitions;
+        int total = 0;
+        for (ReconAcquisition *ra in recons)
+        {
+            total += ra.numReconsAcquired;
+        }
+        return total;
+    }] / 2.0; // deviding by 2 because both super and regular scout collects recon acquisitions
+}
+
+-(float)avgReconSuccessRateForTeam:(Team *)team
+{
+    float avgSuccesses = [self avgNumStepReconsForTeam:team];
+    return [self validFloat:
+            (
+             avgSuccesses /
+             ([self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numStepReconAcquisitionsFailed"] + avgSuccesses)
+            )
+             orDefault:0.0];
 }
 
 -(float)avgReconsFromStepForTeam:(Team *)team withNumRecons:(int)num
