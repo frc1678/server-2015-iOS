@@ -88,7 +88,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else if(filePath == PitScoutDotRealm)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"pancakes.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 
     }
     else if(filePath == InvalidChangePackets)
@@ -105,7 +105,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 
 
-#define WAIT_TIME 10.0
+#define WAIT_TIME 20.0
+#warning This is 20 seconds now, which is really long but for terrible internet, it was 10 seconds before
 /**
  *  Sets a wait time = 10sec before updating unprocessed files
  */
@@ -364,12 +365,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             if (error) {
                 NSLog(@"%@",error);
             }
-            if(file.open) [file close];
             
             //dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = nil;
                 if (data == nil)
                 {
+                
                     NSLog(@"Empty change packet");
                     NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
                     [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
@@ -443,7 +444,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     }
                     
                 } else {
-                    NSLog(@"Condition %@ not found in database!", filterString);
+                    //NSLog(@"Condition %@ not found in database!", filterString);
                     //make it so that if the objects dont exist we can create them
                     if ([className isEqual: @"Team"]) {
                         RLMRealm *realm = [RLMRealm defaultRealm];

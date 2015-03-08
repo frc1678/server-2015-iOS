@@ -347,12 +347,11 @@
         
         [realm commitWriteTransaction];
         
-//        [realm commitWriteTransaction];
 
     }
     self.currentlyCalculating = NO;
     Log(@"Finished Calculating Matches", @"green");
-    [self wait:5.0];
+    //[self wait:5.0];
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
@@ -482,7 +481,7 @@
 {
 //    float totalplayed = 0.0;
     RLMArray<TeamInMatchData> *matchData = team.matchData;
-    return (float)[[matchData objectsWhere:@"match.officialBlueScore > 0 && match.officialRedScore > 0"] count];
+    return (float)[[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1"] count];
 //    for (TeamInMatchData *timd in matchData)
 //    {
 //        if (timd.match.officialBlueScore > 0 && timd.match.officialRedScore > 0) totalplayed += 1.0;
