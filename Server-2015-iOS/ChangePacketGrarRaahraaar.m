@@ -16,19 +16,9 @@
 #import "ServerMath.h"
 #import "Logging.h"
 
-/*
-@interface RLMProperty (DefaultValue)
-- (id) defaultValue;
-@end
- */
 
-/*@implementation RLMProperty (DefaultValue)
+@implementation RLMProperty (DefaultValue)
 
-*
- *  Sorts the input data by type. If bool, double, float, or int returns [NSNumber numberWithInt:0]. If array, data, date, or string initializes them.
- *
- *  @return returns a default object of the appropriate type
- 
 - (id) defaultValue
 {
     if(self.type == RLMPropertyTypeBool || self.type == RLMPropertyTypeDouble || self.type == RLMPropertyTypeFloat || self.type == RLMPropertyTypeInt) {
@@ -46,7 +36,8 @@
     }
 }
 
-@end*/
+@end
+
 
 /*#define XCODE_COLORS_ESCAPE @"\033["
 
@@ -58,7 +49,9 @@
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) NSTimer *emptyTimer;
 @property (nonatomic, strong) NSArray *unprocessedFiles;
+@property (nonatomic) int currentMatch;
 
 @end
 
@@ -69,6 +62,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     UnprocessedChangePackets,
     ProcessedChangePackets,
     RealmDotRealm,
+    PitScoutDotRealm,
     InvalidChangePackets
 };
 
@@ -93,6 +87,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //return @"/Database File/realm.realm";
         return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
     }
+    else if(filePath == PitScoutDotRealm)
+    {
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+
+    }
     else if(filePath == InvalidChangePackets)
     {
         return [[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"];
@@ -105,9 +104,29 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
 }
 
+-(void)waitForEmpty:(float)time fileInfo:(DBFileInfo *)fileInfo
+{
+    [self.emptyTimer invalidate];
+    self.emptyTimer = [NSTimer scheduledTimerWithTimeInterval:time target:self selector:@selector(emptyPacket:) userInfo:fileInfo repeats:NO];
+}
 
+-(void)emptyPacket:(NSTimer *)timer
+{
+    DBFileInfo *fileInfo = (DBFileInfo *)timer.userInfo;
+    if(fileInfo == nil)
+    {
+        NSLog(@"Empty Change Packet");
+        NSString *ls = [[NSString alloc] initWithString:[NSString stringWithFormat:@"Empty Change Packet: %@", fileInfo]];
+        Log(ls, @"red");
+        NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
+        DBError *error = [[DBError alloc] init];
+        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
+    }
+    
+}
 
-#define WAIT_TIME 10.0
+#define WAIT_TIME 20.0
+#warning This is 20 seconds now, which is really long but for terrible internet, it was 10 seconds before
 /**
  *  Sets a wait time = 10sec before updating unprocessed files
  */
@@ -126,7 +145,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
             NSLog(@"%@", logString);
 
-            Log(logString, @"green");
         }];
         NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
@@ -145,6 +163,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 -(void)timerFired:(NSTimer *)timer
 {
     self.timer = nil;
+    Log(@"Starting New Processing", @"green");
     NSLog(@"Starting new processing!\n");
     
 
@@ -240,9 +259,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         }
                         else if (matchResults.count == 0)
                         {
-                            //create new match object with all necisary datapoints (see creation of test database)
-                            //create team in match data objects for all the teams with necisary datas
-                            //
+                            Match *match = [[Match alloc] init];
+                            self.currentMatch = self.currentMatch + 1;
+                            match.match = [NSString stringWithFormat:@"NTQ%d", self.currentMatch];
+                            match.redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+                            match.blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+                            
                         }
                         else
                         {
@@ -325,6 +347,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
         NSError *error = nil;
         if (error) {
@@ -349,7 +372,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //        continue;
             
             error = nil;
-#warning already Open
            
             DBError *dbError = nil;
             DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&dbError];
@@ -363,17 +385,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             if (error) {
                 NSLog(@"%@",error);
             }
-            if(file.open) [file close];
             
             //dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = nil;
-                if (data == nil)
+            if (data == nil)
                 {
-                    NSLog(@"Empty change packet");
-                    NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
-
-                    return;
+                    [self waitForEmpty:10.0 fileInfo:fileInfo];
+                    if (data == nil) {
+                        return;
+                    }
                 }
                 NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
                 if (error) {
@@ -388,7 +408,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 NSString *filterString = nil;
                 if([class conformsToProtocol:@protocol(UniqueKey)]) {
                     NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
-                    RLMObjectSchema *schema = [RLMRealm defaultRealm].schema[className];
+                    RLMObjectSchema *schema = realm.schema[className];
                     RLMPropertyType uniqueValueType = schema[uniqueKey].type;
                     
                     if (uniqueValueType == RLMPropertyTypeString) {
@@ -400,8 +420,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 } else {
                     NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
                     NSLog(@"The file that has the issue is: %@", JSONfile);
-                    NSString *emptyName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
+                    NSString *invalidName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
+                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                     return;
                 }
                 //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
@@ -424,7 +444,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
                         //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        //RLMRealm *realm = [RLMRealm defaultRealm];
+                        [realm beginWriteTransaction];
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
@@ -433,7 +454,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                         }
-                        [[RLMRealm defaultRealm] commitWriteTransaction];
+                        [realm commitWriteTransaction];
                             //
                         
                         //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
@@ -441,11 +462,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     }
                     
                 } else {
-                    NSLog(@"Condition %@ not found in database!", filterString);
+                    //NSLog(@"Condition %@ not found in database!", filterString);
                     //make it so that if the objects dont exist we can create them
                     if ([className isEqual: @"Team"]) {
-                        
-                        [[RLMRealm defaultRealm] beginWriteTransaction];
+                        RLMRealm *realm = [RLMRealm defaultRealm];
+                        [realm beginWriteTransaction];
                         Team *t = [[Team alloc] init];
                         t.name = @"noName";
                         t.number = [uniqueValue intValue];
@@ -468,10 +489,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         utd.pitOrganization = @"";
                         utd.drivetrain = @"";
                         utd.typesWheels = @"";
+                        utd.programmingLanguage = @"";
+                        utd.pitNotes = @"";
+                        utd.weight = 0;
+                        utd.withholdingAllowanceUsed = 0;
+                        utd.canMountMechanism = false;
                         t.uploadedData = utd;
                         
-                        [[RLMRealm defaultRealm] addObject:t];
-                        [[RLMRealm defaultRealm] commitWriteTransaction];
+                        [realm addObject:t];
+                        [realm commitWriteTransaction];
                         
                         
                         
@@ -513,7 +539,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
 
         
-            [self recalculateValuesInRealm:[RLMRealm defaultRealm]];
+            [self recalculateValuesInRealm:nil];
     
 
     });
