@@ -20,8 +20,11 @@
 @property (nonatomic, strong) NSMutableDictionary *predictedTotalScoresOfTeams;
 @property (nonatomic, strong) NSMutableDictionary *totalScoresOfTeams;
 
+@property (nonatomic, strong) NSMutableDictionary *playedMatchesForTeamsMemo;
+@property (nonatomic, strong) NSMutableDictionary *officiallyScoredMatchesForTeamsMemo;
 @property (nonatomic, strong) NSMutableDictionary *probabilityThatTeamMemo;
 @property (nonatomic, strong) NSMutableDictionary *predictedTeleopScoreForTeamMemo;
+
 @property (nonatomic, strong) NSTimer *waitTimer;
 @end
 
@@ -33,6 +36,14 @@
         _probabilityThatTeamMemo = [[NSMutableDictionary alloc] init];
     }
     return _probabilityThatTeamMemo;
+}
+
+- (NSMutableDictionary *)playedMatchesForTeamsMemo
+{
+    if(!_playedMatchesForTeamsMemo) {
+        _playedMatchesForTeamsMemo = [[NSMutableDictionary alloc] init];
+    }
+    return _playedMatchesForTeamsMemo;
 }
 
 - (NSMutableDictionary *)predictedTeleopScoreForTeamMemo
@@ -47,6 +58,8 @@
 {
     [self.probabilityThatTeamMemo removeAllObjects];
     [self.predictedTeleopScoreForTeamMemo removeAllObjects];
+    [self.playedMatchesForTeamsMemo removeAllObjects];
+    [self.officiallyScoredMatchesForTeamsMemo removeAllObjects];
 }
 
 #define WAIT_TIME 5
@@ -166,6 +179,7 @@
         
         self.currentlyCalculating = YES;
         
+        
         self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
         self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
         RLMRealm *realm = [RLMRealm defaultRealm];
@@ -173,7 +187,7 @@
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
         for (Team *t in allTeams)
         {
-            if (t.number == 10000) {
+            if (t.number == 1678) {
                 //
             }
             
@@ -253,6 +267,8 @@
             t.calculatedData.avgStepReconsAcquiredInAuto = [self avgNumStepReconsForTeam:t];
             t.calculatedData.stepReconSuccessRateInAuto = [self avgReconSuccessRateForTeam:t];
             
+            
+            
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             
             [realm commitWriteTransaction];
@@ -315,6 +331,8 @@
     }
 }
 
+
+
 -(void)updateCalculatedMatchData
 {
     RLMRealm *realm = [RLMRealm defaultRealm];
@@ -322,7 +340,8 @@
     
     for (Match *m in allMatches)
     {
-
+        
+        
         RLMArray<Team> *blueTeams = m.blueTeams;
         RLMArray<Team> *redTeams = m.redTeams;
         
@@ -509,14 +528,7 @@
 
 - (float)playedMatchesCountForTeam:(Team *)team
 {
-//    float totalplayed = 0.0;
-    RLMArray<TeamInMatchData> *matchData = team.matchData;
-    return (float)[[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1"] count];
-//    for (TeamInMatchData *timd in matchData)
-//    {
-//        if (timd.match.officialBlueScore > 0 && timd.match.officialRedScore > 0) totalplayed += 1.0;
-//    }
-//    return totalplayed;
+    return [[self playedMatchesForTeam:team] count];
 }
 
 /**
@@ -532,7 +544,7 @@
     
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
     
     for(TeamInMatchData *teamInMatchData in matchData)
     {
@@ -610,17 +622,20 @@
 }
 
 -(float)loopThrewCOOPActionsForTeam:(Team *)team WithDatapointBlock:(float(^)(CoopAction *, Match *))block
-
 {
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
     for(TeamInMatchData *teamInMatchData in matchData)
     {
         RLMArray<CoopAction> *coopActions = teamInMatchData.uploadedData.coopActions;
         for(CoopAction *ca in coopActions)
         {
-            total += block(ca, teamInMatchData.match);
+            float val = block(ca, teamInMatchData.match);
+            if (val == 50000.0) {
+                playedMatches -= 1.0;
+            }
+            else total += val;
         }
     }
     if (playedMatches == 0.0) {
@@ -772,7 +787,6 @@
     return [self maximize:[self.autoActionDictionary allKeys] function:^float(NSString *condition) {
         float probability = [weakSelf lambda:alliance forAutoConditionString:condition];
         float totalPoints = [weakSelf.autoActionDictionary[condition] floatValue];
-        if(probability > 0.0) NSLog(@"condition: %@, points: %f, probability: %f", condition, totalPoints ,probability);
         return probability * totalPoints;
     }];
 }
@@ -781,7 +795,7 @@
 {
     float stackedToteSet = 20*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked" withSpecificValue:3];
     float containerSet = 0.0;
-    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
     for (TeamInMatchData *TIMD in matchData)
     {
         if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
@@ -824,13 +838,25 @@
     }];
 }*/
 
+-(float)bottomPlacingCOOPReliabilityForTeam:(Team *)team
+{
+    return [self loopThrewCOOPActionsForTeam:team WithDatapointBlock:^float(CoopAction *CA, Match *M) {
+        if(!CA.onTop) {
+            if (CA.didSucceed) {
+                return 1.0;
+            }
+            return 0.0;
+        }
+        return 50000.0;
+    }];
+}
 
 -(float)calculatedCOOPScoreForMatch:(Match *)match
 {
     int maxBottomTotes = 0;
     int totalTopTotes = 0;
     int totalTotes = 0;
-    RLMArray<TeamInMatchData> *teamInMatchDatas = match.teamInMatchDatas;
+    RLMArray<TeamInMatchData> *teamInMatchDatas = (RLMArray<TeamInMatchData> *)[match.teamInMatchDatas objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
     for(TeamInMatchData *TIMD in teamInMatchDatas)
     {
         RLMArray<CoopAction> *coopActions = TIMD.uploadedData.coopActions;
@@ -913,7 +939,7 @@
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd) {
         float avg = 0.0;
         
-        RLMArray<TeamInMatchData> *matchData = team.matchData;
+        RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
         for(TeamInMatchData *timd in matchData)
         {
             RLMArray<CoopAction> *coopActions = timd.uploadedData.coopActions;
@@ -997,7 +1023,7 @@
 {
     
     int totalScore = 0;
-    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    RLMArray<TeamInMatchData> *matchData = [self officiallyScoredMatchesForTeam:team];
     for (TeamInMatchData *TIMD in matchData)
     {
         Match *m = TIMD.match;
@@ -1028,7 +1054,7 @@
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
 {
-    NSInteger matchesPlayed = [self playedMatchesCountForTeam:team];
+    NSInteger matchesPlayed = [[self officiallyScoredMatchesForTeam:team] count];
     
     return team.matchData.count - matchesPlayed;
 }
@@ -1061,6 +1087,31 @@
 
 
 #pragma mark - General Team Stuff
+
+-(RLMArray *)officiallyScoredMatchesForTeam:(Team *)team
+{
+    NSString *number = [NSString stringWithFormat:@"%ld", (long)team.number];
+    if ([self.officiallyScoredMatchesForTeamsMemo valueForKey:number] != nil) {
+        return self.officiallyScoredMatchesForTeamsMemo[number];
+    }
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1"];
+    self.officiallyScoredMatchesForTeamsMemo[number] = matchData;
+    return matchData;
+}
+
+-(RLMArray *)playedMatchesForTeam:(Team *)team
+{
+    NSString *number = [NSString stringWithFormat:@"%ld", (long)team.number];
+    if ([self.playedMatchesForTeamsMemo valueForKey:number] != nil) {
+        return self.playedMatchesForTeamsMemo[number];
+    }
+    RLMArray<TeamInMatchData> *matchData = team.matchData;
+    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
+    self.playedMatchesForTeamsMemo[number] = matchData;
+    return matchData;
+}
+
 /**
  *  Superscout agility. Best robot in alliance is 2, next is 1, worst is 0.
  */

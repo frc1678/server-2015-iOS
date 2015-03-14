@@ -49,6 +49,7 @@
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) NSTimer *emptyTimer;
 @property (nonatomic, strong) NSArray *unprocessedFiles;
 @property (nonatomic) int currentMatch;
 
@@ -103,7 +104,26 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
 }
 
+-(void)waitForEmpty:(float)time fileInfo:(DBFileInfo *)fileInfo
+{
+    [self.emptyTimer invalidate];
+    self.emptyTimer = [NSTimer scheduledTimerWithTimeInterval:time target:self selector:@selector(emptyPacket:) userInfo:fileInfo repeats:NO];
+}
 
+-(void)emptyPacket:(NSTimer *)timer
+{
+    DBFileInfo *fileInfo = (DBFileInfo *)timer.userInfo;
+    if(fileInfo == nil)
+    {
+        NSLog(@"Empty Change Packet");
+        NSString *ls = [[NSString alloc] initWithString:[NSString stringWithFormat:@"Empty Change Packet: %@", fileInfo]];
+        Log(ls, @"red");
+        NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
+        DBError *error = [[DBError alloc] init];
+        [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
+    }
+    
+}
 
 #define WAIT_TIME 20.0
 #warning This is 20 seconds now, which is really long but for terrible internet, it was 10 seconds before
@@ -368,14 +388,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             //dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = nil;
-                if (data == nil)
+            if (data == nil)
                 {
-                
-                    NSLog(@"Empty change packet");
-                    NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
-
-                    return;
+                    [self waitForEmpty:10.0 fileInfo:fileInfo];
+                    if (data == nil) {
+                        return;
+                    }
                 }
                 NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
                 if (error) {
@@ -402,8 +420,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 } else {
                     NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
                     NSLog(@"The file that has the issue is: %@", JSONfile);
-                    NSString *emptyName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:emptyName] error:&error];
+                    NSString *invalidName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
+                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                     return;
                 }
                 //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
