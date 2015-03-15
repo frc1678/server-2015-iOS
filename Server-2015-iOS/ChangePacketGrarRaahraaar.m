@@ -50,7 +50,7 @@
 @property (nonatomic, strong) NSMutableArray *changePackets;
 @property (nonatomic, strong) NSTimer *timer;
 @property (nonatomic, strong) NSTimer *emptyTimer;
-@property (nonatomic, strong) NSArray *unprocessedFiles;
+@property (nonatomic, strong) NSMutableArray *unprocessedFiles;
 @property (nonatomic) int currentMatch;
 
 @end
@@ -348,7 +348,20 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RLMRealm *realm = [RLMRealm defaultRealm];
-        self.unprocessedFiles = [[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil];
+        self.unprocessedFiles = [[[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil] mutableCopy];
+#warning get rid of this!
+        NSMutableArray *toRemove = [[NSMutableArray alloc] init];
+        for (DBFileInfo *info in self.unprocessedFiles)
+        {
+            if([info.path.name containsString:@"super"] || [info.path.name containsString:@"officialScores"]) {
+                [toRemove addObject:info];
+            }
+        }
+        for (DBFileInfo *info in toRemove)
+        {
+            [self.unprocessedFiles removeObject:info];
+        }
+#warning end get rid
         NSError *error = nil;
         if (error) {
             NSLog(@"%@",error);

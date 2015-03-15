@@ -231,10 +231,8 @@
             t.calculatedData.avgAgility = [self avgDriverAbilityForTeam:t];
             
             t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
-            //Choose which one based on data
             
-            t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"];
-            //t.calculatedData.avgStackPlacing = [self stackingAbilityOfTeamOrigional:t];
+            t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"]/3;
             t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
             t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
@@ -254,9 +252,9 @@
             }];
             
             t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
-            t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"];
+            t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"]/3.0;
             t.calculatedData.reconAcquisitionTypes = [self listOfReconAcquisitionTypesForTeam:t];
-            t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t]; //Uncomment when schema type gets fixed
+            t.calculatedData.mostCommonReconAcquisitionType = [self mostCommonAquisitionTypeForTeam:t];
             t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
             
             t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
@@ -266,7 +264,7 @@
             t.calculatedData.avgCounterChokeholdTime = [self avgAcquisitionTimeForNumRecons:2 forTeam:t];
             t.calculatedData.avgStepReconsAcquiredInAuto = [self avgNumStepReconsForTeam:t];
             t.calculatedData.stepReconSuccessRateInAuto = [self avgReconSuccessRateForTeam:t];
-            
+            //t.calculatedData.coopBottomPlacingSuccessRate = [self bottomPlacingCOOPReliabilityForTeam:t]; //Uncomment when the schema gets updated
             
             
             NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
@@ -340,7 +338,10 @@
     
     for (Match *m in allMatches)
     {
-        
+        if ([m.match  isEqual: @"Q13"])
+        {
+            //
+        }
         
         RLMArray<Team> *blueTeams = m.blueTeams;
         RLMArray<Team> *redTeams = m.redTeams;
@@ -482,6 +483,9 @@
             maxObject = x;
             max = y;
         }
+    }
+    if(max == 0.0) {
+        return @[@"none", @(max)];
     }
     return @[maxObject, @(max)];
 }
@@ -787,6 +791,9 @@
     return [self maximize:[self.autoActionDictionary allKeys] function:^float(NSString *condition) {
         float probability = [weakSelf lambda:alliance forAutoConditionString:condition];
         float totalPoints = [weakSelf.autoActionDictionary[condition] floatValue];
+        if (probability == 0) {
+            return 0.0;
+        }
         return probability * totalPoints;
     }];
 }
@@ -1107,7 +1114,9 @@
         return self.playedMatchesForTeamsMemo[number];
     }
     RLMArray<TeamInMatchData> *matchData = team.matchData;
-    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
+    //matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
+    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1"];
+
     self.playedMatchesForTeamsMemo[number] = matchData;
     return matchData;
 }
@@ -1393,7 +1402,7 @@
  */
 - (float)stackingAbilityTeamNew:(Team *)team
 {
-    if (team.number == 114) {
+    if (team.number == 1678) {
         //
     }
     float numTotesStacked = 0;
@@ -1402,7 +1411,7 @@
     float maxReconsStackHeight = 0;
     float numLitterDropped = 0;
     float numNoodlesContributed = 0;
-    float matches = [team.matchData count];
+    float matches = [self playedMatchesCountForTeam:team];
     
     RLMArray<TeamInMatchData> *matchData = team.matchData;
     for (TeamInMatchData *teamInMatchData in matchData)
