@@ -7,14 +7,16 @@
 //
 
 #import "ChangePacketGrarRaahraaar.h"
-#import "ViewController.h"
+//#import "ViewController.h"
 #import "CCDropboxSync.h"
 #import "CCRealmSync.h"
-//#import <RealmModels.h>
-#import "RealmModels.h"
+#import <RealmModels.h>
+//#import "RealmModels.h"
 #import "UniqueKey.h"
 #import "ServerMath.h"
 #import "Logging.h"
+#import <Realm/RLMProperty.h>
+#import <Realm/RLMObjectSchema.h>
 
 
 @implementation RLMProperty (DefaultValue)
