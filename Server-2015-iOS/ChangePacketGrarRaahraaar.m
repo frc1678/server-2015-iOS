@@ -352,6 +352,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil] mutableCopy];
 #warning get rid of this!
+        /*
         NSMutableArray *toRemove = [[NSMutableArray alloc] init];
         for (DBFileInfo *info in self.unprocessedFiles)
         {
@@ -363,6 +364,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         {
             [self.unprocessedFiles removeObject:info];
         }
+         */
 #warning end get rid
         NSError *error = nil;
         if (error) {

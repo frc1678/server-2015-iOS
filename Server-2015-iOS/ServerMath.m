@@ -1114,8 +1114,8 @@
         return self.playedMatchesForTeamsMemo[number];
     }
     RLMArray<TeamInMatchData> *matchData = team.matchData;
-    //matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
-    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1"];
+    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
+    //matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1"];
 
     self.playedMatchesForTeamsMemo[number] = matchData;
     return matchData;
