@@ -65,7 +65,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     ProcessedChangePackets,
     RealmDotRealm,
     PitScoutDotRealm,
-    InvalidChangePackets
+    InvalidChangePackets,
+    ConflictedCopies
 };
 
 /**
@@ -93,6 +94,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     {
         return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 
+    }
+    else if(filePath == ConflictedCopies)
+    {
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"Conflicted Copies"];
+        
     }
     else if(filePath == InvalidChangePackets)
     {
@@ -168,17 +174,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     Log(@"Starting New Processing", @"green");
     NSLog(@"Starting new processing!\n");
     
+    
 
-    [self updateWithChangePackets];
+    [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
 
 /**
  *  Updates/writes to Realm
  */
--(void)updateWithChangePackets
-{
-    [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
-}
+
 /*
  1. Value does not change.
  2. newKeyPath always has the first element of current keyPath chopped off.
@@ -351,6 +355,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil] mutableCopy];
+        NSMutableArray *DBFiles = [[[DBFilesystem sharedFilesystem] listFolder:[[DBPath root] childPath:@"Database File"] error:nil] mutableCopy];
+
+        for(DBFileInfo *fi in DBFiles) {
+            if([fi.path.name containsString:@"conflicted copy"]) {
+                [[DBFilesystem sharedFilesystem] movePath:fi.path toPath:[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name]  error:nil];
+                Log(@"Conflicted Copy", @"Yellow");
+            }
+        }
 #warning get rid of this!
         /*
         NSMutableArray *toRemove = [[NSMutableArray alloc] init];
