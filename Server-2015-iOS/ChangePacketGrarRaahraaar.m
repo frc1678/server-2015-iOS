@@ -54,6 +54,7 @@
 @property (nonatomic, strong) NSTimer *emptyTimer;
 @property (nonatomic, strong) NSMutableArray *unprocessedFiles;
 @property (nonatomic) int currentMatch;
+@property (nonatomic) BOOL haveCheckedTeamInMatch;
 
 @end
 
@@ -309,7 +310,24 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
                 return rtError;
             }
-            
+            /*if (!self.haveCheckedTeamInMatch) {
+                if ([[[newObject objectSchema] className] isEqualToString:@"Match"]) {
+                    BOOL foundTeam = NO;
+                    for (Team *t in [newObject valueForKey:@"redTeams"]) {
+                        if ([t isEqual:original]) {
+                            foundTeam = YES;
+                        }
+                    }
+                    for (Team *t in [newObject valueForKey:@"blueTeams"]) {
+                        if ([t isEqual:original]) {
+                            foundTeam = YES;
+                        }
+                    }
+                    if (foundTeam == NO) {
+                        //somehow magically know which alliance the team is on, and add it.
+                    }
+                }
+            }*/
             if(!newObject)
             {
                 // If newObject is nil, we need to create it, with the right class, and then set that as the value for head on the current object
@@ -475,6 +493,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                         //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
+                        self.haveCheckedTeamInMatch = NO;
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
@@ -529,6 +548,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         [realm commitWriteTransaction];
                         
                         
+                        
+                    }
+                    if([className isEqualToString:@"Match"]) {
                         
                     }
                 }
