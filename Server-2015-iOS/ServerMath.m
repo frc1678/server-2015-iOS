@@ -160,6 +160,7 @@
     //NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
     
     @try {
+        NSLog(@"SD: %f",[self predictedScoreStandardDeviation]);
         [self updateCalculatedData];
         
     }
@@ -175,16 +176,16 @@
     NSMutableArray *matches = (NSMutableArray *)[Match allObjects];
     float totalDifference = 0.0;
     for (Match *m in matches) {
-        totalDifference += (m.calculatedData.predictedRedScore - m.officialRedScore);
-        totalDifference += (m.calculatedData.predictedBlueScore - m.officialBlueScore);
+        totalDifference += abs(pow((m.calculatedData.predictedRedScore - m.officialRedScore), 1));
+        totalDifference += abs(pow((m.calculatedData.predictedBlueScore - m.officialBlueScore), 1));
     }
-    float averageDifference = totalDifference/(matches.count * 2);
-    float totalSD = 0.0;
+    return   totalDifference / (matches.count * 2);
+   /* float totalSD = 0.0;
     for (Match *m in matches) {
         totalSD += pow((averageDifference - (m.calculatedData.predictedRedScore - m.officialRedScore)), 2);
         totalSD += pow((averageDifference - (m.calculatedData.predictedBlueScore - m.officialBlueScore)), 2);
     }
-    return sqrt(totalSD)/(matches.count * 2);
+    return averageDifference;*/
 }
 
 -(void)updateCalculatedData
@@ -195,6 +196,7 @@
 
         
         self.currentlyCalculating = YES;
+        
         
         
         self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
@@ -284,14 +286,14 @@
             //t.calculatedData.coopBottomPlacingSuccessRate = [self bottomPlacingCOOPReliabilityForTeam:t]; //Uncomment when the schema gets updated
             
             
-            NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
+            //NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             
             [realm commitWriteTransaction];
             
             //Update UI
             //[self wait:3.0];
             
-            
+            NSLog(@"Team: %ld, Avg Human Loaded Totes: %ld", (long)t.number, (long)(t.calculatedData.avgNumTotesStacked - t.calculatedData.avgNumTotesPickedUpFromGround));
             
         }
         

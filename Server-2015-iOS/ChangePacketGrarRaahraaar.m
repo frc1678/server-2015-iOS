@@ -423,7 +423,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             DBError *dbError = nil;
             DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&dbError];
             //        NSLog(@"File %@, status: %@", fileInfo.path, file.status);
-            
+           
             if (dbError) {
                 NSLog(@"%@",error);
             }
@@ -479,6 +479,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             
             if(objectToModify) {
+                BOOL wasError = NO;
                 for(NSMutableDictionary *change in JSONfile[@"changes"])
                 {
                     NSString *keyPath = change[@"keyToChange"];
@@ -498,6 +499,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         self.haveCheckedTeamInMatch = NO;
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify onOriginalObject:objectToModify withReturn:nil];
                         if (setError != nil) {
+                            wasError = YES;
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
                             //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
@@ -510,6 +512,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     
                     //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                     
+                }
+                if (wasError == NO) {
+                    NSString *s = [NSString stringWithFormat:@"Change Packet: %@ Processed Without Errors! :)",fileInfo.path.name];
+                    Log(s, @"green");
                 }
                 
             } else {
