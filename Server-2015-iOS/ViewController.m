@@ -255,7 +255,15 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
-
+        /*RLMResults *am = [Match allObjects];
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+        
+        for (Match *m in (NSArray *)am) {
+            m.officialBlueScore = -1;
+            m.officialRedScore = -1;
+        }
+        [[RLMRealm defaultRealm] commitWriteTransaction];
+*/
         ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
         [grar beginCalculations];
     });

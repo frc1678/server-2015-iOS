@@ -42,10 +42,10 @@
 
 
 /*#define XCODE_COLORS_ESCAPE @"\033["
-
-#define XCODE_COLORS_RESET_FG  XCODE_COLORS_ESCAPE @"fg;" // Clear any foreground color
-#define XCODE_COLORS_RESET_BG  XCODE_COLORS_ESCAPE @"bg;" // Clear any background color
-#define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color*/
+ 
+ #define XCODE_COLORS_RESET_FG  XCODE_COLORS_ESCAPE @"fg;" // Clear any foreground color
+ #define XCODE_COLORS_RESET_BG  XCODE_COLORS_ESCAPE @"bg;" // Clear any background color
+ #define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color*/
 
 @interface ChangePacketGrarRaahraaar ()
 
@@ -94,7 +94,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     else if(filePath == PitScoutDotRealm)
     {
         return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
-
+        
     }
     else if(filePath == ConflictedCopies)
     {
@@ -134,34 +134,34 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
 }
 
-#define WAIT_TIME 20.0
-#warning This is 20 seconds now, which is really long but for terrible internet, it was 10 seconds before
+#define WAIT_TIME 10.0
 /**
  *  Sets a wait time = 10sec before updating unprocessed files
  */
 -(void)beginCalculations
 {
-        NSLog(@"Calcs");
+    
+    NSLog(@"Calcs");
+    
+    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
+    [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
         
-        //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
-        [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
-            
-            [self.timer invalidate];
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
-            
-            
-            //Start 10 sec timer.
-            NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
-            NSLog(@"%@", logString);
-
-        }];
-        NSLog(@"Done with begin calcs");
+        [self.timer invalidate];
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+        
+        
+        //Start 10 sec timer.
+        NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
+        NSLog(@"%@", logString);
+        
+    }];
+    NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
-        //Download change packets
-        //Parse JSON
-        //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
-   // });
-   
+    //Download change packets
+    //Parse JSON
+    //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
+    // });
+    
 }
 
 /**
@@ -176,7 +176,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSLog(@"Starting new processing!\n");
     
     
-
+    
     [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
 
@@ -198,7 +198,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         return r;
     }
     NSString *rtError = r;
-
+    
     if (!value) {
         NSLog(@"value is not ok");
         rtError = @"Value not OK";
@@ -311,23 +311,23 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 return rtError;
             }
             /*if (!self.haveCheckedTeamInMatch) {
-                if ([[[newObject objectSchema] className] isEqualToString:@"Match"]) {
-                    BOOL foundTeam = NO;
-                    for (Team *t in [newObject valueForKey:@"redTeams"]) {
-                        if ([t isEqual:original]) {
-                            foundTeam = YES;
-                        }
-                    }
-                    for (Team *t in [newObject valueForKey:@"blueTeams"]) {
-                        if ([t isEqual:original]) {
-                            foundTeam = YES;
-                        }
-                    }
-                    if (foundTeam == NO) {
-                        //somehow magically know which alliance the team is on, and add it.
-                    }
-                }
-            }*/
+             if ([[[newObject objectSchema] className] isEqualToString:@"Match"]) {
+             BOOL foundTeam = NO;
+             for (Team *t in [newObject valueForKey:@"redTeams"]) {
+             if ([t isEqual:original]) {
+             foundTeam = YES;
+             }
+             }
+             for (Team *t in [newObject valueForKey:@"blueTeams"]) {
+             if ([t isEqual:original]) {
+             foundTeam = YES;
+             }
+             }
+             if (foundTeam == NO) {
+             //somehow magically know which alliance the team is on, and add it.
+             }
+             }
+             }*/
             if(!newObject)
             {
                 // If newObject is nil, we need to create it, with the right class, and then set that as the value for head on the current object
@@ -374,7 +374,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil] mutableCopy];
         NSMutableArray *DBFiles = [[[DBFilesystem sharedFilesystem] listFolder:[[DBPath root] childPath:@"Database File"] error:nil] mutableCopy];
-
+        
         for(DBFileInfo *fi in DBFiles) {
             if([fi.path.name containsString:@"conflicted copy"]) {
                 [[DBFilesystem sharedFilesystem] movePath:fi.path toPath:[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name]  error:nil];
@@ -383,17 +383,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
 #warning get rid of this!
         /*
-        NSMutableArray *toRemove = [[NSMutableArray alloc] init];
-        for (DBFileInfo *info in self.unprocessedFiles)
-        {
-            if([info.path.name containsString:@"super"] || [info.path.name containsString:@"officialScores"]) {
-                [toRemove addObject:info];
-            }
-        }
-        for (DBFileInfo *info in toRemove)
-        {
-            [self.unprocessedFiles removeObject:info];
-        }
+         NSMutableArray *toRemove = [[NSMutableArray alloc] init];
+         for (DBFileInfo *info in self.unprocessedFiles)
+         {
+         if([info.path.name containsString:@"super"] || [info.path.name containsString:@"officialScores"]) {
+         [toRemove addObject:info];
+         }
+         }
+         for (DBFileInfo *info in toRemove)
+         {
+         [self.unprocessedFiles removeObject:info];
+         }
          */
 #warning end get rid
         NSError *error = nil;
@@ -419,7 +419,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //        continue;
             
             error = nil;
-           
+            
             DBError *dbError = nil;
             DBFile *file = [[DBFilesystem sharedFilesystem] openFile:fileInfo.path error:&dbError];
             //        NSLog(@"File %@, status: %@", fileInfo.path, file.status);
@@ -434,55 +434,57 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
             
             //dispatch_async(dispatch_get_main_queue(), ^{
-                NSError *error = nil;
+            NSError *error = nil;
             if (data == nil)
-                {
-                    [self waitForEmpty:10.0 fileInfo:fileInfo];
-                    if (data == nil) {
-                        return;
-                    }
-                }
-                NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-                if (error) {
-                    NSLog(@"%@",error);
-                }
-                
-                
-                NSString *className = JSONfile[@"class"];
-                NSString *uniqueValue = JSONfile[@"uniqueValue"];
-                
-                Class class = NSClassFromString(className);
-                NSString *filterString = nil;
-                if([class conformsToProtocol:@protocol(UniqueKey)]) {
-                    NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
-                    RLMObjectSchema *schema = realm.schema[className];
-                    RLMPropertyType uniqueValueType = schema[uniqueKey].type;
-                    
-                    if (uniqueValueType == RLMPropertyTypeString) {
-                        filterString = [NSString stringWithFormat:@"%@ == '%@'", uniqueKey, uniqueValue]; // build the string to query Realm with.
-                    } else {
-                        filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
-                    }
-                    
-                } else {
-                    NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
-                    NSLog(@"The file that has the issue is: %@", JSONfile);
-                    NSString *invalidName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
-                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+            {
+                [self waitForEmpty:10.0 fileInfo:fileInfo];
+                if (data == nil) {
                     return;
                 }
-                //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
-                // Query for the matching unique objects
-                //Queries Realm based on a uniqueKey and uniqueValue from the JSON
+            }
+            NSDictionary *JSONfile = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+            if (error) {
+                NSLog(@"%@",error);
+            }
+            
+            
+            NSString *className = JSONfile[@"class"];
+            NSString *uniqueValue = JSONfile[@"uniqueValue"];
+            
+            Class class = NSClassFromString(className);
+            NSString *filterString = nil;
+            if([class conformsToProtocol:@protocol(UniqueKey)]) {
+                NSString *uniqueKey = [(id<UniqueKey>)class uniqueKey];
+                RLMObjectSchema *schema = realm.schema[className];
+                RLMPropertyType uniqueValueType = schema[uniqueKey].type;
                 
-                RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+                if (uniqueValueType == RLMPropertyTypeString) {
+                    filterString = [NSString stringWithFormat:@"%@ == '%@'", uniqueKey, uniqueValue]; // build the string to query Realm with.
+                } else {
+                    filterString = [NSString stringWithFormat:@"%@ == %@", uniqueKey, uniqueValue]; // build the string to query Realm with.
+                }
                 
-                
-                if(objectToModify) {
-                    for(NSMutableDictionary *change in JSONfile[@"changes"])
-                    {
-                        NSString *keyPath = change[@"keyToChange"];
-                        NSString *valueToChangeTo = change[@"valueToChangeTo"];
+            } else {
+                NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
+                NSLog(@"The file that has the issue is: %@", JSONfile);
+                NSString *invalidName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
+                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+                return;
+            }
+            //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
+            // Query for the matching unique objects
+            //Queries Realm based on a uniqueKey and uniqueValue from the JSON
+            
+            RLMObject *objectToModify = [[(RLMObject *)NSClassFromString(className) performSelector:@selector(objectsWhere:) withObject:filterString] firstObject];
+            
+            
+            if(objectToModify) {
+                for(NSMutableDictionary *change in JSONfile[@"changes"])
+                {
+                    NSString *keyPath = change[@"keyToChange"];
+                    NSString *valueToChangeTo = change[@"valueToChangeTo"];
+                    if (![keyPath containsString:@"scoutName"]) {
+                        
                         
                         //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
                         
@@ -503,108 +505,107 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
                         }
                         [realm commitWriteTransaction];
-                            //
-                        
-                        //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
-                        
                     }
+                    //
                     
-                } else {
-                    //NSLog(@"Condition %@ not found in database!", filterString);
-                    //make it so that if the objects dont exist we can create them
-                    if ([className isEqual: @"Team"]) {
-                        RLMRealm *realm = [RLMRealm defaultRealm];
-                        [realm beginWriteTransaction];
-                        Team *t = [[Team alloc] init];
-                        t.name = @"noName";
-                        t.number = [uniqueValue intValue];
-                        t.seed = 10000;
-                        TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                        timd.team = t;
-                        [t.matchData addObject:timd];
-                        
-                        RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
-                        t.matchData = md;
-                        
-                        CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
-                        ctimd.predictedSeed = 0;
-                        ctimd.totalScore = 0;
-                        ctimd.mostCommonReconAcquisitionType = @"";
-                        ctimd.reconAcquisitionTypes = @"";
-                        t.calculatedData = ctimd;
-                        
-                        UploadedTeamData *utd = [[UploadedTeamData alloc] init];
-                        utd.pitOrganization = @"";
-                        utd.drivetrain = @"";
-                        utd.typesWheels = @"";
-                        utd.programmingLanguage = @"";
-                        utd.pitNotes = @"";
-                        utd.weight = 0;
-                        utd.withholdingAllowanceUsed = 0;
-                        utd.canMountMechanism = false;
-                        t.uploadedData = utd;
-                        
-                        [realm addObject:t];
-                        [realm commitWriteTransaction];
-                        
-                        
-                        
-                    }
-                    if([className isEqualToString:@"Match"]) {
-                        
-                    }
+                    //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
+                    
                 }
                 
+            } else {
+                //NSLog(@"Condition %@ not found in database!", filterString);
+                //make it so that if the objects dont exist we can create them
+                /*if ([className isEqual: @"Team"]) {
+                 RLMRealm *realm = [RLMRealm defaultRealm];
+                 [realm beginWriteTransaction];
+                 Team *t = [[Team alloc] init];
+                 t.name = @"noName";
+                 t.number = [uniqueValue intValue];
+                 t.seed = 10000;
+                 TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                 timd.team = t;
+                 [t.matchData addObject:timd];
+                 
+                 RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
+                 t.matchData = md;
+                 
+                 CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
+                 ctimd.predictedSeed = 0;
+                 ctimd.totalScore = 0;
+                 ctimd.mostCommonReconAcquisitionType = @"";
+                 ctimd.reconAcquisitionTypes = @"";
+                 t.calculatedData = ctimd;
+                 
+                 UploadedTeamData *utd = [[UploadedTeamData alloc] init];
+                 utd.pitOrganization = @"";
+                 utd.drivetrain = @"";
+                 utd.typesWheels = @"";
+                 utd.programmingLanguage = @"";
+                 utd.pitNotes = @"";
+                 utd.weight = 0;
+                 utd.withholdingAllowanceUsed = 0;
+                 utd.canMountMechanism = false;
+                 t.uploadedData = utd;
+                 
+                 [realm addObject:t];
+                 [realm commitWriteTransaction];
+                 
+                 
+                 
+                 }*/
                 
-                
-                
-                //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                    //Moving change packet into processedChangePackets directory in DB
-                    NSString *name = [[NSString alloc] init];
-                    name = fileInfo.path.name;
-                    NSLog(@"Finished Processing %@", name);
+            }
+            
+            
+            
+            
+            //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            //Moving change packet into processedChangePackets directory in DB
+            NSString *name = [[NSString alloc] init];
+            name = fileInfo.path.name;
+            NSLog(@"Finished Processing %@", name);
+            error = nil;
+            @try {
+                NSString *toName = name;
+                while (true) {
                     error = nil;
-                    @try {
-                        NSString *toName = name;
-                        while (true) {
-                            error = nil;
-                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:toName] error:&error];
-                            if(error.code == DBErrorExists) {
-                                toName = [toName stringByReplacingOccurrencesOfString:@".json" withString:@" copy.json"];
-                            } else {
-                                break;
-                            }
-                            NSLog(@"%@", error);
-                        }
-                        
+                    [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:ProcessedChangePackets] childPath:toName] error:&error];
+                    if(error.code == DBErrorExists) {
+                        toName = [toName stringByReplacingOccurrencesOfString:@".json" withString:@" copy.json"];
+                    } else {
+                        break;
                     }
-                    @catch (NSException *exception) {
-                        NSLog(@"%@", exception);
-                        NSLog(@"%@",error);
-                    }
-                //});
+                    NSLog(@"%@", error);
+                }
+                
+            }
+            @catch (NSException *exception) {
+                NSLog(@"%@", exception);
+                NSLog(@"%@",error);
+            }
+            //});
             //});
             
             
             
         }
-
         
-            [self recalculateValuesInRealm:nil];
-    
-
+        
+        [self recalculateValuesInRealm:nil];
+        
+        
     });
     
-
+    
 }
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
-
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         ServerMath *calculator = [[ServerMath alloc] init];
         [calculator beginMath];
-
+        
     });
-    }
+}
 
 @end

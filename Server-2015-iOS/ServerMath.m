@@ -158,6 +158,7 @@
     
     //NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
     //NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
+    
     @try {
         [self updateCalculatedData];
         
@@ -169,6 +170,22 @@
     
 }
 
+
+-(float)predictedScoreStandardDeviation {
+    NSMutableArray *matches = (NSMutableArray *)[Match allObjects];
+    float totalDifference = 0.0;
+    for (Match *m in matches) {
+        totalDifference += (m.calculatedData.predictedRedScore - m.officialRedScore);
+        totalDifference += (m.calculatedData.predictedBlueScore - m.officialBlueScore);
+    }
+    float averageDifference = totalDifference/(matches.count * 2);
+    float totalSD = 0.0;
+    for (Match *m in matches) {
+        totalSD += pow((averageDifference - (m.calculatedData.predictedRedScore - m.officialRedScore)), 2);
+        totalSD += pow((averageDifference - (m.calculatedData.predictedBlueScore - m.officialBlueScore)), 2);
+    }
+    return sqrt(totalSD)/(matches.count * 2);
+}
 
 -(void)updateCalculatedData
 {
