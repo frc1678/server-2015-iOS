@@ -232,6 +232,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         rtError = @"Value not OK";
         return rtError;
     }
+    Team *originalTeam = (Team *)original;
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
@@ -281,12 +282,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     }
                     timd.uploadedData = utimd;
                     timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
-                    
+                    [originalTeam.matchData addObject:timd];
+                    [match.teamInMatchDatas addObject:timd];
                     if ([allianceColor isEqualToString:@"red"]) {
-                        [match.redTeams addObject:original];
+                        [match.redTeams addObject:originalTeam];
                     }
                     else if ([allianceColor isEqualToString:@"blue"]) {
-                        [match.blueTeams addObject:original];
+                        [match.blueTeams addObject:originalTeam];
                     }
                 }
             }
