@@ -169,11 +169,10 @@
     @try {
         [super viewDidAppear:animated];
         
-        
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logNotification:) name:LOG_TEXT_NOTIFICATION object:nil];
         
         self.logTextView.scrollsToTop = NO;
-        //self.logTextView.text = @"Hello, I'm the Citrus Server!";
+        self.logTextView.text = @"Hello, I'm the Citrus Server!\n";
         
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
@@ -305,7 +304,7 @@
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
             
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor greenColor] range:NSMakeRange(0, newLog.length)];
-
+            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
 
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
@@ -313,11 +312,12 @@
             
                                                     
             self.logTextView.attributedText = logString;
+            
         }
         if ([color isEqualToString:@"blue"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
             
-            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor blueColor] range:NSMakeRange(0, newLog.length)];
+            [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor cyanColor] range:NSMakeRange(0, newLog.length)];
             
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
             

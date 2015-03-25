@@ -44,7 +44,7 @@
                                     <action selector="restart:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="IgC-41-DuN"/>
                                 </connections>
                             </button>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" bouncesZoom="NO" editable="NO" text="Hi, I'm the Citrus Server!" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
                                 <rect key="frame" x="16" y="205" width="568" height="375"/>
                                 <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                 <color key="tintColor" red="0.35686274509803922" green="0.8901960784313725" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

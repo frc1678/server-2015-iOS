@@ -188,6 +188,24 @@
     return averageDifference;*/
 }
 
+-(void)doPrintoutForTeams:(RLMArray *)teams {
+    /*NSString *stringToLog = [[NSString alloc] init];
+    stringToLog = @"Number, Name, First Pick Ability, Second Pick Ability, Stacking Ability, avg number max height stacks, recon ability, recon reliability, ...";
+    for (RLMProperty *p in CalculatedTeamInMatchData.properties) {
+        stringToLog = [stringToLog stringByAppendingString:p.name];
+        stringToLog = [stringToLog stringByAppendingString:@", "];
+    }
+    
+    for (Team *t in teams) {
+        for (RLMProperty *p in CalculatedTeamData.properties) {
+            stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:@"%@, ", t.calculatedData.p]];
+        }
+        stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:
+                                              @"\n%ld, %@, %f, %f, %f, %f, %f, %f",(long)t.number, t.name, t.calculatedData.firstPickAbility, t.calculatedData.secondPickAbility, t.calculatedData.stackingAbility, t.calculatedData.avgNumMaxHeightStacks, t.calculatedData.reconAbility, t.calculatedData.reconReliability]];
+    }
+    NSLog(@"%@", stringToLog);*/
+}
+
 -(void)updateCalculatedData
 {
     if (!self.currentlyCalculating) {
@@ -204,6 +222,7 @@
         RLMRealm *realm = [RLMRealm defaultRealm];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
+        [self doPrintoutForTeams:allTeams];
         for (Team *t in allTeams)
         {
             if (t.number == 1678) {
