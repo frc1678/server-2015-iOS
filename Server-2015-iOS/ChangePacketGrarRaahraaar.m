@@ -54,7 +54,7 @@
 @property (nonatomic, strong) NSTimer *emptyTimer;
 @property (nonatomic, strong) NSMutableArray *unprocessedFiles;
 @property (nonatomic) int currentMatch;
-@property (nonatomic) BOOL haveCheckedTeamInMatch;
+@property (nonatomic) BOOL haveCheckedTeam;
 
 @end
 
@@ -179,7 +179,42 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
-
+-(Team *)blankTeamWithNumber:(int)number {
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    [realm beginWriteTransaction];
+    Team *t = [[Team alloc] init];
+    t.name = @"noName";
+    t.number = number;
+    t.seed = 10000;
+    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+    timd.team = t;
+    [t.matchData addObject:timd];
+    
+    RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
+    t.matchData = md;
+    
+    CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
+    ctimd.predictedSeed = 0;
+    ctimd.totalScore = 0;
+    ctimd.mostCommonReconAcquisitionType = @"";
+    ctimd.reconAcquisitionTypes = @"";
+    t.calculatedData = ctimd;
+    
+    UploadedTeamData *utd = [[UploadedTeamData alloc] init];
+    utd.pitOrganization = @"";
+    utd.drivetrain = @"";
+    utd.typesWheels = @"";
+    utd.programmingLanguage = @"";
+    utd.pitNotes = @"";
+    utd.weight = 0;
+    utd.withholdingAllowanceUsed = 0;
+    utd.canMountMechanism = false;
+    t.uploadedData = utd;
+    
+    [realm addObject:t];
+    [realm commitWriteTransaction];
+    return t;
+}
 
 -(Match *)blankMatchWithNumber:(NSString *)number {
     Match *m = [[Match alloc] init];
@@ -189,12 +224,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     RLMArray<Team> *blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
     //RLMResults *timds = [TeamInMatchData objectsWhere:@"match.match == %@", number];
     RLMArray<TeamInMatchData> *teamInMatchData = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
-
+    CalculatedMatchData *cmd = [[CalculatedMatchData alloc] init];
+    cmd.predictedBlueScore = -1;
+    cmd.predictedRedScore = -1;
+    cmd.bestBlueAutoStrategy = @"none";
+    cmd.bestRedAutoStrategy = @"none";
+    m.calculatedData = cmd;
     m.redTeams = redTeams;
     m.blueTeams = blueTeams;
     m.teamInMatchDatas = teamInMatchData;
-    m.officialRedScore = 0;
-    m.officialBlueScore = 0;
+    m.officialRedScore = -1;
+    m.officialBlueScore = -1;
     [[RLMRealm defaultRealm] addObject:m];
     return m;
 }
@@ -236,65 +276,70 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
-    if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
-        RLMResults *m = [Match objectsWhere: @"match == %@", head];
-        if (m.count == 0) {
-            Match *match = [self blankMatchWithNumber:head];
-            allianceColor = @"blue";
-#warning testing
-            if ([allianceColor isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:original]) {
-                [(NSMutableArray *)match.redTeams addObject:original];
-            }
-            else if ([allianceColor isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:original]) {
-                [(NSMutableArray *)match.blueTeams addObject:original];
-            }
-        }
-        else {
-            Match *match = [m firstObject];
-            if ([allianceColor isEqualToString:@"red"] && ![(NSArray *)match.redTeams containsObject:original]) {
-                [(NSMutableArray *)match.redTeams addObject:original];
-            }
-            else if ([allianceColor isEqualToString:@"blue"] && ![(NSArray *)match.blueTeams containsObject:original]) {
-                [(NSMutableArray *)match.blueTeams addObject:original];
-            }
-        }
-    
-        if (!self.haveCheckedTeamInMatch) {
-                BOOL foundTeam = NO;
-                Match *match = (Match *)[m firstObject];
-                for (Team *t in match.redTeams) {
-                    if ([t isEqual:original]) {
-                        foundTeam = YES;
-                    }
-                }
-                for (Team *t in match.blueTeams) {
-                    if (t.number == [[original valueForKey:@"number"] longValue]) {
-                        foundTeam = YES;
-                    }
-                }
-                if (foundTeam == NO) {
-                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    timd.team = original;
-                    timd.match = match;
-                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
-                    for (RLMProperty *p in [utimd objectSchema].properties) {
-                        utimd[p.name] = [p defaultValue];
-                    }
-                    timd.uploadedData = utimd;
-                    timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
-                    [originalTeam.matchData addObject:timd];
-                    [match.teamInMatchDatas addObject:timd];
-                    if ([allianceColor isEqualToString:@"red"]) {
-                        [match.redTeams addObject:originalTeam];
-                    }
-                    else if ([allianceColor isEqualToString:@"blue"]) {
-                        [match.blueTeams addObject:originalTeam];
-                    }
-                }
-            }
+    if (!self.haveCheckedTeam) {
         
+        if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
+            self.haveCheckedTeam = YES;
+            RLMResults *m = [Match objectsWhere: @"match == %@", head];
+            if (m.count == 0) {
+                Match *match = [self blankMatchWithNumber:head];
+                allianceColor = @"blue";
+#warning testing
+                if ([allianceColor isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:original]) {
+                    [(NSMutableArray *)match.redTeams addObject:original];
+                }
+                else if ([allianceColor isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:original]) {
+                    [(NSMutableArray *)match.blueTeams addObject:original];
+                }
+            }
+            else {
+                Match *match = [m firstObject];
+                if ([allianceColor isEqualToString:@"red"] && ![(NSArray *)match.redTeams containsObject:original]) {
+                    [(NSMutableArray *)match.redTeams addObject:original];
+                }
+                else if ([allianceColor isEqualToString:@"blue"] && ![(NSArray *)match.blueTeams containsObject:original]) {
+                    [(NSMutableArray *)match.blueTeams addObject:original];
+                }
+            }
+            
+            
+            BOOL foundTeam = NO;
+            Match *match = (Match *)[m firstObject];
+            for (Team *t in match.redTeams) {
+                if ([t isEqual:original]) {
+                    foundTeam = YES;
+                }
+            }
+            for (Team *t in match.blueTeams) {
+                if (t.number == [[original valueForKey:@"number"] longValue]) {
+                    foundTeam = YES;
+                }
+            }
+            if (foundTeam == NO) {
+                TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                timd.team = original;
+                timd.match = match;
+                UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
+                for (RLMProperty *p in [utimd objectSchema].properties) {
+                    utimd[p.name] = [p defaultValue];
+                }
+                utimd.maxFieldToteHeight = -1;
+                timd.uploadedData = utimd;
+                timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
+                [originalTeam.matchData addObject:timd];
+                [match.teamInMatchDatas addObject:timd];
+                if ([allianceColor isEqualToString:@"red"]) {
+                    [match.redTeams addObject:originalTeam];
+                }
+                else if ([allianceColor isEqualToString:@"blue"]) {
+                    [match.blueTeams addObject:originalTeam];
+                }
+            }
+        }
+        
+        
+
     }
-    
     if (tail.count > 0)
     {
         if([object isKindOfClass:[RLMArray class]])
@@ -440,8 +485,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 
+
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RLMRealm *realm = [RLMRealm defaultRealm];
         self.unprocessedFiles = [[[DBFilesystem sharedFilesystem] listFolder:[self dropboxFilePath:UnprocessedChangePackets] error:nil] mutableCopy];
@@ -451,7 +496,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         
         for(DBFileInfo *fi in DBFiles) {
             if([fi.path.name containsString:@"conflicted copy"]) {
-                [[DBFilesystem sharedFilesystem] movePath:fi.path toPath:[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name]  error:nil];
+                    DBError *e = [[DBError alloc] init];
+                    [[DBFilesystem sharedFilesystem] movePath:fi.path toPath:[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name]  error:&e];
+                if(e.code == DBErrorExists) {
+                    [[DBFilesystem sharedFilesystem] movePath:
+                     fi.path toPath:
+                     [[DBPath alloc] initWithString:
+                      [[[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name] stringValue] stringByReplacingOccurrencesOfString:@".realm" withString:@" copy.realm"] ]  error:&e];
+               
+                }
                 Log(@"Conflicted Copy", @"Yellow");
             }
         }
@@ -487,6 +540,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
         for(NSNumber *timestamp in sortedTimestamps)
         {
+            self.haveCheckedTeam = NO;
+
             DBFileInfo *fileInfo = dict[timestamp];
             
             //        NSLog(@"Processing file %@", fileInfo.path);
@@ -571,7 +626,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                         //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
-                        self.haveCheckedTeamInMatch = NO;
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:allianceColor withReturn:nil];
                         if (setError != nil) {
                             wasError = YES;
@@ -597,42 +651,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 //NSLog(@"Condition %@ not found in database!", filterString);
                 //make it so that if the objects dont exist we can create them
                 if ([className isEqual: @"Team"]) {
-                    RLMRealm *realm = [RLMRealm defaultRealm];
-                    [realm beginWriteTransaction];
-                    Team *t = [[Team alloc] init];
-                    t.name = @"noName";
-                    t.number = [uniqueValue intValue];
-                    t.seed = 10000;
-                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    timd.team = t;
-                    [t.matchData addObject:timd];
-                    
-                    RLMArray<TeamInMatchData> *md = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
-                    t.matchData = md;
-                    
-                    CalculatedTeamData *ctimd = [[CalculatedTeamData alloc] init];
-                    ctimd.predictedSeed = 0;
-                    ctimd.totalScore = 0;
-                    ctimd.mostCommonReconAcquisitionType = @"";
-                    ctimd.reconAcquisitionTypes = @"";
-                    t.calculatedData = ctimd;
-                    
-                    UploadedTeamData *utd = [[UploadedTeamData alloc] init];
-                    utd.pitOrganization = @"";
-                    utd.drivetrain = @"";
-                    utd.typesWheels = @"";
-                    utd.programmingLanguage = @"";
-                    utd.pitNotes = @"";
-                    utd.weight = 0;
-                    utd.withholdingAllowanceUsed = 0;
-                    utd.canMountMechanism = false;
-                    t.uploadedData = utd;
-                    
-                    [realm addObject:t];
-                    [realm commitWriteTransaction];
-                    
-                    
-                    
+                    [self blankTeamWithNumber:[uniqueValue intValue]];
                 }
                 
             }

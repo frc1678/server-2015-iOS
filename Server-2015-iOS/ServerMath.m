@@ -12,6 +12,9 @@
 #import "ChangePacketGrarRaahraaar.h"
 #import "ViewController.h"
 #import "Logging.h"
+#import <Realm/RLMProperty.h>
+#import <Realm/RLMObjectSchema.h>
+
 
 @interface ServerMath ()
 
@@ -189,21 +192,23 @@
 }
 
 -(void)doPrintoutForTeams:(RLMArray *)teams {
-    /*NSString *stringToLog = [[NSString alloc] init];
-    stringToLog = @"Number, Name, First Pick Ability, Second Pick Ability, Stacking Ability, avg number max height stacks, recon ability, recon reliability, ...";
-    for (RLMProperty *p in CalculatedTeamInMatchData.properties) {
+    NSString *stringToLog = [[NSString alloc] init];
+    //stringToLog = @"Number, Name, First Pick Ability, Second Pick Ability, Stacking Ability, avg number max height stacks, recon ability, recon reliability, ...";
+    stringToLog = [stringToLog stringByAppendingString:@"\nNumber, Name, "];
+    Team *t = (Team *)teams.firstObject;
+    for (RLMProperty *p in [t.calculatedData objectSchema].properties) {
         stringToLog = [stringToLog stringByAppendingString:p.name];
         stringToLog = [stringToLog stringByAppendingString:@", "];
     }
-    
     for (Team *t in teams) {
-        for (RLMProperty *p in CalculatedTeamData.properties) {
-            stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:@"%@, ", t.calculatedData.p]];
+        stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:@"\n%ld, %@, ", (long)t.number, t.name]];
+
+        for (RLMProperty *p in [t.calculatedData objectSchema].properties) {
+            stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:@"%@, ", [t valueForKeyPath:[NSString stringWithFormat: @"calculatedData.%@", p.name]]]];
         }
-        stringToLog = [stringToLog stringByAppendingString:[NSString stringWithFormat:
-                                              @"\n%ld, %@, %f, %f, %f, %f, %f, %f",(long)t.number, t.name, t.calculatedData.firstPickAbility, t.calculatedData.secondPickAbility, t.calculatedData.stackingAbility, t.calculatedData.avgNumMaxHeightStacks, t.calculatedData.reconAbility, t.calculatedData.reconReliability]];
+        
     }
-    NSLog(@"%@", stringToLog);*/
+    NSLog(@"%@", stringToLog);
 }
 
 -(void)updateCalculatedData
@@ -222,7 +227,7 @@
         RLMRealm *realm = [RLMRealm defaultRealm];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
-        [self doPrintoutForTeams:allTeams];
+        //[self doPrintoutForTeams:allTeams];
         for (Team *t in allTeams)
         {
             if (t.number == 1678) {
@@ -363,7 +368,11 @@
         Log(@"Finished Calculating Team Data, Predicted Seeds, And Actual Seeds.", @"green");
         [self updateCalculatedMatchData];
 //        [realm commitWriteTransaction];
-
+        RLMResults *team1678 = [[Team objectsWhere:@"number == 1678"] firstObject];
+        Team *us = (Team *)team1678;
+        if (us.calculatedData.avgNumTotesStacked <= 7) {
+            Log(@"Oh No, we have an avgNumTotesStacked of less than or equal to 7! Somthing must be wrong with the server/data.", @"yellow");
+        }
     }
 }
 

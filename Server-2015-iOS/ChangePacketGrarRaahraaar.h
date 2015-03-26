@@ -29,7 +29,4 @@
 - (id) defaultValue;
 @end
 
-//@interface <#class name#> ()
-//
-//@end
 
