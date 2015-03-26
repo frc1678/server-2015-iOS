@@ -281,64 +281,57 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
             self.haveCheckedTeam = YES;
             RLMResults *m = [Match objectsWhere: @"match == %@", head];
+            NSString *color = @"blue";
             if (m.count == 0) {
                 Match *match = [self blankMatchWithNumber:head];
-                allianceColor = @"blue";
+                
 #warning testing
-                if ([allianceColor isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:original]) {
-                    [(NSMutableArray *)match.redTeams addObject:original];
-                }
-                else if ([allianceColor isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:original]) {
-                    [(NSMutableArray *)match.blueTeams addObject:original];
-                }
-            }
-            else {
-                Match *match = [m firstObject];
-                if ([allianceColor isEqualToString:@"red"] && ![(NSArray *)match.redTeams containsObject:original]) {
-                    [(NSMutableArray *)match.redTeams addObject:original];
-                }
-                else if ([allianceColor isEqualToString:@"blue"] && ![(NSArray *)match.blueTeams containsObject:original]) {
-                    [(NSMutableArray *)match.blueTeams addObject:original];
-                }
-            }
-            
-            
-            BOOL foundTeam = NO;
-            Match *match = (Match *)[m firstObject];
-            for (Team *t in match.redTeams) {
-                if ([t isEqual:original]) {
-                    foundTeam = YES;
-                }
-            }
-            for (Team *t in match.blueTeams) {
-                if (t.number == [[original valueForKey:@"number"] longValue]) {
-                    foundTeam = YES;
-                }
-            }
-            if (foundTeam == NO) {
-                TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                timd.team = original;
-                timd.match = match;
-                UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
-                for (RLMProperty *p in [utimd objectSchema].properties) {
-                    utimd[p.name] = [p defaultValue];
-                }
-                utimd.maxFieldToteHeight = -1;
-                timd.uploadedData = utimd;
-                timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
-                [originalTeam.matchData addObject:timd];
-                [match.teamInMatchDatas addObject:timd];
-                if ([allianceColor isEqualToString:@"red"]) {
+                if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
                 }
-                else if ([allianceColor isEqualToString:@"blue"]) {
+                else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];
                 }
-            }
-        }
-        
-        
+            } else {
+                NSString *color = @"blue";
 
+                Match *match = [m firstObject];
+                if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
+                    [match.redTeams addObject:originalTeam];
+                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                    timd.team = originalTeam;
+                    timd.match = match;
+                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
+                    for (RLMProperty *p in [utimd objectSchema].properties) {
+                        utimd[p.name] = [p defaultValue];
+                    }
+                    utimd.maxFieldToteHeight = -1;
+                    timd.uploadedData = utimd;
+                    timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
+                    
+                    [originalTeam.matchData addObject:timd];
+                    [match.teamInMatchDatas addObject:timd];
+                }
+                else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
+                    [match.blueTeams addObject:originalTeam];
+                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+                    timd.team = originalTeam;
+                    timd.match = match;
+                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
+                    for (RLMProperty *p in [utimd objectSchema].properties) {
+                        utimd[p.name] = [p defaultValue];
+                    }
+                    utimd.maxFieldToteHeight = -1;
+                    timd.uploadedData = utimd;
+                    timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
+                    
+                    [originalTeam.matchData addObject:timd];
+                    [match.teamInMatchDatas addObject:timd];
+                }
+            }
+            
+        
+        }
     }
     if (tail.count > 0)
     {
@@ -418,19 +411,21 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         newObject[p.name] = [p defaultValue];
                     }
                 }
-                
+                NSString *color = @"blue";
+#warning testing
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:allianceColor withReturn:nil];
+                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
                 }
                 else if([newObject conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:allianceColor withReturn:nil];
+                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
                 }
                 
                 [array addObject:newObject];
             }
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:allianceColor withReturn:nil];
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:@"blue" withReturn:nil];
+#warning testing
         }
         else
         {
@@ -464,9 +459,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 
                 
+                
                 object[head] = newObject;
             }
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:allianceColor withReturn:nil];
+#warning testing
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:@"blue" withReturn:nil];
         }
         
     }
@@ -508,7 +505,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 Log(@"Conflicted Copy", @"Yellow");
             }
         }
-#warning get rid of this!
         /*
          NSMutableArray *toRemove = [[NSMutableArray alloc] init];
          for (DBFileInfo *info in self.unprocessedFiles)
@@ -522,7 +518,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
          [self.unprocessedFiles removeObject:info];
          }
          */
-#warning end get rid
         NSError *error = nil;
         if (error) {
             NSLog(@"%@",error);
@@ -579,7 +574,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             
             NSString *className = JSONfile[@"class"];
             NSString *uniqueValue = JSONfile[@"uniqueValue"];
-            NSString *allianceColor = JSONfile[@"allianceColor"];
+            NSString *color = JSONfile[@"allianceColor"];
             
             Class class = NSClassFromString(className);
             NSString *filterString = nil;
@@ -626,7 +621,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                         //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
-                        NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:allianceColor withReturn:nil];
+                        NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
                         if (setError != nil) {
                             wasError = YES;
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
@@ -647,9 +642,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     Log(s, @"green");
                 }
                 
-            } else {
-                //NSLog(@"Condition %@ not found in database!", filterString);
-                //make it so that if the objects dont exist we can create them
+            } else { //(There is no team with that number in the database)
                 if ([className isEqual: @"Team"]) {
                     [self blankTeamWithNumber:[uniqueValue intValue]];
                 }

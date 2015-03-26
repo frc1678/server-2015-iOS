@@ -534,6 +534,10 @@
     if(max == 0.0) {
         return @[@"none", @(max)];
     }
+    
+    if (maxObject == nil) {
+        maxObject = @"Max Object Is nil";
+    }
     return @[maxObject, @(max)];
 }
 
@@ -595,7 +599,7 @@
     
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
+    RLMArray *matchData = [self playedMatchesForTeam:team];
     
     for(TeamInMatchData *teamInMatchData in matchData)
     {
@@ -676,7 +680,7 @@
 {
     float total = 0.0;
     float playedMatches = [self playedMatchesCountForTeam:team];
-    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
+    RLMArray *matchData = [self playedMatchesForTeam:team];
     for(TeamInMatchData *teamInMatchData in matchData)
     {
         RLMArray<CoopAction> *coopActions = teamInMatchData.uploadedData.coopActions;
@@ -849,7 +853,7 @@
 {
     float stackedToteSet = 20*[self averageWithTeam:team withDatapointKeyPath:@"uploadedData.numTotesStacked" withSpecificValue:3];
     float containerSet = 0.0;
-    RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
+    RLMArray *matchData = [self playedMatchesForTeam:team];
     for (TeamInMatchData *TIMD in matchData)
     {
         if(TIMD.uploadedData.numContainersMovedIntoAutoZone >= 3) containerSet += 1.0;
@@ -993,7 +997,7 @@
     return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *timd) {
         float avg = 0.0;
         
-        RLMArray<TeamInMatchData> *matchData = [self playedMatchesForTeam:team];
+        RLMArray *matchData = [self playedMatchesForTeam:team];
         for(TeamInMatchData *timd in matchData)
         {
             RLMArray<CoopAction> *coopActions = timd.uploadedData.coopActions;
@@ -1077,7 +1081,7 @@
 {
     
     int totalScore = 0;
-    RLMArray<TeamInMatchData> *matchData = [self officiallyScoredMatchesForTeam:team];
+    RLMArray *matchData = [self officiallyScoredMatchesForTeam:team];
     for (TeamInMatchData *TIMD in matchData)
     {
         Match *m = TIMD.match;
@@ -1217,7 +1221,6 @@
 
 -(NSString *)listOfReconAcquisitionTypesForTeam:(Team *)team
 {
-    NSString *reconAcquisitionTypes = [[NSString alloc] init];
     NSMutableArray *reconAcquisitionArray = [[NSMutableArray alloc] init];
     
     if(team.matchData.count == 0) return @"none";
@@ -1245,8 +1248,8 @@
         else return NSOrderedAscending; // second number > first number
     }];
     
-    reconAcquisitionTypes = [self stringFromComponentsOfMutableArray:reconAcquisitionArray];
-    return reconAcquisitionTypes;
+    
+    return [self stringFromComponentsOfMutableArray:reconAcquisitionArray];
 }
 
 

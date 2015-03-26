@@ -21,7 +21,7 @@
 -(void)beginCalculations;
 -(void)timerFired:(NSTimer *)timer;
 
-- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original withReturn:(NSString *)r;
+- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original withAllianceColor:(NSString *)allianceColor withReturn:(NSString *)r;
 
 @end
 
