@@ -89,11 +89,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     else if(filePath == RealmDotRealm)
     {
         //return @"/Database File/realm.realm";
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"no.realm"];
     }
     else if(filePath == PitScoutDotRealm)
     {
-        return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+        return [[[DBPath root] childPath:@"Database File"] childPath:@"nono.realm"];
         
     }
     else if(filePath == ConflictedCopies)
@@ -202,13 +202,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     UploadedTeamData *utd = [[UploadedTeamData alloc] init];
     utd.pitOrganization = @"";
-    utd.drivetrain = @"";
-    utd.typesWheels = @"";
+    //utd.drivetrain = @"";
+    //utd.typesWheels = @"";
     utd.programmingLanguage = @"";
-    utd.pitNotes = @"";
-    utd.weight = 0;
-    utd.withholdingAllowanceUsed = 0;
+    utd.pitNotes = @"Not Yet Pit Scouted";
+    //utd.weight = 0;
+    //utd.withholdingAllowanceUsed = 0;
     utd.canMountMechanism = false;
+    utd.mountingWillingness = -1.0;
     t.uploadedData = utd;
     
     [realm addObject:t];
@@ -237,6 +238,22 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     m.officialBlueScore = -1;
     [[RLMRealm defaultRealm] addObject:m];
     return m;
+}
+
+-(TeamInMatchData *)blankTeamInMatchDataWithTeam:(Team *)team andMatch:(Match *)match {
+    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
+    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
+    utimd.reconAcquisitions = (RLMArray<ReconAcquisition> *)[[RLMArray alloc] initWithObjectClassName:@"ReconAcquisition"];
+    utimd.coopActions = (RLMArray<CoopAction> *)[[RLMArray alloc] initWithObjectClassName:@"CoopAction"];
+    CalculatedTeamInMatchData *ctimd = [[CalculatedTeamInMatchData alloc] init];
+    timd.calculatedData = ctimd;
+    timd.uploadedData = utimd;
+    timd.team = team;
+    timd.match = match;
+    //[[RLMRealm defaultRealm] beginWriteTransaction];
+    [[RLMRealm defaultRealm] addObject:timd];
+    //[[RLMRealm defaultRealm] commitWriteTransaction];
+    return timd;
 }
 
 -(BOOL)realmArray:(RLMArray *)array containsObject:(id)obj {
@@ -279,6 +296,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     if (!self.haveCheckedTeam) {
         
         if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
+            NSLog(@"Match: %@", head);
             self.haveCheckedTeam = YES;
             RLMResults *m = [Match objectsWhere: @"match == %@", head];
             NSString *color = @"blue";
@@ -292,6 +310,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];
                 }
+                TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
+                [match.teamInMatchDatas addObject:timd];
+                [originalTeam.matchData addObject:timd];
             } else {
                 NSString *color = @"blue";
 
@@ -645,6 +666,43 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             } else { //(There is no team with that number in the database)
                 if ([className isEqual: @"Team"]) {
                     [self blankTeamWithNumber:[uniqueValue intValue]];
+                    BOOL wasError = NO;
+                    for(NSMutableDictionary *change in JSONfile[@"changes"])
+                    {
+                        NSString *keyPath = change[@"keyToChange"];
+                        NSString *valueToChangeTo = change[@"valueToChangeTo"];
+                        if (![keyPath containsString:@"scoutName"]) {
+                            
+                            
+                            //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
+                            
+                            // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
+                            
+                            //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
+                            //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
+                            //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
+                            //RLMRealm *realm = [RLMRealm defaultRealm];
+                            [realm beginWriteTransaction];
+                            NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
+                            if (setError != nil) {
+                                wasError = YES;
+                                NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
+                                //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
+                                Log(log, @"yellow");
+                                NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
+                                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+                            }
+                            [realm commitWriteTransaction];
+                        }
+                        //
+                        
+                        //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
+                        
+                    }
+                    if (wasError == NO) {
+                        NSString *s = [NSString stringWithFormat:@"Change Packet: %@ Processed Without Errors! :)",fileInfo.path.name];
+                        Log(s, @"green");
+                    }
                 }
                 
             }

@@ -28,7 +28,7 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database_2.2 copy.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     
@@ -37,7 +37,7 @@
 
 - (void)emptyRealmDatabase
 {
-    UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Clear?" message:@"Are you sure you want to make the realm database empty? Like 0 bytes?" delegate:self cancelButtonTitle:@"No, Dont Empty it." otherButtonTitles:@"Yes, I'm sure", nil];
+    UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Clear?" message:@"Are you sure you want to make the realm database empty except testing throwdown?" delegate:self cancelButtonTitle:@"No, Dont Empty it." otherButtonTitles:@"Yes, I'm sure", nil];
     
     [clearAlertView show];
 }
@@ -52,7 +52,20 @@
             Log(@"Clearing", @"yellow");
             unsigned long long max = [[DBFilesystem sharedFilesystem] maxFileCacheSize];
             [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:0];
-            [[DBFilesystem sharedFilesystem] deletePath:[self dropboxFilePath] error:nil];
+            [[RLMRealm defaultRealm] beginWriteTransaction];
+            [[RLMRealm defaultRealm] deleteAllObjects];
+            Competition *comp = [[Competition alloc] init];
+            comp.name = @"Testing Throwdown";
+            comp.competitionCode = @"TEST";
+            [[RLMRealm defaultRealm] addObject:comp];
+
+            [[RLMRealm defaultRealm] commitWriteTransaction];
+//            RLMRealm *realm = [RLMRealm defaultRealm];
+//            RLMResults *allTeams = [Team allObjects];
+//            NSArray *teams = (NSArray *)allTeams;
+//            for (Team *t in teams) {
+//                realm del
+//            }
             [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
         }
         else {
@@ -254,6 +267,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
+        //[self emptyRealmDatabase];
         /*RLMResults *am = [Match allObjects];
         [[RLMRealm defaultRealm] beginWriteTransaction];
         
