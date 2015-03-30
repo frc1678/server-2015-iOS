@@ -245,6 +245,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
     utimd.reconAcquisitions = (RLMArray<ReconAcquisition> *)[[RLMArray alloc] initWithObjectClassName:@"ReconAcquisition"];
     utimd.coopActions = (RLMArray<CoopAction> *)[[RLMArray alloc] initWithObjectClassName:@"CoopAction"];
+    utimd.miscellaneousNotes = @"No Notes";
     CalculatedTeamInMatchData *ctimd = [[CalculatedTeamInMatchData alloc] init];
     timd.calculatedData = ctimd;
     timd.uploadedData = utimd;
@@ -665,7 +666,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
             } else { //(There is no team with that number in the database)
                 if ([className isEqual: @"Team"]) {
-                    [self blankTeamWithNumber:[uniqueValue intValue]];
+                    objectToModify = [self blankTeamWithNumber:[uniqueValue intValue]];
                     BOOL wasError = NO;
                     for(NSMutableDictionary *change in JSONfile[@"changes"])
                     {

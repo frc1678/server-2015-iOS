@@ -383,7 +383,40 @@
 
 
 -(void)updateCalculatedMatchData
-{/*
+{
+    NSArray *comp = [self getTBAStuff];
+    NSArray *matches = comp[0];
+    RLMRealm *realm = [RLMRealm defaultRealm];
+    RLMResults *allMatches = [Match allObjectsInRealm:realm];
+    
+    for (Match *m in allMatches)
+    {
+        NSString *matchNum = m.match;
+        NSString *compLevel;
+        if ([matchNum containsString:@"QF"]) {
+            compLevel = @"qf";
+            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"QF" withString:@""];
+        }
+        else if ([matchNum containsString:@"SF"]) {
+            compLevel = @"sf";
+            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"SF" withString:@""];
+        }
+        else if ([matchNum containsString:@"F"]) {
+            compLevel = @"f";
+            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"F" withString:@""];
+        }
+        else if ([matchNum containsString:@"Q"] || [matchNum containsString:@"QQ"]) {
+            compLevel = @"q"; //We had issues before with this ;)
+            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"Q" withString:@""];
+        }
+        for (NSDictionary *mat in matches) {
+            if ([mat[@"comp_level"] isEqualToString:compLevel] && [[mat[@"match_number"] stringValue] isEqualToString:matchNum]) {
+                m.officialBlueScore = [mat[@"alliances"][@"blue"][@"score"] integerValue];
+                m.officialRedScore = [mat[@"alliances"][@"red"][@"score"] integerValue];
+            }
+        }
+    }
+    /*
     RLMRealm *realm = [RLMRealm defaultRealm];
     RLMResults *allMatches = [Match allObjectsInRealm:realm];
     
@@ -428,6 +461,18 @@
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
 }
+
+
+-(NSData *)getTBAStuff {
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casa/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSData* data = [NSData dataWithContentsOfURL:url];
+    wait(2);
+    NSError *error;
+    data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+    NSLog(@"%@", data);
+    return data;
+}
+
 /*
 #define SEED_URL @"http://www2.usfirst.org/2014comp/events/TXDA/rankings.html"
 -(void)getSeeds
