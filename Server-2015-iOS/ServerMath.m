@@ -380,15 +380,39 @@
     }
 }
 
+-(Match *)blankMatchWithNumber:(NSString *)number {
+    Match *m = [[Match alloc] init];
+    //m.number = number;
+    m.match = number;
+    RLMArray<Team> *redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+    RLMArray<Team> *blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
+    //RLMResults *timds = [TeamInMatchData objectsWhere:@"match.match == %@", number];
+    RLMArray<TeamInMatchData> *teamInMatchData = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
+    CalculatedMatchData *cmd = [[CalculatedMatchData alloc] init];
+    cmd.predictedBlueScore = -1;
+    cmd.predictedRedScore = -1;
+    cmd.bestBlueAutoStrategy = @"none";
+    cmd.bestRedAutoStrategy = @"none";
+    m.calculatedData = cmd;
+    m.redTeams = redTeams;
+    m.blueTeams = blueTeams;
+    m.teamInMatchDatas = teamInMatchData;
+    m.officialRedScore = -1;
+    m.officialBlueScore = -1;
+    [[RLMRealm defaultRealm] beginWriteTransaction];
+    [[RLMRealm defaultRealm] addObject:m];
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+    return m;
+}
 
 
 -(void)updateCalculatedMatchData
 {
     NSArray *comp = [self getTBAStuff];
-    NSArray *matches = comp[0];
+    //NSArray *matches = comp[0];
     RLMRealm *realm = [RLMRealm defaultRealm];
     RLMResults *allMatches = [Match allObjectsInRealm:realm];
-    
+    [self blankMatchWithNumber:@"QF3"];
     for (Match *m in allMatches)
     {
         NSString *matchNum = m.match;
@@ -409,10 +433,12 @@
             compLevel = @"q"; //We had issues before with this ;)
             matchNum = [matchNum stringByReplacingOccurrencesOfString:@"Q" withString:@""];
         }
-        for (NSDictionary *mat in matches) {
+        for (NSDictionary *mat in comp) {
             if ([mat[@"comp_level"] isEqualToString:compLevel] && [[mat[@"match_number"] stringValue] isEqualToString:matchNum]) {
+                [[RLMRealm defaultRealm] beginWriteTransaction];
                 m.officialBlueScore = [mat[@"alliances"][@"blue"][@"score"] integerValue];
                 m.officialRedScore = [mat[@"alliances"][@"red"][@"score"] integerValue];
+                [[RLMRealm defaultRealm] commitWriteTransaction];
             }
         }
     }
@@ -469,7 +495,7 @@
     wait(2);
     NSError *error;
     data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    NSLog(@"%@", data);
+    //NSLog(@"%@", data);
     return data;
 }
 
