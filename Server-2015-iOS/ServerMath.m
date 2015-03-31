@@ -384,7 +384,7 @@
 
 -(void)updateCalculatedMatchData
 {
-    NSArray *comp = [self getTBAStuff];
+    NSArray *comp = [self getTBAOfficialScores];
     NSArray *matches = comp[0];
     RLMRealm *realm = [RLMRealm defaultRealm];
     RLMResults *allMatches = [Match allObjectsInRealm:realm];
@@ -463,14 +463,26 @@
 }
 
 
--(NSData *)getTBAStuff {
+-(NSData *)getTBAOfficialScores {
     NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casa/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     wait(2);
     NSError *error;
     data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    NSLog(@"%@", data);
     return data;
+}
+
+-(void)doTBAOPRs {
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casa/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSData* data = [NSData dataWithContentsOfURL:url];
+    wait(2);
+    NSError *error;
+    data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+    NSDictionary *d = (NSDictionary *)data;
+    for (NSString *key in [d[@"oprs"] allKeys]) {
+        NSLog(@"%@: %@", key, d[@"oprs"][key]);
+    }
+
 }
 
 /*

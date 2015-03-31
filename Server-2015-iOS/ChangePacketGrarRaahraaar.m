@@ -180,6 +180,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
 -(Team *)blankTeamWithNumber:(int)number {
+    NSArray *at = (NSArray *)[Team allObjects];
+    for (Team *t in at) {
+        if (t.number == number) {
+            return nil;
+        }
+    }
     RLMRealm *realm = [RLMRealm defaultRealm];
     [realm beginWriteTransaction];
     Team *t = [[Team alloc] init];
@@ -218,6 +224,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 -(Match *)blankMatchWithNumber:(NSString *)number {
+    for(Match *m in [Match allObjects]) if([m.match isEqualToString:number]) return nil;
     Match *m = [[Match alloc] init];
     //m.number = number;
     m.match = number;
@@ -241,6 +248,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 -(TeamInMatchData *)blankTeamInMatchDataWithTeam:(Team *)team andMatch:(Match *)match {
+    for(TeamInMatchData *m in [TeamInMatchData allObjects]) if(m.team.number == team.number && [m.match.match isEqualToString:match.match]) return nil;
+
     TeamInMatchData *timd = [[TeamInMatchData alloc] init];
     UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
     utimd.reconAcquisitions = (RLMArray<ReconAcquisition> *)[[RLMArray alloc] initWithObjectClassName:@"ReconAcquisition"];
@@ -264,6 +273,33 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         }
     }
     return NO;
+}
+
+-(NSString *)safeAddTeamInMatchData:(TeamInMatchData *)timd toMatch:(Match *)match andTeam:(Team *)team {
+    NSString *returnString = @"";
+    BOOL wasEqual = NO;
+    for (TeamInMatchData *tmd in team.matchData) {
+        if ([tmd.match isEqual:timd.match]) {
+            wasEqual = YES;
+        }
+    }
+    if (wasEqual == NO) {
+        [team.matchData addObject:timd];
+    } else {
+        returnString = [returnString stringByAppendingString:@"was already in team's teamInMatchDatas"];
+    }
+    wasEqual = NO;
+    for (TeamInMatchData *tmd in match.teamInMatchDatas) {
+        if ([tmd.team isEqual:timd.team]) {
+            wasEqual = YES;
+        }
+    }
+    if (wasEqual == NO) {
+        [match.teamInMatchDatas addObject:timd];
+    } else {
+        returnString = [returnString stringByAppendingString:@" Was already in match's teamInMatchDatas"];
+    }
+    return returnString;
 }
 
 /**
@@ -301,10 +337,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             self.haveCheckedTeam = YES;
             RLMResults *m = [Match objectsWhere: @"match == %@", head];
             NSString *color = @"blue";
+            #warning testing
             if (m.count == 0) {
                 Match *match = [self blankMatchWithNumber:head];
                 
-#warning testing
+
                 if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
                 }
@@ -312,8 +349,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [match.blueTeams addObject:originalTeam];
                 }
                 TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
-                [match.teamInMatchDatas addObject:timd];
-                [originalTeam.matchData addObject:timd];
+                [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
             } else {
                 NSString *color = @"blue";
 
@@ -331,8 +367,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     timd.uploadedData = utimd;
                     timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
                     
-                    [originalTeam.matchData addObject:timd];
-                    [match.teamInMatchDatas addObject:timd];
+                    [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
                 }
                 else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];

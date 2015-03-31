@@ -33,4 +33,4 @@ SPEC CHECKSUMS:
   Realm: b9c1fd9defa26aa7276ce938a8df52ec81f24528
   realm-database-2015: 79dd9966fdd3bcee0710d48b51551d74ee5ddf1f
 
-COCOAPODS: 0.36.0
+COCOAPODS: 0.36.0.beta.2
