@@ -227,6 +227,8 @@
         RLMRealm *realm = [RLMRealm defaultRealm];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
+        NSLog(@"There are %lu teams, %lu matches, and %lu teamInMatchDatas in the database.", (unsigned long)[allTeams count], [[Match allObjects] count], [[TeamInMatchData allObjects] count]);
+        
         //[self doPrintoutForTeams:allTeams];
         for (Team *t in allTeams)
         {
@@ -409,6 +411,7 @@
 -(void)updateCalculatedMatchData
 {
     NSArray *comp = [self getTBAOfficialScores];
+    [self doTBAOPRs];
     NSArray *matches = comp[0];
     RLMRealm *realm = [RLMRealm defaultRealm];
     RLMResults *allMatches = [Match allObjectsInRealm:realm];
@@ -504,10 +507,10 @@
     wait(2);
     NSError *error;
     data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    NSDictionary *d = (NSDictionary *)data;
+    /*NSDictionary *d = (NSDictionary *)data;
     for (NSString *key in [d[@"oprs"] allKeys]) {
         NSLog(@"%@: %@", key, d[@"oprs"][key]);
-    }
+    }*/
 
 }
 

@@ -67,9 +67,15 @@
 //                realm del
 //            }
             [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
+            UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Ckeared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
         }
         else {
             NSLog(@"Unknown Button");
+        }
+    }
+    else if([alertView.title isEqualToString:@"Check/Delete"]) {
+        if (buttonIndex == 0 || buttonIndex == 1) {
+            Log(@"Continuing...", @"yellow");
         }
     }
     
@@ -267,7 +273,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
-        //[self emptyRealmDatabase];
+        [self emptyRealmDatabase];
         /*RLMResults *am = [Match allObjects];
         [[RLMRealm defaultRealm] beginWriteTransaction];
         
