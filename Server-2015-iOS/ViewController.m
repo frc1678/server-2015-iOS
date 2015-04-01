@@ -67,7 +67,8 @@
 //                realm del
 //            }
             [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
-            UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Ckeared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
+            UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Cleared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
+            [clearAlertView show];
         }
         else {
             NSLog(@"Unknown Button");

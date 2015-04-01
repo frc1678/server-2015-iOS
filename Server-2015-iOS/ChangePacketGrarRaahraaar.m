@@ -215,10 +215,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     //utd.weight = 0;
     //utd.withholdingAllowanceUsed = 0;
     utd.canMountMechanism = false;
-    utd.mountingWillingness = -1.0;
+    utd.mountingWillingness = 0.0;
     t.uploadedData = utd;
     
     [realm addObject:t];
+    Competition *comp = (Competition *)[[Competition allObjects] firstObject];
+    [comp.attendingTeams addObject:t];
+    
     [realm commitWriteTransaction];
     return t;
 }
@@ -244,6 +247,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     m.officialRedScore = -1;
     m.officialBlueScore = -1;
     [[RLMRealm defaultRealm] addObject:m];
+    Competition *comp = (Competition *)[[Competition allObjects] firstObject];
+    [comp.matches addObject:m];
     return m;
 }
 
@@ -255,6 +260,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     utimd.reconAcquisitions = (RLMArray<ReconAcquisition> *)[[RLMArray alloc] initWithObjectClassName:@"ReconAcquisition"];
     utimd.coopActions = (RLMArray<CoopAction> *)[[RLMArray alloc] initWithObjectClassName:@"CoopAction"];
     utimd.miscellaneousNotes = @"No Notes";
+    utimd.maxFieldToteHeight = -1;
     CalculatedTeamInMatchData *ctimd = [[CalculatedTeamInMatchData alloc] init];
     timd.calculatedData = ctimd;
     timd.uploadedData = utimd;
@@ -283,7 +289,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             wasEqual = YES;
         }
     }
-    if (wasEqual == NO) {
+    if (wasEqual == NO && timd != nil) {
         [team.matchData addObject:timd];
     } else {
         returnString = [returnString stringByAppendingString:@"was already in team's teamInMatchDatas"];
@@ -294,7 +300,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             wasEqual = YES;
         }
     }
-    if (wasEqual == NO) {
+    if (wasEqual == NO && timd != nil) {
         [match.teamInMatchDatas addObject:timd];
     } else {
         returnString = [returnString stringByAppendingString:@" Was already in match's teamInMatchDatas"];
@@ -321,6 +327,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     NSString *rtError = r;
     
+    if (allianceColor == nil) {
+        allianceColor = @"";
+    }
+    NSString *color = allianceColor;
+    
     if (!value) {
         NSLog(@"value is not ok");
         rtError = @"Value not OK";
@@ -336,12 +347,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             NSLog(@"Match: %@", head);
             self.haveCheckedTeam = YES;
             RLMResults *m = [Match objectsWhere: @"match == %@", head];
-            NSString *color = @"blue";
-            #warning testing
+            //NSString *color = @"blue";
+            //#warning testing
             if (m.count == 0) {
                 Match *match = [self blankMatchWithNumber:head];
                 
-
                 if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
                 }
@@ -350,44 +360,20 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
                 [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
+                
             } else {
                 NSString *color = @"blue";
-
                 Match *match = [m firstObject];
+                
                 if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
-                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    timd.team = originalTeam;
-                    timd.match = match;
-                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
-                    for (RLMProperty *p in [utimd objectSchema].properties) {
-                        utimd[p.name] = [p defaultValue];
-                    }
-                    utimd.maxFieldToteHeight = -1;
-                    timd.uploadedData = utimd;
-                    timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
-                    
-                    [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
+                    [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
                 }
                 else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];
-                    TeamInMatchData *timd = [[TeamInMatchData alloc] init];
-                    timd.team = originalTeam;
-                    timd.match = match;
-                    UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
-                    for (RLMProperty *p in [utimd objectSchema].properties) {
-                        utimd[p.name] = [p defaultValue];
-                    }
-                    utimd.maxFieldToteHeight = -1;
-                    timd.uploadedData = utimd;
-                    timd.calculatedData = [[CalculatedTeamInMatchData alloc] init];
-                    
-                    [originalTeam.matchData addObject:timd];
-                    [match.teamInMatchDatas addObject:timd];
+                    [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
                 }
             }
-            
-        
         }
     }
     if (tail.count > 0)
@@ -468,8 +454,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         newObject[p.name] = [p defaultValue];
                     }
                 }
-                NSString *color = @"blue";
-#warning testing
+                //NSString *color = @"blue";
+//#warning testing
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
                     return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
@@ -481,8 +467,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 [array addObject:newObject];
             }
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:@"blue" withReturn:nil];
-#warning testing
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
+//#warning testing
         }
         else
         {
@@ -519,8 +505,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 object[head] = newObject;
             }
-#warning testing
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:@"blue" withReturn:nil];
+//#warning testing
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
         }
         
     }

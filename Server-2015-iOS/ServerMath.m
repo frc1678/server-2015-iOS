@@ -415,7 +415,6 @@
     NSArray *matches = comp[0];
     RLMRealm *realm = [RLMRealm defaultRealm];
     RLMResults *allMatches = [Match allObjectsInRealm:realm];
-    [self blankMatchWithNumber:@"QF3"];
     for (Match *m in allMatches)
     {
         NSString *matchNum = m.match;
