@@ -327,6 +327,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     NSString *rtError = r;
     
+    
+    
     if (allianceColor == nil) {
         allianceColor = @"";
     }
@@ -407,7 +409,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else
                 {
-                    NSLog(@"Oh no, %@ doesnt conform to unique key or semi unique key protocols!", item);
                     rtError = [NSString stringWithFormat:@"%@ doesnt conform to unique or semiunique key protocols", item];
                     return rtError;
                 }
@@ -477,7 +478,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 newObject = object[head];
             }
             @catch (NSException *exception) {
-                NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
+                //NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
                 rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
                 return rtError;
             }
@@ -516,8 +517,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             object[head] = value;
         }
         @catch (NSException *exception) {
-            NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
+            //NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
             rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
+            rtError = [rtError stringByAppendingString:[NSString stringWithFormat:@"\nException: %@", exception]];
             return rtError;
         }
     }

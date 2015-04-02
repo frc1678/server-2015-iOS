@@ -272,8 +272,8 @@
                         t.calculatedData.avgNumMaxHeightStacks = [self avgNumMaxHeightStacksForTeam:t]; //Is this gonna be an issue because it relies on other calculated data that might have been calculated very recently
 t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackPlacing"]/3;
             
-#warning uncomment when schema fixes
-            //t.calculatedData.avgNumCappedSixStacks = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numSixStacksCapped"];
+//#warning uncomment when schema fixes
+            t.calculatedData.avgNumCappedSixStacks = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numSixStacksCapped"];
             
 
             
@@ -1309,8 +1309,8 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     20 * SECOND_PICK_ABILITY_CONSTANT * team.calculatedData.isStackedToteSetPercentage +
     6 * team.calculatedData.avgNumTotesPickedUpFromGround -
     6 * (ourAvgMaxFieldReconHeight + 1) * (team.calculatedData.avgNumStacksDamaged);*/
-#warning uncomment when schema changes
-    //return (team.calculatedData.avgNumCappedSixStacks * 24) + (team.calculatedData.avgNumReconsPickedUp * 24) + (team.calculatedData.avgStepReconsAcquiredInAuto);
+//#warning uncomment when schema changes
+    return (team.calculatedData.avgNumCappedSixStacks * 24) + (team.calculatedData.avgNumReconsPickedUp * 24) + (team.calculatedData.avgStepReconsAcquiredInAuto);
     return 0.0;
 }
 

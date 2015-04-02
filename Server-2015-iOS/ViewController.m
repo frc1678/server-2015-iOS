@@ -19,6 +19,7 @@
 
 @property (nonatomic, strong) NSMutableArray *dataFromDropbox;
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic) BOOL doClearRealm;
 
 
 @end
@@ -42,6 +43,30 @@
     [clearAlertView show];
 }
 
+-(void)clearRealm {
+    Log(@"Clearing", @"yellow");
+    unsigned long long max = [[DBFilesystem sharedFilesystem] maxFileCacheSize];
+    [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:0];
+    [[RLMRealm defaultRealm] beginWriteTransaction];
+    [[RLMRealm defaultRealm] deleteAllObjects];
+    Competition *comp = [[Competition alloc] init];
+    comp.name = @"SVR";
+    comp.competitionCode = @"casj";
+    [[RLMRealm defaultRealm] addObject:comp];
+    
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+    //            RLMRealm *realm = [RLMRealm defaultRealm];
+    //            RLMResults *allTeams = [Team allObjects];
+    //            NSArray *teams = (NSArray *)allTeams;
+    //            for (Team *t in teams) {
+    //                realm del
+    //            }
+    [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
+    UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Cleared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
+    [clearAlertView show];
+    self.doClearRealm = NO;
+}
+
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if ([alertView.title isEqualToString:@"Clear?"]) {
@@ -49,26 +74,7 @@
             Log(@"Not Clearing", @"yellow");
         }
         else if (buttonIndex == 1) {
-            Log(@"Clearing", @"yellow");
-            unsigned long long max = [[DBFilesystem sharedFilesystem] maxFileCacheSize];
-            [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:0];
-            [[RLMRealm defaultRealm] beginWriteTransaction];
-            [[RLMRealm defaultRealm] deleteAllObjects];
-            Competition *comp = [[Competition alloc] init];
-            comp.name = @"Testing Throwdown";
-            comp.competitionCode = @"TEST";
-            [[RLMRealm defaultRealm] addObject:comp];
-
-            [[RLMRealm defaultRealm] commitWriteTransaction];
-//            RLMRealm *realm = [RLMRealm defaultRealm];
-//            RLMResults *allTeams = [Team allObjects];
-//            NSArray *teams = (NSArray *)allTeams;
-//            for (Team *t in teams) {
-//                realm del
-//            }
-            [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
-            UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Cleared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
-            [clearAlertView show];
+            self.doClearRealm = YES;
         }
         else {
             NSLog(@"Unknown Button");
@@ -184,6 +190,7 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    //[self emptyRealmDatabase];
     [self checkInternet:self.timer];
    
     @try {
@@ -274,8 +281,11 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
-        [self emptyRealmDatabase];
+        if (self.doClearRealm == YES) {
+            [self emptyRealmDatabase];
+        }
         /*RLMResults *am = [Match allObjects];
+         
         [[RLMRealm defaultRealm] beginWriteTransaction];
         
         for (Match *m in (NSArray *)am) {
