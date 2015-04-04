@@ -215,7 +215,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     //utd.weight = 0;
     //utd.withholdingAllowanceUsed = 0;
     utd.canMountMechanism = false;
-    utd.mountingWillingness = 0.0;
+    utd.mountingSpeed = 0.0;
     t.uploadedData = utd;
     
     [realm addObject:t];
@@ -281,6 +281,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     return NO;
 }
 
+-(BOOL)allianceContainsTeam:(RLMArray *)al team:(Team *)team {
+    for (Team *t in al) {
+        if (t.number == team.number) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+
 -(NSString *)safeAddTeamInMatchData:(TeamInMatchData *)timd toMatch:(Match *)match andTeam:(Team *)team {
     NSString *returnString = @"";
     BOOL wasEqual = NO;
@@ -320,7 +330,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 // Separates the keyPath into components and creates an array out o them
 // Finds UniqueKey-s and SemiUniqueKey-s among the components
-- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath onRealmObject:(id)object onOriginalObject:(id)original withAllianceColor:(NSString *)allianceColor withReturn:(NSString *)r
+- (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath forOrigionalPath:(NSString *)origionalPath onRealmObject:(id)object onOriginalObject:(id)original withAllianceColor:(NSString *)allianceColor withReturn:(NSString *)r
 {
     if (r != nil) {
         return r;
@@ -346,7 +356,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     if (!self.haveCheckedTeam) {
         
         if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
-            NSLog(@"Match: %@", head);
+            //NSLog(@"Match: %@", head);
             self.haveCheckedTeam = YES;
             RLMResults *m = [Match objectsWhere: @"match == %@", head];
             //NSString *color = @"blue";
@@ -354,24 +364,23 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             if (m.count == 0) {
                 Match *match = [self blankMatchWithNumber:head];
                 
-                if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
+                if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
                 }
-                else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
+                else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];
                 }
                 TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
                 [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
                 
             } else {
-                NSString *color = @"blue";
                 Match *match = [m firstObject];
                 
-                if ([color isEqualToString:@"red"] && ![self realmArray:match.redTeams containsObject:originalTeam]) {
+                if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
                     [match.redTeams addObject:originalTeam];
                     [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
                 }
-                else if ([color isEqualToString:@"blue"] && ![self realmArray:match.blueTeams containsObject:originalTeam]) {
+                else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
                     [match.blueTeams addObject:originalTeam];
                     [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
                 }
@@ -422,12 +431,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 Class class = NSClassFromString(className);
                 newObject = [[class alloc] init];
                 for (RLMProperty *p in [newObject objectSchema].properties) {
+                    newObject[p.name] = [p defaultValue];
+#warning Chenged
                     // Add hard-coded checking for team or match objects, in the case of a match data change packet.
-                    if ([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"team"])
+                    /*if ([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"team"])
                     {
                         newObject[p.name] = original;
-                    }
-                    else if([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"match"])
+                    }*/
+                    /*else if([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"match"])
                     {
                         RLMResults *matchResults = [Match objectsWhere:[NSString stringWithFormat:@"%@ == '%@'", [Match uniqueKey], head]];
                         if (matchResults.count == 1)
@@ -453,27 +464,30 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     else
                     {
                         newObject[p.name] = [p defaultValue];
-                    }
+                    }*/
                 }
                 //NSString *color = @"blue";
 //#warning testing
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
-                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
+                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
                 }
                 else if([newObject conformsToProtocol:@protocol(SemiUniqueKey)])
                 {
-                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
+                    return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
                 }
                 
                 [array addObject:newObject];
             }
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
 //#warning testing
         }
         else
         {
             id newObject = nil;
+//            if (<#condition#>) {
+//                <#statements#>
+//            }
             @try {
                 newObject = object[head];
             }
@@ -504,15 +518,49 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 
                 
                 
+                
                 object[head] = newObject;
             }
 //#warning testing
-            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
+            return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
         }
         
     }
     else
     {
+        if ([head isEqualToString:@"coopActions"]) {
+            NSArray *keyPathComponents = [origionalPath componentsSeparatedByString:@"."];
+            NSString *matchNum = keyPathComponents[1];
+            TeamInMatchData *timd = (TeamInMatchData *)[[TeamInMatchData objectsWhere:@"team.number == %ld && match.match == %@", originalTeam.number, matchNum] firstObject];
+            NSArray *ar = (NSArray *)value;
+            if (ar.count > 0) {
+                if (timd.uploadedData.coopActions.count == 0) {
+                    CoopAction *ca = [[CoopAction alloc] init];
+                    for (NSDictionary *d in value[0]) {
+                        ca.uniqueID = 0;
+                        ca.numTotes = [d[@"numTotes"] integerValue];
+                        ca.didSucceed = d[@"didSucceed"];
+                        ca.onTop = d[@"onTop"];
+                    }
+                    
+                    [timd.uploadedData.coopActions addObject:ca];
+                }
+                else {
+                    for (NSDictionary *d in value[0]) {
+                        CoopAction *ca = timd.uploadedData.coopActions[0];
+                        ca.uniqueID = 0;
+                        ca.numTotes = [d[@"numTotes"] integerValue];
+                        ca.didSucceed = d[@"didSucceed"];
+                        ca.onTop = d[@"onTop"];
+                    }
+                }
+                
+            }
+            
+            
+            
+            
+        }
         @try {
             object[head] = value;
         }
@@ -520,6 +568,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
             rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
             rtError = [rtError stringByAppendingString:[NSString stringWithFormat:@"\nException: %@", exception]];
+            if ([rtError containsString:@"numReconsFromStep"]) {
+                //
+            }
             return rtError;
         }
     }
@@ -654,7 +705,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 {
                     NSString *keyPath = change[@"keyToChange"];
                     NSString *valueToChangeTo = change[@"valueToChangeTo"];
-                    if (![keyPath containsString:@"scoutName"]) {
+                       if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
+                        if ([keyPath containsString:@"numReconsFromStep"]) {
+                            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
+                        }
                         
                         
                         //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
@@ -666,14 +720,23 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                         //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
-                        NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
+                        NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath forOrigionalPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
                         if (setError != nil) {
                             wasError = YES;
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
                             //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
+                            DBError *e = [[DBError alloc] init];
                             NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
-                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+                            if (invalidName.length > 209) {
+                                invalidName = [invalidName substringFromIndex:invalidName.length-130];
+
+                            }
+                            if (invalidName.length > 109) {
+                                invalidName = [invalidName substringFromIndex:invalidName.length-30];
+                            }
+                            
+                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&e];
                         }
                         [realm commitWriteTransaction];
                     }
@@ -695,8 +758,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     {
                         NSString *keyPath = change[@"keyToChange"];
                         NSString *valueToChangeTo = change[@"valueToChangeTo"];
-                        if (![keyPath containsString:@"scoutName"]) {
-                            
+                        
+                            if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
+                                if ([keyPath containsString:@"numReconsFromStep"]) {
+                                    keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
+                                }
+                                
                             
                             //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
                             
@@ -707,14 +774,22 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
                             //RLMRealm *realm = [RLMRealm defaultRealm];
                             [realm beginWriteTransaction];
-                            NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
+                            NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath forOrigionalPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
                             if (setError != nil) {
                                 wasError = YES;
                                 NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
                                 //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                                 Log(log, @"yellow");
+                                DBError *e = [[DBError alloc] init];
                                 NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
-                                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+                                if (invalidName.length > 209) {
+                                    invalidName = [invalidName substringFromIndex:invalidName.length-130];
+                                    
+                                }
+                                if (invalidName.length > 109) {
+                                    invalidName = [invalidName substringFromIndex:invalidName.length-30];
+                                }
+                                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&e];
                             }
                             [realm commitWriteTransaction];
                         }

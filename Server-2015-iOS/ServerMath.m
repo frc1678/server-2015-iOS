@@ -211,6 +211,14 @@
     NSLog(@"%@", stringToLog);
 }
 
+-(CalculatedTeamData *)newBlankCalculatedTeamDataForTeam:(Team *)team {
+    CalculatedTeamData *ctd = [[CalculatedTeamData alloc] init];
+    ctd.reconAcquisitionTypes = @"";
+    ctd.mostCommonReconAcquisitionType = @"";
+    team.calculatedData = ctd;
+    return ctd;
+}
+
 -(void)updateCalculatedData
 {
     if (!self.currentlyCalculating) {
@@ -227,24 +235,30 @@
         RLMRealm *realm = [RLMRealm defaultRealm];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
-        NSLog(@"There are %lu teams, %lu matches, and %lu teamInMatchDatas in the database.", (unsigned long)[allTeams count], [[Match allObjects] count], [[TeamInMatchData allObjects] count]);
+        NSLog(@"There are %lu teams, %lu matches, and %lu teamInMatchDatas in the database.", (unsigned long)[allTeams count], (unsigned long)[[Match allObjects] count], (unsigned long)[[TeamInMatchData allObjects] count]);
         
-        //[self doPrintoutForTeams:allTeams];
+        [self doPrintoutForTeams:allTeams];
+
         for (Team *t in allTeams)
         {
-            if (t.number == 1678) {
+            [realm beginWriteTransaction];
+
+            if (t.number == 254) {
                 //
             }
             
-            [realm beginWriteTransaction];
-
+            if(t.calculatedData == nil) {
+                [self newBlankCalculatedTeamDataForTeam:t];
+            }
 #pragma mark Tote Stuff
+            t.calculatedData.avgNumTotesFromHP = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesFromHP"];
             t.calculatedData.avgNumTotesPickedUpFromGround = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesPickedUpFromGround"];
             t.calculatedData.avgNumTotesStacked = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTotesStacked"];
             t.calculatedData.avgMaxFieldToteHeight = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.maxFieldToteHeight"];
             t.calculatedData.isStackedToteSetPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.stackedToteSet"];
 
 #pragma mark Recon Stuff
+            t.calculatedData.avgNumTeleopReconsFromStep = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numTeleopReconsFromStep"];
             t.calculatedData.avgNumVerticalReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numVerticalReconsPickedUp"];
             t.calculatedData.avgNumHorizontalReconsPickedUp = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.numHorizontalReconsPickedUp"];
             t.calculatedData.avgNumReconsPickedUp = t.calculatedData.avgNumHorizontalReconsPickedUp + t.calculatedData.avgNumVerticalReconsPickedUp;
@@ -281,12 +295,12 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             t.calculatedData.incapacitatedPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.incapacitated"];
             t.calculatedData.disabledPercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.disabled"];
             t.calculatedData.reliability = [self reliabilityOfTeam:t];
-            //t.calculatedData.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMovedIntoAutoZone"];
+            //t.calculatedData.isRobotMoveIntoAutoZonePercentage = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.robotMoveIntoAutoZone"];
             t.calculatedData.avgAgility = [self avgDriverAbilityForTeam:t];
             t.calculatedData.driverAbility = [self avgDriverAbilityForTeam:t];
             
-            //t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
-            //t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
+            t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
+            t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
             self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"]/3.0;
@@ -294,6 +308,8 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
             t.calculatedData.thirdPickAbility = [self thirdPickAbilityForTeamNOLandfill:t];
             t.calculatedData.thirdPickAbilityLandfill = [self thirdPickAbilityForTeamLandfill:t];
+            t.calculatedData.averageScore = [self averageTotalScoreForTeam:t];
+            t.calculatedData.predictedAverageScore = t.calculatedData.averageScore;
             
             /*t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD) {
                 //Make sure this implicit conversion is not causing problems
@@ -307,7 +323,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
                 return totalTime/TIMD.uploadedData.reconAcquisitions.count;
             }];*/
             
-            //t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
+            t.calculatedData.avgCoopPoints = [self predictedCOOPScoreForTeam:t];
             
             
             //t.calculatedData.avgMostCommonReconAcquisitionTypeTime = [self mostCommonReconAcquisitionTimeForTeam:t];
@@ -322,14 +338,15 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             
             //NSLog(@"Team: %ld, %@ has been calculated.", (long)t.number, t.name);
             
-            [realm commitWriteTransaction];
             
             //Update UI
             //[self wait:3.0];
             
-            NSLog(@"Team: %ld, Avg Human Loaded Totes: %ld", (long)t.number, (long)(t.calculatedData.avgNumTotesStacked - t.calculatedData.avgNumTotesPickedUpFromGround));
-            
+            //NSLog(@"Team: %ld, Avg Human Loaded Totes: %ld", (long)t.number, (long)(t.calculatedData.avgNumTotesStacked - t.calculatedData.avgNumTotesPickedUpFromGround));
+            [realm commitWriteTransaction];
+
         }
+
         
         //Calculating Predicted Seeds
         NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.predictedTotalScoresOfTeams allValues]] array] mutableCopy];
@@ -436,7 +453,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             matchNum = [matchNum stringByReplacingOccurrencesOfString:@"F" withString:@""];
         }
         else if ([matchNum containsString:@"Q"] || [matchNum containsString:@"QQ"]) {
-            compLevel = @"q"; //We had issues before with this ;)
+            compLevel = @"qm"; //We had issues before with this ;)
             matchNum = [matchNum stringByReplacingOccurrencesOfString:@"Q" withString:@""];
         }
         for (NSDictionary *mat in comp) {
@@ -496,7 +513,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 
 -(NSData *)getTBAOfficialScores {
-    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casa/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     wait(2);
     NSError *error;
@@ -505,7 +522,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 }
 
 -(void)doTBAOPRs {
-    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casa/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     wait(2);
     NSError *error;
@@ -971,9 +988,9 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
  *
  *  @return The average # points.
  */
-/*-(float)predictedCOOPScoreForTeam:(Team *)team
+-(float)predictedCOOPScoreForTeam:(Team *)team
 {
-    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD, Match *m) {
+    return [self averageUploadedDataWithTeam:team WithDatapointBlock:^float(TeamInMatchData *TIMD) {
         float avgCoop = 0.0;
         for (CoopAction *ca in TIMD.uploadedData.coopActions)
         {
@@ -987,7 +1004,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
         }
         return avgCoop/TIMD.uploadedData.coopActions.count;
     }];
-}*/
+}
 
 -(float)bottomPlacingCOOPReliabilityForTeam:(Team *)team
 {
@@ -1169,7 +1186,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 #pragma mark - General
 
 
-/*
+
 -(int)totalScoreForTeam:(Team *)team
 {
     
@@ -1202,20 +1219,20 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 {
     return [self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team];
 }
-*/
+
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
 {
     NSInteger matchesPlayed = [[self officiallyScoredMatchesForTeam:team] count];
     
     return team.matchData.count - matchesPlayed;
-}/*
+}
 
 -(NSInteger)predictedTotalScoreForTeam:(Team *)team
 {
     //Get the totalScore, and add that to the sum of the predicted scores for future matches.
-    return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self predictedQualScoreForTeam:team]);
+    return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self averageTotalScoreForTeam:team]);
 }
-*/
+
 /**
  *  Sum of predicted auto and teleop scores for one match.
  *//*

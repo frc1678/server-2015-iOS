@@ -29,7 +29,7 @@
 
 
 - (DBPath *)dropboxFilePath {
-    return [[[DBPath root] childPath:@"Database File"] childPath:@"test_database_3.14159265.realm"];
+    return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
     
@@ -242,6 +242,7 @@
 
 - (void)reloadDataWithData:(NSMutableArray *)data {
     //dispatch_async(dispatch_get_main_queue(), ^{
+    //[self clearRealm];
         @try {
             RLMResults *teamsFromDB = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
             NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
@@ -282,7 +283,7 @@
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
         if (self.doClearRealm == YES) {
-            [self emptyRealmDatabase];
+            [self clearRealm];
         }
         /*RLMResults *am = [Match allObjects];
          

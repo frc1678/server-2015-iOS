@@ -24,7 +24,7 @@ CHECKOUT OPTIONS:
     :commit: 1b8786c19e626a60b9d0dc86c939078684ccd439
     :git: https://github.com/frc1678/CCDropboxRealmSync-iOS
   realm-database-2015:
-    :commit: c61d661dbd8b9eeda6b65696e3173badb44c444c
+    :commit: 6335b0dbe6766cef2295d6f5d97575ac0204a5f4
     :git: https://github.com/frc1678/realm-database-2015
 
 SPEC CHECKSUMS:
