@@ -540,7 +540,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 return rtError;
             }
             
-            
             if(!newObject)
             {
                 // If newObject is nil, we need to create it, with the right class, and then set that as the value for head on the current object

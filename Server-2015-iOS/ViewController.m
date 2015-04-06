@@ -164,6 +164,45 @@
     
 }
 
+/**
+ *  Does exacly what the title says.
+ *
+ *  @return Returns a dictionaty of Dberrors and what they come from.
+ */
+-(NSDictionary *)moveAllChangePacketsToUnprocessed {
+    NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
+    
+    DBError *e;
+    NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
+    errors[@"processed listFile"] = e;
+    
+    DBError *e2;
+    NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
+    errors[@"invalid listFile"] = e2;
+    
+    DBError *e3;
+    for (DBFileInfo *info in processed) {
+        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+        if(e.code == DBErrorExists) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+            
+        }
+    }
+    errors[@"processed moving"] = e3;
+    
+    DBError *e4;
+    for (DBFileInfo *info in invalid) {
+        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+        if(e.code == DBErrorExists) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+            
+        }
+    }
+    errors[@"invalid moving"] = e4;
+    
+    return errors;
+}
+
 - (BOOL)connectedToNetwork  {
     NSURL* url = [[NSURL alloc] initWithString:@"http://this-page-intentionally-left-blank.org/"];
     NSURL* url2 = [[NSURL alloc] initWithString:@"http://http://www.blankwebsite.com/"];
