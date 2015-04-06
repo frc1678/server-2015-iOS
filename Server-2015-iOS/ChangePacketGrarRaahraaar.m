@@ -318,15 +318,91 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     return returnString;
 }
 
+-(BOOL)isInvalidFloat:(float)value
+{
+    if (isnan(value)) {
+        return YES;
+    }
+    if (value > 10000.0 || value < -10000.0)
+    {
+        return YES;
+    }
+    return NO;
+}
+
+
 /**
  *  Updates/writes to Realm
  */
+
+
 
 /*
  1. Value does not change.
  2. newKeyPath always has the first element of current keyPath chopped off.
  3. newObject is always the equivelent of object.keyPathComponents[0]
  */
+
+- (void)possiblyCreateMatch:(NSString *)head andImplementTeam:(Team *)originalTeam intoTheDatabaseWithAllianceColor:(NSString *)color
+{
+    RLMResults *m = [Match objectsWhere: @"match == %@", head];
+    if (m.count == 0) {
+        Match *match = [self blankMatchWithNumber:head];
+        
+        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
+            [match.redTeams addObject:originalTeam];
+        }
+        else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
+            [match.blueTeams addObject:originalTeam];
+        }
+        TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
+        [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
+        
+    } else {
+        Match *match = [m firstObject];
+        
+        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
+            [match.redTeams addObject:originalTeam];
+            [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
+        }
+        else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
+            [match.blueTeams addObject:originalTeam];
+            [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
+        }
+    }
+}
+
+- (void)dealWithDictCoopForValue:(id)value andTeam:(Team *)originalTeam andPath:(NSString *)origionalPath andHead:(NSString *)head
+{
+    if ([head isEqualToString:@"coopActions"]) { //Dealing with when coop actions are given as a dictionary
+        NSArray *keyPathComponents = [origionalPath componentsSeparatedByString:@"."];
+        NSString *matchNum = keyPathComponents[1];
+        TeamInMatchData *timd = (TeamInMatchData *)[[TeamInMatchData objectsWhere:@"team.number == %ld && match.match == %@", originalTeam.number, matchNum] firstObject];
+        NSArray *ar = (NSArray *)value;
+        if (ar.count > 0) {
+            if (timd.uploadedData.coopActions.count == 0) {
+                CoopAction *ca = [[CoopAction alloc] init];
+                for (NSDictionary *d in value[0]) {
+                    ca.uniqueID = 0;
+                    ca.numTotes = [d[@"numTotes"] integerValue];
+                    ca.didSucceed = d[@"didSucceed"];
+                    ca.onTop = d[@"onTop"];
+                }
+                
+                [timd.uploadedData.coopActions addObject:ca];
+            }
+            else {
+                for (NSDictionary *d in value[0]) {
+                    CoopAction *ca = timd.uploadedData.coopActions[0];
+                    ca.uniqueID = 0;
+                    ca.numTotes = [d[@"numTotes"] integerValue];
+                    ca.didSucceed = d[@"didSucceed"];
+                    ca.onTop = d[@"onTop"];
+                }
+            }
+        }
+    }
+}
 
 // Separates the keyPath into components and creates an array out o them
 // Finds UniqueKey-s and SemiUniqueKey-s among the components
@@ -337,54 +413,27 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     NSString *rtError = r;
     
-    
-    
     if (allianceColor == nil) {
         allianceColor = @"";
     }
     NSString *color = allianceColor;
     
-    if (!value) {
-        NSLog(@"value is not ok");
+    if (value == nil) {
         rtError = @"Value not OK";
         return rtError;
     }
+    
     Team *originalTeam = (Team *)original;
+    
     NSMutableArray *tail = [[keyPath componentsSeparatedByString:@"."] mutableCopy];
     NSString *head = [tail firstObject];
     [tail removeObjectAtIndex:0];
+    
     if (!self.haveCheckedTeam) {
-        
-        if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) {
-            //NSLog(@"Match: %@", head);
+        if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) { //If its a match string like: "Q35"
             self.haveCheckedTeam = YES;
-            RLMResults *m = [Match objectsWhere: @"match == %@", head];
-            //NSString *color = @"blue";
-            //#warning testing
-            if (m.count == 0) {
-                Match *match = [self blankMatchWithNumber:head];
-                
-                if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
-                    [match.redTeams addObject:originalTeam];
-                }
-                else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
-                    [match.blueTeams addObject:originalTeam];
-                }
-                TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
-                [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
-                
-            } else {
-                Match *match = [m firstObject];
-                
-                if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
-                    [match.redTeams addObject:originalTeam];
-                    [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
-                }
-                else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
-                    [match.blueTeams addObject:originalTeam];
-                    [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
-                }
-            }
+            
+            [self possiblyCreateMatch:head andImplementTeam:originalTeam intoTheDatabaseWithAllianceColor:color];
         }
     }
     if (tail.count > 0)
@@ -466,8 +515,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         newObject[p.name] = [p defaultValue];
                     }*/
                 }
-                //NSString *color = @"blue";
-//#warning testing
+               
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
                     return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
@@ -480,19 +528,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 [array addObject:newObject];
             }
             return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
-//#warning testing
         }
         else
         {
             id newObject = nil;
-//            if (<#condition#>) {
-//                <#statements#>
-//            }
             @try {
                 newObject = object[head];
             }
             @catch (NSException *exception) {
-                //NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
                 rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
                 return rtError;
             }
@@ -515,66 +558,25 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [newObject setValue:utimd forKey:@"uploadedData"];
                     [newObject setValue:ctimd forKey:@"calculatedData"];
                 }
-                
-                
-                
-                
                 object[head] = newObject;
             }
-//#warning testing
             return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
         }
         
     }
     else
     {
-        if ([head isEqualToString:@"coopActions"]) {
-            NSArray *keyPathComponents = [origionalPath componentsSeparatedByString:@"."];
-            NSString *matchNum = keyPathComponents[1];
-            TeamInMatchData *timd = (TeamInMatchData *)[[TeamInMatchData objectsWhere:@"team.number == %ld && match.match == %@", originalTeam.number, matchNum] firstObject];
-            NSArray *ar = (NSArray *)value;
-            if (ar.count > 0) {
-                if (timd.uploadedData.coopActions.count == 0) {
-                    CoopAction *ca = [[CoopAction alloc] init];
-                    for (NSDictionary *d in value[0]) {
-                        ca.uniqueID = 0;
-                        ca.numTotes = [d[@"numTotes"] integerValue];
-                        ca.didSucceed = d[@"didSucceed"];
-                        ca.onTop = d[@"onTop"];
-                    }
-                    
-                    [timd.uploadedData.coopActions addObject:ca];
-                }
-                else {
-                    for (NSDictionary *d in value[0]) {
-                        CoopAction *ca = timd.uploadedData.coopActions[0];
-                        ca.uniqueID = 0;
-                        ca.numTotes = [d[@"numTotes"] integerValue];
-                        ca.didSucceed = d[@"didSucceed"];
-                        ca.onTop = d[@"onTop"];
-                    }
-                }
-                
-            }
-            
-            
-            
-            
-        }
+        [self dealWithDictCoopForValue:value andTeam:originalTeam andPath:origionalPath andHead:head];
         @try {
             object[head] = value;
         }
         @catch (NSException *exception) {
-            //NSLog(@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]);
             rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
             rtError = [rtError stringByAppendingString:[NSString stringWithFormat:@"\nException: %@", exception]];
-            if ([rtError containsString:@"numReconsFromStep"]) {
-                //
-            }
             return rtError;
         }
     }
-    return nil;
+    return nil; //Cuz u gotta return something ;)
 }
 
 
