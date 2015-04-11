@@ -140,28 +140,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
  */
 -(void)beginCalculations
 {
-    
-    NSLog(@"Calcs");
-    
-    //NSLog(@"%@",[self dropboxFilePath:UnprocessedChangePackets]);
     [[DBFilesystem sharedFilesystem] addObserver:self forPathAndChildren:[self dropboxFilePath:UnprocessedChangePackets] block:^{
-        
         [self.timer invalidate];
         self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
-        
-        
         //Start 10 sec timer.
         NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
         NSLog(@"%@", logString);
-        
     }];
     NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
-    //Download change packets
-    //Parse JSON
-    //Do Calculations Code, DONT BE HORRIBLY DATA INEFFICIENT
-    // });
-    
 }
 
 /**
@@ -173,16 +160,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 {
     self.timer = nil;
     Log(@"Starting New Processing", @"green");
-    NSLog(@"Starting new processing!\n");
-    
-    
-    
     [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
+
 -(Team *)blankTeamWithNumber:(int)number {
     NSArray *at = (NSArray *)[Team allObjects];
     for (Team *t in at) {
         if (t.number == number) {
+            Log(@"Team already exists", @"yellow");
             return nil;
         }
     }
@@ -208,18 +193,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     
     UploadedTeamData *utd = [[UploadedTeamData alloc] init];
     utd.pitOrganization = @"";
-    //utd.drivetrain = @"";
-    //utd.typesWheels = @"";
     utd.programmingLanguage = @"";
     utd.pitNotes = @"Not Yet Pit Scouted";
-    //utd.weight = 0;
-    //utd.withholdingAllowanceUsed = 0;
     utd.canMountMechanism = false;
     utd.willingToMount = false;
     utd.easeOfMounting = 0.0;
+    
     t.uploadedData = utd;
     
     [realm addObject:t];
+    
     Competition *comp = (Competition *)[[Competition allObjects] firstObject];
     [comp.attendingTeams addObject:t];
     
@@ -228,13 +211,15 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 -(Match *)blankMatchWithNumber:(NSString *)number {
-    for(Match *m in [Match allObjects]) if([m.match isEqualToString:number]) return nil;
+    for(Match *m in [Match allObjects]) if([m.match isEqualToString:number])
+    {
+        Log(@"Match already exists", @"yellow");
+        return nil;
+    }
     Match *m = [[Match alloc] init];
-    //m.number = number;
     m.match = number;
     RLMArray<Team> *redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
     RLMArray<Team> *blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
-    //RLMResults *timds = [TeamInMatchData objectsWhere:@"match.match == %@", number];
     RLMArray<TeamInMatchData> *teamInMatchData = (RLMArray<TeamInMatchData> *)[[RLMArray alloc] initWithObjectClassName:@"TeamInMatchData"];
     CalculatedMatchData *cmd = [[CalculatedMatchData alloc] init];
     cmd.predictedBlueScore = -1;
@@ -254,7 +239,10 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 -(TeamInMatchData *)blankTeamInMatchDataWithTeam:(Team *)team andMatch:(Match *)match {
-    for(TeamInMatchData *m in [TeamInMatchData allObjects]) if(m.team.number == team.number && [m.match.match isEqualToString:match.match]) return nil;
+    for(TeamInMatchData *m in [TeamInMatchData allObjects]) if(m.team.number == team.number && [m.match.match isEqualToString:match.match]) {
+        Log(@"Team In Match Data Already Exists", @"yellow");
+        return nil;
+    }
 
     TeamInMatchData *timd = [[TeamInMatchData alloc] init];
     UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
@@ -267,9 +255,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     timd.uploadedData = utimd;
     timd.team = team;
     timd.match = match;
-    //[[RLMRealm defaultRealm] beginWriteTransaction];
     [[RLMRealm defaultRealm] addObject:timd];
-    //[[RLMRealm defaultRealm] commitWriteTransaction];
     return timd;
 }
 
@@ -331,18 +317,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     return NO;
 }
 
-
-/**
- *  Updates/writes to Realm
- */
-
-
-
-/*
- 1. Value does not change.
- 2. newKeyPath always has the first element of current keyPath chopped off.
- 3. newObject is always the equivelent of object.keyPathComponents[0]
- */
 
 - (void)possiblyCreateMatch:(NSString *)head andImplementTeam:(Team *)originalTeam intoTheDatabaseWithAllianceColor:(NSString *)color
 {

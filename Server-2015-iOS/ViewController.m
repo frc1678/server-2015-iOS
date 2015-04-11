@@ -35,6 +35,7 @@
     
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
+
 - (IBAction)shareTeamData:(id)sender {
     ServerMath *sm = [[ServerMath alloc] init];
         RLMArray *allTeams = (RLMArray *)[Team allObjects];
@@ -45,13 +46,44 @@
         [self presentViewController:activityVC animated:TRUE completion:nil];
 }
 
-
-
 - (IBAction)emptyRealmDatabase:(id)sender
 {
     UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Clear?" message:@"Are you sure you want to make the realm database empty except testing throwdown?" delegate:self cancelButtonTitle:@"No, Dont Empty it." otherButtonTitles:@"Yes, I'm sure", nil];
     
     [clearAlertView show];
+}
+
+-(IBAction)moveAllChangePacketsToUnprocessed:(id)sender {
+    NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
+    
+    DBError *e = [[DBError alloc] init];
+    NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
+    errors[@"processed listFile"] = e;
+    
+    DBError *e2 = [[DBError alloc] init];
+    NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
+    errors[@"invalid listFile"] = e2;
+    
+    DBError *e3 = [[DBError alloc] init];
+    for (DBFileInfo *info in processed) {
+        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+        if(e.code == DBErrorExists) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+            
+        }
+    }
+    errors[@"processed moving"] = e3;
+    
+    DBError *e4 = [[DBError alloc] init];
+    for (DBFileInfo *info in invalid) {
+        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+        if(e.code == DBErrorExists) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+            
+        }
+    }
+    errors[@"invalid moving"] = e4;
+    
 }
 
 -(void)clearRealm {
@@ -64,14 +96,7 @@
     comp.name = @"Champs";
     comp.competitionCode = @"chmp";
     [[RLMRealm defaultRealm] addObject:comp];
-    
     [[RLMRealm defaultRealm] commitWriteTransaction];
-    //            RLMRealm *realm = [RLMRealm defaultRealm];
-    //            RLMResults *allTeams = [Team allObjects];
-    //            NSArray *teams = (NSArray *)allTeams;
-    //            for (Team *t in teams) {
-    //                realm del
-    //            }
     [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
     UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Cleared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
     [clearAlertView show];
@@ -180,40 +205,9 @@
  *
  *  @return Returns a dictionaty of Dberrors and what they come from.
  */
--(IBAction)moveAllChangePacketsToUnprocessed:(id)sender {
-    NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
-    
-    DBError *e = [[DBError alloc] init];
-    NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
-    errors[@"processed listFile"] = e;
-    
-    DBError *e2 = [[DBError alloc] init];
-    NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
-    errors[@"invalid listFile"] = e2;
-    
-    DBError *e3 = [[DBError alloc] init];
-    for (DBFileInfo *info in processed) {
-        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
-        if(e.code == DBErrorExists) {
-            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
-            
-        }
-    }
-    errors[@"processed moving"] = e3;
-    
-    DBError *e4 = [[DBError alloc] init];
-    for (DBFileInfo *info in invalid) {
-        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
-        if(e.code == DBErrorExists) {
-            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
-            
-        }
-    }
-    errors[@"invalid moving"] = e4;
- 
-}
 
-- (BOOL)connectedToNetwork  {
+
+- (BOOL)isConnectedToNetwork  {
     NSURL* url = [[NSURL alloc] initWithString:@"http://this-page-intentionally-left-blank.org/"];
     NSURL* url2 = [[NSURL alloc] initWithString:@"http://http://www.blankwebsite.com/"];
 
@@ -229,7 +223,7 @@
 -(void)checkInternet:(NSTimer *)timer
 {
     [self.timer invalidate];
-    if(![self connectedToNetwork])
+    if(![self isConnectedToNetwork])
     {
         [self logText:@"No Network Connection" color:@"red"];
 
@@ -275,13 +269,9 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self checkInternet:self.timer];
         [self startDatabaseOperations:nil];
-        
         [self logText:@"Restarting..." color:@"green"];
     });
-    
-
 }
-
 
 - (void)logNotification:(NSNotification *)note {
     NSString *text = note.userInfo[LOG_TEXT_NOTIFICATION_TEXT_KEY];
@@ -290,42 +280,26 @@
 }
 
 - (void)reloadDataWithData:(NSMutableArray *)data {
-    //dispatch_async(dispatch_get_main_queue(), ^{
-    //[self clearRealm];
         @try {
             RLMResults *teamsFromDB = [Team allObjectsInRealm:[RLMRealm defaultRealm]];
             NSMutableArray *ar = [[NSMutableArray alloc] initWithArray:data];
-            //[ar addObject:@"hi"];
             for(Team *t in teamsFromDB) {
                 [ar addObject:t];
-                //NSLog(@"data: %@, t: %@", ar, t);
             }
-            
             [ar sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"number" ascending:YES]]];
-            
             NSLog(@"%lu teams!", (unsigned long)ar.count);
             self.dataFromDropbox = ar;
         }
         @catch (NSException *exception) {
             [self logException:exception withMessage:@"Reload Data From Realm caused the exception" color:@"blue"];
         }
-
-    //});
-    
-    
 }
-
-
-
-
 
 -(NSMutableArray *)getParsedJSON
 {
     return self.dataFromDropbox;
-    //Not Actually Parsing
 }
 
-//we should make this one giant abstraction tree with incredible naming
 -(void)startDatabaseOperations:(NSNotification *)note
 {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -334,40 +308,19 @@
         if (self.doClearRealm == YES) {
             [self clearRealm];
         }
-        /*RLMResults *am = [Match allObjects];
-         
-        [[RLMRealm defaultRealm] beginWriteTransaction];
-        
-        for (Match *m in (NSArray *)am) {
-            m.officialBlueScore = -1;
-            m.officialRedScore = -1;
-        }
-        [[RLMRealm defaultRealm] commitWriteTransaction];
-*/
         ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
         [grar beginCalculations];
     });
-    
-    
-    
-    
-    
 }
-
-
-
 
 - (IBAction)Recalculate:(id)sender {
     [self checkInternet:self.timer];
-
     @try {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
-        ServerMath *math = [[ServerMath alloc] init];
-        [math beginMath];
+            ServerMath *math = [[ServerMath alloc] init];
+            [math beginMath];
         });
         [self logText:@"Recalculating." color:@"green"];
-
     }
     @catch (DBException *exception) {
         if (exception.name == DBExceptionName)
@@ -378,78 +331,51 @@
         }
     }
 }
+
 -(void)logText:(NSString *)text color:(NSString *)color
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([color isEqualToString:@"green"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
-            
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor greenColor] range:NSMakeRange(0, newLog.length)];
-            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
-
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
             [logString appendAttributedString:newLog];
-            
-                                                    
             self.logTextView.attributedText = logString;
-            
         }
         if ([color isEqualToString:@"blue"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
-            
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor cyanColor] range:NSMakeRange(0, newLog.length)];
-            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
-            
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
             [logString appendAttributedString:newLog];
-            
-            
             self.logTextView.attributedText = logString;
         }
         if ([color isEqualToString:@"yellow"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
-            
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor yellowColor] range:NSMakeRange(0, newLog.length)];
-            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
-            
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
             [logString appendAttributedString:newLog];
-            
-            
             self.logTextView.attributedText = logString;
         }
         if ([color isEqualToString:@"red"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
-            
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:NSMakeRange(0, newLog.length)];
-            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
-            
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
             [logString appendAttributedString:newLog];
-            
-            
             self.logTextView.attributedText = logString;
         }
         if ([color isEqualToString:@"white"]) {
             NSMutableAttributedString *newLog = [[NSMutableAttributedString alloc] initWithString:text];
-            
             [newLog addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(0, newLog.length)];
-            
             [newLog appendAttributedString:[[NSMutableAttributedString alloc] initWithString:@"\n"] ];
-            
             NSMutableAttributedString *logString = [[NSMutableAttributedString alloc] initWithAttributedString:self.logTextView.attributedText];
             [logString appendAttributedString:newLog];
-            
-            
             self.logTextView.attributedText = logString;
         }
-        
         [self.logTextView scrollRangeToVisible:NSMakeRange([self.logTextView.text length] - 1, 0)];
-        
     });
 }
                        
@@ -458,7 +384,6 @@
     if (message) {
         NSString *logString = [[NSString alloc] initWithFormat:@"%@\nName: %@\nReason: %@", message, e.name, e.reason];
         [self logText:logString color:color];
-
     }
     else
     {
@@ -466,8 +391,5 @@
         [self logText:logString color:color];
     }
 }
-
-
-
 
 @end
