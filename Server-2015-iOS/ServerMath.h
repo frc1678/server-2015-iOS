@@ -7,10 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <Realm/Realm.h>
 
 @interface ServerMath : NSObject
 
 -(void)beginMath;
 -(void)updateCalculatedMatchData;
+-(NSString *)doPrintoutForTeams:(RLMArray *)teams;
 
 @end

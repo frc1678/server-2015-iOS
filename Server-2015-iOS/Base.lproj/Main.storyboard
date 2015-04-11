@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14C109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="2Rj-tu-Uge">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6751" systemVersion="14C1514" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="2Rj-tu-Uge">
     <dependencies>
-        <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6736"/>
         <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
@@ -44,14 +43,6 @@
                                     <action selector="restart:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="IgC-41-DuN"/>
                                 </connections>
                             </button>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" bouncesZoom="NO" editable="NO" text="Hi, I'm the Citrus Server!" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
-                                <rect key="frame" x="16" y="205" width="568" height="375"/>
-                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
-                                <color key="tintColor" red="0.35686274509803922" green="0.8901960784313725" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <color key="textColor" red="0.35686274509803922" green="0.90196078431372551" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardAppearance="alert"/>
-                            </textView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQp-B2-Bpg">
                                 <rect key="frame" x="16" y="110" width="568" height="87"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
@@ -66,6 +57,47 @@
                                     <action selector="Recalculate:" destination="2Rj-tu-Uge" eventType="touchUpInside" id="rAz-ak-Fdr"/>
                                 </connections>
                             </button>
+                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7im-gx-wq9">
+                                <rect key="frame" x="0.0" y="556" width="600" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="Pmy-kf-d39"/>
+                                </constraints>
+                                <items>
+                                    <barButtonItem systemItem="trash" id="R2W-D7-6YF">
+                                        <color key="tintColor" red="0.35686274509999999" green="0.90196078430000004" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <connections>
+                                            <action selector="emptyRealmDatabase:" destination="2Rj-tu-Uge" id="LTw-Sl-zVh"/>
+                                        </connections>
+                                    </barButtonItem>
+                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="Hme-xl-hiL">
+                                        <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    </barButtonItem>
+                                    <barButtonItem systemItem="organize" id="XUb-ad-mnw">
+                                        <color key="tintColor" red="0.35686274509999999" green="0.90196078430000004" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <connections>
+                                            <action selector="moveAllChangePacketsToUnprocessed:" destination="2Rj-tu-Uge" id="T1Y-8n-MRE"/>
+                                        </connections>
+                                    </barButtonItem>
+                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="2qW-cv-KHP">
+                                        <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    </barButtonItem>
+                                    <barButtonItem systemItem="action" id="528-Ss-JHd">
+                                        <color key="tintColor" red="0.35686274509999999" green="0.90196078430000004" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <connections>
+                                            <action selector="shareTeamData:" destination="2Rj-tu-Uge" id="EsT-WD-sMr"/>
+                                        </connections>
+                                    </barButtonItem>
+                                </items>
+                                <color key="barTintColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </toolbar>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" bounces="NO" bouncesZoom="NO" editable="NO" text="Hi, I'm the Citrus Server!" translatesAutoresizingMaskIntoConstraints="NO" id="6hl-yu-Gps">
+                                <rect key="frame" x="16" y="205" width="568" height="351"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="tintColor" red="0.35686274509803922" green="0.8901960784313725" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="textColor" red="0.35686274509803922" green="0.90196078431372551" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardAppearance="alert"/>
+                            </textView>
                         </subviews>
                         <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -73,6 +105,7 @@
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" id="Doc-fm-bLG"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="baseline" secondItem="Ddx-fh-c7f" secondAttribute="firstBaseline" id="F7A-XX-nn4"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="u24-ym-0BG" secondAttribute="trailingMargin" id="KF1-bi-OsU"/>
+                            <constraint firstItem="n8u-qJ-LVE" firstAttribute="top" secondItem="7im-gx-wq9" secondAttribute="bottom" id="MRZ-2T-8Dn"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="6hl-yu-Gps" secondAttribute="leading" id="Mog-4d-ZmE"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" id="NHG-Zj-FuL"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="top" secondItem="Ddx-fh-c7f" secondAttribute="bottom" constant="8" id="PoO-Fy-l9W"/>
@@ -81,8 +114,12 @@
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="trailing" secondItem="6hl-yu-Gps" secondAttribute="trailing" id="Ss9-XY-pr0"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="width" secondItem="Ddx-fh-c7f" secondAttribute="width" id="UgH-68-GTf"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="top" secondItem="VEw-CE-bm4" secondAttribute="bottom" constant="8" symbolic="YES" id="dSW-QQ-Xuf"/>
+                            <constraint firstItem="7im-gx-wq9" firstAttribute="top" secondItem="6hl-yu-Gps" secondAttribute="bottom" id="fd6-08-tcY"/>
                             <constraint firstItem="6hl-yu-Gps" firstAttribute="top" secondItem="cQp-B2-Bpg" secondAttribute="bottom" constant="8" symbolic="YES" id="fyq-tw-h8f"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="7im-gx-wq9" secondAttribute="trailing" constant="-16" id="h7u-ip-FBW"/>
                             <constraint firstItem="cQp-B2-Bpg" firstAttribute="leading" secondItem="Ddx-fh-c7f" secondAttribute="trailing" constant="8" symbolic="YES" id="hIl-ZJ-IWW"/>
+                            <constraint firstItem="7im-gx-wq9" firstAttribute="leading" secondItem="u24-ym-0BG" secondAttribute="leadingMargin" constant="-16" id="om9-3A-bpF"/>
+                            <constraint firstAttribute="centerX" secondItem="7im-gx-wq9" secondAttribute="centerX" id="t5l-7a-cKy"/>
                             <constraint firstAttribute="bottom" secondItem="6hl-yu-Gps" secondAttribute="bottom" constant="20" symbolic="YES" id="xYk-jx-Tw9"/>
                             <constraint firstItem="Ddx-fh-c7f" firstAttribute="baseline" secondItem="cQp-B2-Bpg" secondAttribute="firstBaseline" id="xvv-IY-105"/>
                         </constraints>
@@ -94,6 +131,7 @@
                                 <exclude reference="F7A-XX-nn4"/>
                                 <exclude reference="UgH-68-GTf"/>
                                 <exclude reference="hIl-ZJ-IWW"/>
+                                <exclude reference="xYk-jx-Tw9"/>
                             </mask>
                         </variation>
                     </view>

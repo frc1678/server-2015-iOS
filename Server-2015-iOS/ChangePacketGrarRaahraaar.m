@@ -215,7 +215,8 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     //utd.weight = 0;
     //utd.withholdingAllowanceUsed = 0;
     utd.canMountMechanism = false;
-    utd.mountingSpeed = 0.0;
+    utd.willingToMount = false;
+    utd.easeOfMounting = 0.0;
     t.uploadedData = utd;
     
     [realm addObject:t];
@@ -728,16 +729,16 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
                             DBError *e = [[DBError alloc] init];
-                            NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
-                            if (invalidName.length > 209) {
-                                invalidName = [invalidName substringFromIndex:invalidName.length-130];
-
-                            }
-                            if (invalidName.length > 109) {
-                                invalidName = [invalidName substringFromIndex:invalidName.length-30];
-                            }
-                            
-                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&e];
+//                            NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
+//                            if (invalidName.length > 209) {
+//                                invalidName = [invalidName substringFromIndex:invalidName.length-130];
+//
+//                            }
+//                            if (invalidName.length > 109) {
+//                                invalidName = [invalidName substringFromIndex:invalidName.length-30];
+//                            }
+//                            
+                            [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&e];
                         }
                         [realm commitWriteTransaction];
                     }

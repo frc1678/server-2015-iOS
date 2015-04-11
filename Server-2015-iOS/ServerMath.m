@@ -191,7 +191,7 @@
     return averageDifference;*/
 }
 
--(void)doPrintoutForTeams:(RLMArray *)teams {
+-(NSString *)doPrintoutForTeams:(RLMArray *)teams {
     NSString *stringToLog = [[NSString alloc] init];
     //stringToLog = @"Number, Name, First Pick Ability, Second Pick Ability, Stacking Ability, avg number max height stacks, recon ability, recon reliability, ...";
     stringToLog = [stringToLog stringByAppendingString:@"\nNumber, Name, "];
@@ -208,7 +208,7 @@
         }
         
     }
-    NSLog(@"%@", stringToLog);
+    return stringToLog;
 }
 
 -(CalculatedTeamData *)newBlankCalculatedTeamDataForTeam:(Team *)team {

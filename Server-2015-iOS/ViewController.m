@@ -35,8 +35,19 @@
     
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
+- (IBAction)shareTeamData:(id)sender {
+    ServerMath *sm = [[ServerMath alloc] init];
+        RLMArray *allTeams = (RLMArray *)[Team allObjects];
+        NSString *texttoshare = [sm doPrintoutForTeams:allTeams]; //this is your text string to share
+        NSArray *activityItems = @[texttoshare];
+        UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+        activityVC.excludedActivityTypes = @[UIActivityTypeAssignToContact];
+        [self presentViewController:activityVC animated:TRUE completion:nil];
+}
 
-- (void)emptyRealmDatabase
+
+
+- (IBAction)emptyRealmDatabase:(id)sender
 {
     UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Clear?" message:@"Are you sure you want to make the realm database empty except testing throwdown?" delegate:self cancelButtonTitle:@"No, Dont Empty it." otherButtonTitles:@"Yes, I'm sure", nil];
     
@@ -50,8 +61,8 @@
     [[RLMRealm defaultRealm] beginWriteTransaction];
     [[RLMRealm defaultRealm] deleteAllObjects];
     Competition *comp = [[Competition alloc] init];
-    comp.name = @"SVR";
-    comp.competitionCode = @"casj";
+    comp.name = @"Champs";
+    comp.competitionCode = @"chmp";
     [[RLMRealm defaultRealm] addObject:comp];
     
     [[RLMRealm defaultRealm] commitWriteTransaction];
@@ -74,7 +85,7 @@
             Log(@"Not Clearing", @"yellow");
         }
         else if (buttonIndex == 1) {
-            self.doClearRealm = YES;
+            [self clearRealm];
         }
         else {
             NSLog(@"Unknown Button");
@@ -169,18 +180,18 @@
  *
  *  @return Returns a dictionaty of Dberrors and what they come from.
  */
--(NSDictionary *)moveAllChangePacketsToUnprocessed {
+-(IBAction)moveAllChangePacketsToUnprocessed:(id)sender {
     NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
     
-    DBError *e;
+    DBError *e = [[DBError alloc] init];
     NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
     errors[@"processed listFile"] = e;
     
-    DBError *e2;
+    DBError *e2 = [[DBError alloc] init];
     NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
     errors[@"invalid listFile"] = e2;
     
-    DBError *e3;
+    DBError *e3 = [[DBError alloc] init];
     for (DBFileInfo *info in processed) {
         [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
         if(e.code == DBErrorExists) {
@@ -190,7 +201,7 @@
     }
     errors[@"processed moving"] = e3;
     
-    DBError *e4;
+    DBError *e4 = [[DBError alloc] init];
     for (DBFileInfo *info in invalid) {
         [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
         if(e.code == DBErrorExists) {
@@ -199,8 +210,7 @@
         }
     }
     errors[@"invalid moving"] = e4;
-    
-    return errors;
+ 
 }
 
 - (BOOL)connectedToNetwork  {
