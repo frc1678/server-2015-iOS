@@ -444,9 +444,9 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             compLevel = @"qf";
             matchNum = [matchNum stringByReplacingOccurrencesOfString:@"QF" withString:@""];
         }
-        else if ([matchNum containsString:@"SF"]) {
+        else if ([matchNum containsString:@"S"]) {
             compLevel = @"sf";
-            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"SF" withString:@""];
+            matchNum = [matchNum stringByReplacingOccurrencesOfString:@"S" withString:@""];
         }
         else if ([matchNum containsString:@"F"]) {
             compLevel = @"f";
@@ -1217,7 +1217,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 -(float)averageTotalScoreForTeam:(Team *)team
 {
-    return [self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team];
+    return [self validFloat:[self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team] orDefault:0.0];
 }
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
