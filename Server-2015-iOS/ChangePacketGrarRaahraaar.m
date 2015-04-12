@@ -682,7 +682,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     NSString *keyPath = change[@"keyToChange"];
                     NSString *valueToChangeTo = change[@"valueToChangeTo"];
                        if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
-                        if ([keyPath containsString:@"numReconsFromStep"]) {
+                        if ([keyPath containsString:@"numReconsFromStep"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
                             keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
                         }
                         
@@ -735,7 +735,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         NSString *keyPath = change[@"keyToChange"];
                         NSString *valueToChangeTo = change[@"valueToChangeTo"];
                         
-                            if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
+                            if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
                                 if ([keyPath containsString:@"numReconsFromStep"]) {
                                     keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
                                 }
