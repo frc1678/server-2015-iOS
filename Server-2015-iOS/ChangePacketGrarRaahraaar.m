@@ -317,6 +317,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     return NO;
 }
 
+- (void)checkForTooManyTeamsInAlliance:(RLMArray *)alliance andPossiblyAddTeam:(Team *)team {
+    if(alliance.count >= 3) {
+        [alliance removeAllObjects];
+        Log(@"Removing Team because too many", @"yellow");
+    }
+    [alliance addObject:team];
+}
 
 - (void)possiblyCreateMatch:(NSString *)head andImplementTeam:(Team *)originalTeam intoTheDatabaseWithAllianceColor:(NSString *)color
 {
@@ -324,11 +331,12 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     if (m.count == 0) {
         Match *match = [self blankMatchWithNumber:head];
         
-        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
-            [match.redTeams addObject:originalTeam];
+        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam])
+        {
+            [self checkForTooManyTeamsInAlliance:match.redTeams andPossiblyAddTeam:originalTeam];
         }
         else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
-            [match.blueTeams addObject:originalTeam];
+            [self checkForTooManyTeamsInAlliance:match.blueTeams andPossiblyAddTeam:originalTeam];
         }
         TeamInMatchData *timd = [self blankTeamInMatchDataWithTeam:originalTeam andMatch:match];
         [self safeAddTeamInMatchData:timd toMatch:match andTeam:originalTeam];
@@ -336,14 +344,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     } else {
         Match *match = [m firstObject];
         
-        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam]) {
-            [match.redTeams addObject:originalTeam];
-            [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
+        if ([color isEqualToString:@"red"] && ![self allianceContainsTeam:match.redTeams team:originalTeam])
+        {
+            [self checkForTooManyTeamsInAlliance:match.redTeams andPossiblyAddTeam:originalTeam];
         }
         else if ([color isEqualToString:@"blue"] && ![self allianceContainsTeam:match.blueTeams team:originalTeam]) {
-            [match.blueTeams addObject:originalTeam];
-            [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
+            [self checkForTooManyTeamsInAlliance:match.blueTeams andPossiblyAddTeam:originalTeam];
         }
+        [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
     }
 }
 
