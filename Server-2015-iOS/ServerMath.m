@@ -348,15 +348,19 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
         
         //Calculating Predicted Seeds
-        NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.predictedTotalScoresOfTeams allValues]] array] mutableCopy];
+        //NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.predictedTotalScoresOfTeams allValues]] array] mutableCopy];
         
-        NSArray *sortedPredictedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        //NSArray *sortedPredictedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        NSDictionary *OPRs = [self doTBAOPRs];
+        NSMutableArray *oprs = [[[NSOrderedSet orderedSetWithArray:[OPRs allValues]] array] mutableCopy];
+        NSArray *sortedPredictedScores = [[[oprs sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        
         NSInteger predictedSeed = 1;
         
         for (NSNumber *predictedScore in sortedPredictedScores)
         {
             
-            NSArray *numbers = [self.predictedTotalScoresOfTeams allKeysForObject:predictedScore];
+            NSArray *numbers = [OPRs allKeysForObject:predictedScore];
             for (NSNumber *number in numbers)
             {
                 RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
