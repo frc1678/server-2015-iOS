@@ -179,8 +179,8 @@
     NSMutableArray *matches = (NSMutableArray *)[Match allObjects];
     float totalDifference = 0.0;
     for (Match *m in matches) {
-        totalDifference += abs(pow((m.calculatedData.predictedRedScore - m.officialRedScore), 1));
-        totalDifference += abs(pow((m.calculatedData.predictedBlueScore - m.officialBlueScore), 1));
+        totalDifference += fabs(pow((m.calculatedData.predictedRedScore - m.officialRedScore), 1));
+        totalDifference += fabs(pow((m.calculatedData.predictedBlueScore - m.officialBlueScore), 1));
     }
     return   totalDifference / (matches.count * 2);
    /* float totalSD = 0.0;
@@ -237,7 +237,6 @@
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
         NSLog(@"There are %lu teams, %lu matches, and %lu teamInMatchDatas in the database.", (unsigned long)[allTeams count], (unsigned long)[[Match allObjects] count], (unsigned long)[[TeamInMatchData allObjects] count]);
         
-        [self doPrintoutForTeams:allTeams];
 
         for (Team *t in allTeams)
         {
@@ -432,12 +431,22 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 -(void)updateCalculatedMatchData
 {
     NSArray *comp = [self getTBAOfficialScores];
-    [self doTBAOPRs];
-    NSArray *matches = comp[0];
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    RLMResults *allMatches = [Match allObjectsInRealm:realm];
+    //[self doTBAOPRs];
+    [[RLMRealm defaultRealm] beginWriteTransaction];
+    RLMResults *allMatches = [Match allObjectsInRealm:[RLMRealm defaultRealm]];
+    NSDictionary *OPRs = [self doTBAOPRs];
     for (Match *m in allMatches)
     {
+        float totalBlueOPR = 0.0;
+        for (Team *t in m.blueTeams) {
+            totalBlueOPR += [OPRs[[[NSNumber numberWithFloat:t.number] stringValue]] floatValue];
+        }
+        m.calculatedData.predictedBlueScore = totalBlueOPR;
+        float totalRedOPR = 0.0;
+        for (Team *t in m.redTeams) {
+            totalRedOPR += [OPRs[[[NSNumber numberWithFloat:t.number] stringValue]] floatValue];
+        }
+        m.calculatedData.predictedRedScore = totalRedOPR;
         NSString *matchNum = m.match;
         NSString *compLevel;
         if ([matchNum containsString:@"QF"]) {
@@ -458,12 +467,11 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
         }
         for (NSDictionary *mat in comp) {
             if ([mat[@"comp_level"] isEqualToString:compLevel] && [[mat[@"match_number"] stringValue] isEqualToString:matchNum]) {
-                [[RLMRealm defaultRealm] beginWriteTransaction];
                 m.officialBlueScore = [mat[@"alliances"][@"blue"][@"score"] integerValue];
                 m.officialRedScore = [mat[@"alliances"][@"red"][@"score"] integerValue];
-                [[RLMRealm defaultRealm] commitWriteTransaction];
             }
         }
+
     }
     /*
     RLMRealm *realm = [RLMRealm defaultRealm];
@@ -509,29 +517,31 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     //[self wait:5.0];
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+
 }
 
 
--(NSData *)getTBAOfficialScores {
+-(NSArray *)getTBAOfficialScores {
     NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
-    wait(2);
+    wait((int *)2);
     NSError *error;
     data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    return data;
+    return (NSArray *)data;
 }
 
--(void)doTBAOPRs {
+-(NSDictionary *)doTBAOPRs {
     NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
-    wait(2);
+    wait((int *)2);
     NSError *error;
-    data = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    /*NSDictionary *d = (NSDictionary *)data;
-    for (NSString *key in [d[@"oprs"] allKeys]) {
+    NSDictionary *dict = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+    NSDictionary *d = (NSDictionary *)dict[@"oprs"];
+    /*for (NSString *key in [d[@"oprs"] allKeys]) {
         NSLog(@"%@: %@", key, d[@"oprs"][key]);
     }*/
-
+    return d;
 }
 
 /*
@@ -1199,14 +1209,14 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
         RLMArray<Team> *redTeams = m.redTeams;
         for (Team *t in blueTeams) {
             if (t.number == team.number) {
-                totalScore = totalScore + m.officialBlueScore;
+                totalScore = totalScore + (int)m.officialBlueScore;
             }
         }
         
         for (Team *t in redTeams)
         {
             if (t.number == team.number) {
-                totalScore = totalScore + m.officialRedScore;
+                totalScore = totalScore + (int)m.officialRedScore;
             }
         }
     }

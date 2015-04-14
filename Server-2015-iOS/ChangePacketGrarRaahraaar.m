@@ -464,41 +464,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 newObject = [[class alloc] init];
                 for (RLMProperty *p in [newObject objectSchema].properties) {
                     newObject[p.name] = [p defaultValue];
-#warning Chenged
-                    // Add hard-coded checking for team or match objects, in the case of a match data change packet.
-                    /*if ([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"team"])
-                    {
-                        newObject[p.name] = original;
-                    }*/
-                    /*else if([className isEqualToString:@"TeamInMatchData"] && [p.name isEqualToString:@"match"])
-                    {
-                        RLMResults *matchResults = [Match objectsWhere:[NSString stringWithFormat:@"%@ == '%@'", [Match uniqueKey], head]];
-                        if (matchResults.count == 1)
-                        {
-                            newObject[p.name] = [matchResults firstObject];
-                        }
-                        else if (matchResults.count == 0)
-                        {
-                            Match *match = [[Match alloc] init];
-                            self.currentMatch = self.currentMatch + 1;
-                            match.match = [NSString stringWithFormat:@"NTQ%d", self.currentMatch];
-                            match.redTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
-                            match.blueTeams = (RLMArray<Team> *)[[RLMArray alloc] initWithObjectClassName:@"Team"];
-                            
-                        }
-                        else
-                        {
-                            NSLog(@"Error: %ld matches have the name %@", (unsigned long)matchResults.count, head);
-                            rtError = [NSString stringWithFormat:@"Error: %ld matches have the name %@", (unsigned long)matchResults.count, head];
-                            return rtError;
-                        }
-                    }
-                    else
-                    {
-                        newObject[p.name] = [p defaultValue];
-                    }*/
                 }
-               
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
                     return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
@@ -672,8 +638,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             } else {
                 NSLog(@"Error, class %@ does not conform to UniqueKey protocol", className);
                 NSLog(@"The file that has the issue is: %@", JSONfile);
-                NSString *invalidName = [NSString stringWithFormat:@"%@ Invalid Class", fileInfo.path.name];
-                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&error];
+                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&error];
                 return;
             }
             //NSLog(@"JSONFile: %@\n, Class: %@, filterString: %@",JSONfile, className, filterString);
@@ -711,15 +676,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                             //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                             Log(log, @"yellow");
                             DBError *e = [[DBError alloc] init];
-//                            NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
-//                            if (invalidName.length > 209) {
-//                                invalidName = [invalidName substringFromIndex:invalidName.length-130];
-//
-//                            }
-//                            if (invalidName.length > 109) {
-//                                invalidName = [invalidName substringFromIndex:invalidName.length-30];
-//                            }
-//                            
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&e];
                         }
                         [realm commitWriteTransaction];
@@ -765,35 +721,17 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                                 //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
                                 Log(log, @"yellow");
                                 DBError *e = [[DBError alloc] init];
-                                NSString *invalidName = [NSString stringWithFormat:@"%@ Error: %@", fileInfo.path.name, setError];
-                                if (invalidName.length > 209) {
-                                    invalidName = [invalidName substringFromIndex:invalidName.length-130];
-                                    
-                                }
-                                if (invalidName.length > 109) {
-                                    invalidName = [invalidName substringFromIndex:invalidName.length-30];
-                                }
-                                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:invalidName] error:&e];
+                                [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&e];
                             }
                             [realm commitWriteTransaction];
                         }
-                        //
-                        
-                        //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
-                        
                     }
                     if (wasError == NO) {
                         NSString *s = [NSString stringWithFormat:@"Change Packet: %@ Processed Without Errors! :)",fileInfo.path.name];
                         Log(s, @"green");
                     }
                 }
-                
             }
-            
-            
-            
-            
-            //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             //Moving change packet into processedChangePackets directory in DB
             NSString *name = [[NSString alloc] init];
             name = fileInfo.path.name;
