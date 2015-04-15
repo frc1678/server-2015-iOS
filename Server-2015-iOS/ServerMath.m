@@ -307,7 +307,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
             t.calculatedData.thirdPickAbility = [self thirdPickAbilityForTeamNOLandfill:t];
             t.calculatedData.thirdPickAbilityLandfill = [self thirdPickAbilityForTeamLandfill:t];
-            t.calculatedData.averageScore = [self averageTotalScoreForTeam:t];
+            t.calculatedData.averageScore = [self averageScoreForTeam:t];
             t.calculatedData.predictedAverageScore = t.calculatedData.averageScore;
             
             /*t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD) {
@@ -1229,14 +1229,15 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     return totalScore;
 }
 
--(float)averageTotalScoreForTeam:(Team *)team
+-(float)averageScoreForTeam:(Team *)team
 {
-    return [self validFloat:[self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team] orDefault:0.0];
+#warning Change Back To Played Matches After Done Testing
+    return [self validFloat:[self totalScoreForTeam:team]/[self numberOfOfficiallyScoredMatchesForTeam:team] orDefault:0.0];
 }
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
 {
-    NSInteger matchesPlayed = [[self officiallyScoredMatchesForTeam:team] count];
+    NSInteger matchesPlayed = [self numberOfOfficiallyScoredMatchesForTeam:team];
     
     return team.matchData.count - matchesPlayed;
 }
@@ -1244,7 +1245,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 -(NSInteger)predictedTotalScoreForTeam:(Team *)team
 {
     //Get the totalScore, and add that to the sum of the predicted scores for future matches.
-    return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self averageTotalScoreForTeam:team]);
+    return [self totalScoreForTeam:team] + ([self numRemainingQualMatchesForTeam:team] * [self averageScoreForTeam:team]);
 }
 
 /**
@@ -1270,7 +1271,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 #pragma mark - General Team Stuff
 
--(RLMArray *)officiallyScoredMatchesForTeam:(Team *)team
+-(NSArray *)officiallyScoredMatchesForTeam:(Team *)team
 {
     NSString *number = [NSString stringWithFormat:@"%ld", (long)team.number];
     if ([self.officiallyScoredMatchesForTeamsMemo valueForKey:number] != nil) {
@@ -1279,7 +1280,14 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     RLMArray<TeamInMatchData> *matchData = team.matchData;
     matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1"];
     self.officiallyScoredMatchesForTeamsMemo[number] = matchData;
-    return matchData;
+    return (NSArray *)matchData;
+}
+
+-(float)numberOfOfficiallyScoredMatchesForTeam:(Team *)team {
+    if ([self officiallyScoredMatchesForTeam:team] != nil) {
+        return (float)[self officiallyScoredMatchesForTeam:team].count;
+    }
+    else return 0.0;
 }
 
 -(RLMArray *)playedMatchesForTeam:(Team *)team
