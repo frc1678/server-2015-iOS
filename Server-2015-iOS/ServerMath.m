@@ -89,7 +89,6 @@
 
 - (void)beginMath
 {
-    NSLog(@"Starting Math");
     self.autoActionDictionary = @{
                                   @"1t, 1t, 1t":@6,
                                   @"1rf, 1rf, 1rf":@8,
@@ -223,7 +222,7 @@
 {
     if (!self.currentlyCalculating) {
         [self clearMemos];
-        Log(@"Starting Math", @"green");
+        Log(@"Starting Math", @"white");
 
         
         self.currentlyCalculating = YES;
@@ -395,7 +394,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             }
         }
         
-        Log(@"Finished Calculating Team Data, Predicted Seeds, And Actual Seeds.", @"green");
+        Log(@"Finished Calculating Team Data, Predicted Seeds, And Actual Seeds.", @"white");
         [self updateCalculatedMatchData];
 //        [realm commitWriteTransaction];
         RLMResults *team1678 = [[Team objectsWhere:@"number == 1678"] firstObject];
@@ -517,7 +516,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
     }*/
     self.currentlyCalculating = NO;
-    Log(@"Finished Calculating Matches", @"green");
+    Log(@"Finished Calculating Matches", @"white");
     //[self wait:5.0];
     
     //[(NSMutableArray *)allTeams sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"seed" ascending:YES]]];

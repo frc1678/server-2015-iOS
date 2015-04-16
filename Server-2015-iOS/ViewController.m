@@ -53,37 +53,43 @@
     [clearAlertView show];
 }
 
+-(void)moveConfirmed {
+    dispatch_async(DISPATCH_QUEUE_PRIORITY_DEFAULT, ^{
+        NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
+        
+        DBError *e = [[DBError alloc] init];
+        NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
+        errors[@"processed listFile"] = e;
+        
+        DBError *e2 = [[DBError alloc] init];
+        NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
+        errors[@"invalid listFile"] = e2;
+        
+        DBError *e3 = [[DBError alloc] init];
+        for (DBFileInfo *info in processed) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+            if(e.code == DBErrorExists) {
+                [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+                
+            }
+        }
+        errors[@"processed moving"] = e3;
+        
+        DBError *e4 = [[DBError alloc] init];
+        for (DBFileInfo *info in invalid) {
+            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
+            if(e.code == DBErrorExists) {
+                [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
+                
+            }
+        }
+        errors[@"invalid moving"] = e4;
+    });
+}
+
 -(IBAction)moveAllChangePacketsToUnprocessed:(id)sender {
-    NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
-    
-    DBError *e = [[DBError alloc] init];
-    NSArray *processed = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Processed"] error:&e];
-    errors[@"processed listFile"] = e;
-    
-    DBError *e2 = [[DBError alloc] init];
-    NSArray *invalid = [[DBFilesystem sharedFilesystem] listFolder:[[[DBPath root] childPath:@"Change Packets"] childPath:@"Invalid"] error:&e2];
-    errors[@"invalid listFile"] = e2;
-    
-    DBError *e3 = [[DBError alloc] init];
-    for (DBFileInfo *info in processed) {
-        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
-        if(e.code == DBErrorExists) {
-            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
-            
-        }
-    }
-    errors[@"processed moving"] = e3;
-    
-    DBError *e4 = [[DBError alloc] init];
-    for (DBFileInfo *info in invalid) {
-        [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:info.path.name] error:&e3];
-        if(e.code == DBErrorExists) {
-            [[DBFilesystem sharedFilesystem] movePath:info.path toPath:[[[[DBPath root] childPath:@"Change Packets"] childPath:@"Unprocessed"] childPath:[NSString stringWithFormat:@"%@ copy", info.path.name]] error:&e3];
-            
-        }
-    }
-    errors[@"invalid moving"] = e4;
-    
+    UIAlertView *moveAlert = [[UIAlertView alloc] initWithTitle:@"Move All?" message:@"Did you mean to hit the move all button, or are you just one of those people that cant resist hitting every button they see?" delegate:self cancelButtonTitle:@"You Got Me, I'm Donald" otherButtonTitles:@"Move Them", nil];
+    [moveAlert show];
 }
 
 -(void)clearRealm {
@@ -119,6 +125,15 @@
     else if([alertView.title isEqualToString:@"Check/Delete"]) {
         if (buttonIndex == 0 || buttonIndex == 1) {
             Log(@"Continuing...", @"yellow");
+        }
+    }
+    else if([alertView.title isEqualToString:@"Move All?"]) {
+        if(buttonIndex == 1) {
+            [self moveConfirmed];
+            Log(@"Moved Change Packets", @"blue");
+        }
+        else {
+            Log(@"Canceling Change Packet Move", @"blue");
         }
     }
     
@@ -300,14 +315,22 @@
     return self.dataFromDropbox;
 }
 
+-(void)fixRealmOrder {
+    Competition *c = [[Competition allObjects] firstObject];
+    RLMArray<Match> *matches = (RLMArray<Match> *)[[Match allObjects] sortedResultsUsingProperty:@"match" ascending:YES];
+    RLMArray<Team> *teams = (RLMArray<Team> *)[[Team allObjects] sortedResultsUsingProperty:@"number" ascending:YES];
+    [[RLMRealm defaultRealm] beginWriteTransaction];
+    c.matches = matches;
+    c.attendingTeams = teams;
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+}
+
 -(void)startDatabaseOperations:(NSNotification *)note
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reloadDataWithData:self.dataFromDropbox];
         //[self makeSmallTestingDB];
-        if (self.doClearRealm == YES) {
-            [self clearRealm];
-        }
+        [self fixRealmOrder];
         ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
         [grar beginCalculations];
     });

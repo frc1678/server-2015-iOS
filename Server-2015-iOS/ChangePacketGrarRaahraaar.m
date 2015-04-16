@@ -124,7 +124,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     DBFileInfo *fileInfo = (DBFileInfo *)timer.userInfo;
     if(fileInfo == nil)
     {
-        NSLog(@"Empty Change Packet");
         NSString *ls = [[NSString alloc] initWithString:[NSString stringWithFormat:@"Empty Change Packet: %@", fileInfo]];
         Log(ls, @"red");
         NSString *emptyName = [NSString stringWithFormat:@"%@ EMPTY", fileInfo.path.name];
@@ -147,7 +146,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
         NSLog(@"%@", logString);
     }];
-    NSLog(@"Done with begin calcs");
     [self timerFired:self.timer];
 }
 
@@ -159,7 +157,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 -(void)timerFired:(NSTimer *)timer
 {
     self.timer = nil;
-    Log(@"Starting New Processing", @"green");
+    Log(@"Starting New Processing", @"white");
     [self mergeChangePacketsIntoRealm:[RLMRealm defaultRealm]];
 }
 
@@ -545,7 +543,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [[DBFilesystem sharedFilesystem] movePath:
                      fi.path toPath:
                      [[DBPath alloc] initWithString:
-                      [[[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name] stringValue] stringByReplacingOccurrencesOfString:@".realm" withString:@" copy.realm"] ]  error:&e];
+                      [[[[self dropboxFilePath:ConflictedCopies] childPath:fi.path.name] stringValue] stringByReplacingOccurrencesOfString:@".realm" withString:[NSString stringWithFormat:@" copy (%@).realm", [NSDate date]]]]  error:&e];
                
                 }
                 Log(@"Conflicted Copy", @"Yellow");
@@ -735,7 +733,6 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             //Moving change packet into processedChangePackets directory in DB
             NSString *name = [[NSString alloc] init];
             name = fileInfo.path.name;
-            NSLog(@"Finished Processing %@", name);
             error = nil;
             @try {
                 NSString *toName = name;
