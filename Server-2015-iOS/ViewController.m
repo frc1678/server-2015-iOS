@@ -99,8 +99,8 @@
     [[RLMRealm defaultRealm] beginWriteTransaction];
     [[RLMRealm defaultRealm] deleteAllObjects];
     Competition *comp = [[Competition alloc] init];
-    comp.name = @"Champs";
-    comp.competitionCode = @"chmp";
+    comp.name = @"Newton";
+    comp.competitionCode = @"2015new";
     [[RLMRealm defaultRealm] addObject:comp];
     [[RLMRealm defaultRealm] commitWriteTransaction];
     [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
@@ -327,13 +327,22 @@
 
 -(void)startDatabaseOperations:(NSNotification *)note
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self reloadDataWithData:self.dataFromDropbox];
-        //[self makeSmallTestingDB];
-        [self fixRealmOrder];
-        ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
-        [grar beginCalculations];
-    });
+    if ([DBFilesystem sharedFilesystem].completedFirstSync) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self reloadDataWithData:self.dataFromDropbox];
+            //[self makeSmallTestingDB];
+            [self fixRealmOrder];
+            ChangePacketGrarRaahraaar *grar = [[ChangePacketGrarRaahraaar alloc] init];
+            [grar beginCalculations];
+        });
+    }
+    else {
+        Log(@"Dropbox Not Set Up Yet", @"blue");
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self startDatabaseOperations:note];
+        });
+    }
+    
 }
 
 - (IBAction)Recalculate:(id)sender {
