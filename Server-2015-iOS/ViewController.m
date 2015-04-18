@@ -32,7 +32,6 @@
     return [[[DBPath root] childPath:@"Database File"] childPath:@"realm.realm"];
 }
 - (void)dropboxLinked:(NSNotification *)note {
-    
     [CCRealmSync setupDefaultRealmForDropboxPath:[self dropboxFilePath]];
 }
 
@@ -104,9 +103,7 @@
     [[RLMRealm defaultRealm] addObject:comp];
     [[RLMRealm defaultRealm] commitWriteTransaction];
     [[DBFilesystem sharedFilesystem] setMaxFileCacheSize:max];
-    UIAlertView *clearAlertView = [[UIAlertView alloc] initWithTitle:@"Check/Delete" message:@"Cleared. Now you should now check that the realm database doesnt have anything in it, then delete this app to avoid casheing issues." delegate:self cancelButtonTitle:@"Will Do!" otherButtonTitles:@"I won't do that and I will suffer the consequences.", nil];
-    [clearAlertView show];
-    self.doClearRealm = NO;
+    [self viewDidLoad];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -129,14 +126,12 @@
     }
     else if([alertView.title isEqualToString:@"Move All?"]) {
         if(buttonIndex == 1) {
-            [self moveConfirmed];
             Log(@"Moved Change Packets", @"blue");
         }
         else {
             Log(@"Canceling Change Packet Move", @"blue");
         }
     }
-    
 }
 
 
@@ -249,6 +244,9 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     //[self emptyRealmDatabase];
+    if (self.timer == nil) {
+        self.timer = [[NSTimer alloc] init];
+    }
     [self checkInternet:self.timer];
    
     @try {

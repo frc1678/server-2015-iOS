@@ -526,7 +526,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 
-
+#define CHANGE_PACKET_BATCH_SIZE 20 //This is the number of change packets that you want to process between each realm upload (if it finishes all change packets, it updates realm regardless)
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RLMRealm *realm = [RLMRealm defaultRealm];
@@ -577,8 +577,13 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         NSArray *sortedTimestamps = [[dict allKeys] sortedArrayUsingSelector:@selector(compare:)];
         
         //do all of the change packet handeling by putting the timestamps into dict in order and getting all of the fileInfo objects out.
+        int num = 0;
         for(NSNumber *timestamp in sortedTimestamps)
         {
+            if (num >= CHANGE_PACKET_BATCH_SIZE) {
+                break;
+            }
+            num++;
             self.haveCheckedTeam = NO;
 
             DBFileInfo *fileInfo = dict[timestamp];
@@ -746,26 +751,14 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     }
                     NSLog(@"%@", error);
                 }
-                
             }
             @catch (NSException *exception) {
                 NSLog(@"%@", exception);
                 NSLog(@"%@",error);
             }
-            //});
-            //});
-            
-            
-            
         }
-        
-        
         [self recalculateValuesInRealm:nil];
-        
-        
     });
-    
-    
 }
 
 - (void)recalculateValuesInRealm:(RLMRealm *)realm {
