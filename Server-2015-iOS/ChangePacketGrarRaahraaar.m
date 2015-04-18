@@ -144,9 +144,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         self.timer = [NSTimer scheduledTimerWithTimeInterval:WAIT_TIME target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
         //Start 10 sec timer.
         NSString *logString = [NSString stringWithFormat:@"Unprocessed Files Changed, will update in %g seconds...", WAIT_TIME];
-        NSLog(@"%@", logString);
+        Log(logString, @"green");
     }];
-    [self timerFired:self.timer];
+    //[self timerFired:self.timer];
 }
 
 /**
@@ -526,7 +526,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 }
 
 
-#define CHANGE_PACKET_BATCH_SIZE 20 //This is the number of change packets that you want to process between each realm upload (if it finishes all change packets, it updates realm regardless)
+#define CHANGE_PACKET_BATCH_SIZE 50 //This is the number of change packets that you want to process between each realm upload (if it finishes all change packets, it updates realm regardless)
 - (void)mergeChangePacketsIntoRealm:(RLMRealm *)realm {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         RLMRealm *realm = [RLMRealm defaultRealm];

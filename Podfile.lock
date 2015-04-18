@@ -3,11 +3,11 @@ PODS:
     - Dropbox-Sync-API-SDK
     - Realm
   - Dropbox-Sync-API-SDK (3.1.2)
-  - Realm (0.91.1):
-    - Realm/Headers (= 0.91.1)
+  - Realm (0.91.3):
+    - Realm/Headers (= 0.91.3)
   - realm-database-2015 (0.0.1):
     - Realm
-  - Realm/Headers (0.91.1)
+  - Realm/Headers (0.91.3)
 
 DEPENDENCIES:
   - CCDropboxRealmSync-iOS (from `https://github.com/frc1678/CCDropboxRealmSync-iOS`)
@@ -30,7 +30,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   CCDropboxRealmSync-iOS: 41efe40858f4fb1c16e983cfb044b4aeb0d21578
   Dropbox-Sync-API-SDK: 92652bd663984740f963ba228864542711eda148
-  Realm: b9c1fd9defa26aa7276ce938a8df52ec81f24528
+  Realm: 4bfdac6f0f3170a3947c7196e2e9a2e49c943719
   realm-database-2015: 79dd9966fdd3bcee0710d48b51551d74ee5ddf1f
 
 COCOAPODS: 0.36.0

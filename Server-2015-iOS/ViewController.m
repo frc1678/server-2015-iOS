@@ -53,7 +53,7 @@
 }
 
 -(void)moveConfirmed {
-    dispatch_async(DISPATCH_QUEUE_PRIORITY_DEFAULT, ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableDictionary *errors = [[NSMutableDictionary alloc] init];
         
         DBError *e = [[DBError alloc] init];
@@ -127,6 +127,7 @@
     else if([alertView.title isEqualToString:@"Move All?"]) {
         if(buttonIndex == 1) {
             Log(@"Moved Change Packets", @"blue");
+            [self moveConfirmed];
         }
         else {
             Log(@"Canceling Change Packet Move", @"blue");
@@ -281,7 +282,8 @@
 - (IBAction)restart:(id)sender {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self checkInternet:self.timer];
-        [self startDatabaseOperations:nil];
+        ChangePacketGrarRaahraaar *g = [[ChangePacketGrarRaahraaar alloc] init];
+        [g timerFired:nil];
         [self logText:@"Restarting..." color:@"green"];
     });
 }
@@ -326,6 +328,7 @@
 -(void)startDatabaseOperations:(NSNotification *)note
 {
     if ([DBFilesystem sharedFilesystem].completedFirstSync) {
+        Log(@"Dropbox First Sync Complete!", @"blue");
         dispatch_async(dispatch_get_main_queue(), ^{
             [self reloadDataWithData:self.dataFromDropbox];
             //[self makeSmallTestingDB];
@@ -335,7 +338,7 @@
         });
     }
     else {
-        Log(@"Dropbox Not Set Up Yet", @"blue");
+        Log(@"Dropbox Not Done With First Sync", @"blue");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [self startDatabaseOperations:note];
         });

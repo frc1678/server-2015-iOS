@@ -526,7 +526,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 
 -(NSArray *)getTBAOfficialScores {
-    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015new/matches?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     wait((int *)2);
     NSError *error;
@@ -535,7 +535,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 }
 
 -(NSDictionary *)doTBAOPRs {
-    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015casj/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
+    NSURL* url = [[NSURL alloc] initWithString:@"http://www.thebluealliance.com/api/v2/event/2015new/stats?X-TBA-App-Id=frc1678:scouting-server:2"];
     NSData* data = [NSData dataWithContentsOfURL:url];
     wait((int *)2);
     NSError *error;
