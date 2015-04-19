@@ -36,13 +36,8 @@
 }
 
 - (IBAction)shareTeamData:(id)sender {
-    ServerMath *sm = [[ServerMath alloc] init];
-        RLMArray *allTeams = (RLMArray *)[Team allObjects];
-        NSString *texttoshare = [sm doPrintoutForTeams:allTeams]; //this is your text string to share
-        NSArray *activityItems = @[texttoshare];
-        UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
-        activityVC.excludedActivityTypes = @[UIActivityTypeAssignToContact];
-        [self presentViewController:activityVC animated:TRUE completion:nil];
+    UIAlertView *shareAlertView = [[UIAlertView alloc] initWithTitle:@"What Would You Like To Share?" message:@"Would you like to share the log file or the scouting data?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Log", @"Data", nil];
+    [shareAlertView show];
 }
 
 - (IBAction)emptyRealmDatabase:(id)sender
@@ -131,6 +126,25 @@
         }
         else {
             Log(@"Canceling Change Packet Move", @"blue");
+        }
+    }
+    else if([alertView.title isEqualToString:@"What Would You Like To Share?"]) {
+        if (buttonIndex == 1) {
+            
+            NSString *textToShare = [[NSUserDefaults standardUserDefaults] objectForKey:@"serverLog"];
+            NSArray *activityItems = @[textToShare];
+            UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+            activityVC.excludedActivityTypes = @[UIActivityTypeAssignToContact];
+            [self presentViewController:activityVC animated:TRUE completion:nil];
+        }
+        else if(buttonIndex == 2) {
+            ServerMath *sm = [[ServerMath alloc] init];
+            RLMArray *allTeams = (RLMArray *)[Team allObjects];
+            NSString *texttoshare = [sm doPrintoutForTeams:allTeams]; //this is your text string to share
+            NSArray *activityItems = @[texttoshare];
+            UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+            activityVC.excludedActivityTypes = @[UIActivityTypeAssignToContact];
+            [self presentViewController:activityVC animated:TRUE completion:nil];
         }
     }
 }
@@ -245,9 +259,12 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     //[self emptyRealmDatabase];
+    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@ : View Did Appear", [NSDate date]] forKey:@"serverLog"];
+
     if (self.timer == nil) {
         self.timer = [[NSTimer alloc] init];
     }
+    self.logTextView.scrollsToTop = NO;
     [self checkInternet:self.timer];
    
     @try {
@@ -256,7 +273,6 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logNotification:) name:LOG_TEXT_NOTIFICATION object:nil];
         
         self.logTextView.scrollsToTop = NO;
-        self.logTextView.text = @"Hello, I'm the Citrus Server!\n";
         
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dropboxLinked:) name:CC_DROPBOX_LINK_NOTIFICATION object:nil];
@@ -315,12 +331,32 @@
     return self.dataFromDropbox;
 }
 
+-(int)numberFromMatchNum:(NSString *)matchNum {
+    return [[[[matchNum stringByReplacingOccurrencesOfString:@"Q" withString:@""] stringByReplacingOccurrencesOfString:@"S" withString:@""] stringByReplacingOccurrencesOfString:@"F" withString:@""] intValue];
+}
+
+-(NSMutableArray *)mutableArrayFromRLMResults:(RLMResults *)results {
+    RLMArray<Match> *arr = (RLMArray<Match> *)results;
+    NSMutableArray *ma = [[NSMutableArray alloc] init];
+    for (id result in arr) {
+        [ma addObject:result];
+    }
+    return ma;
+}
+
 -(void)fixRealmOrder {
     Competition *c = [[Competition allObjects] firstObject];
-    RLMArray<Match> *matches = (RLMArray<Match> *)[[Match allObjects] sortedResultsUsingProperty:@"match" ascending:YES];
+    NSMutableArray *m = [self mutableArrayFromRLMResults:[Match allObjects]];
+    [m sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        if([self numberFromMatchNum:[obj1 valueForKey:@"match"]] < [self numberFromMatchNum:[obj2 valueForKey:@"match"]]) {
+            return NSOrderedAscending;
+        }
+        return NSOrderedDescending;
+    }];
+    
     RLMArray<Team> *teams = (RLMArray<Team> *)[[Team allObjects] sortedResultsUsingProperty:@"number" ascending:YES];
     [[RLMRealm defaultRealm] beginWriteTransaction];
-    c.matches = matches;
+    c.matches = (RLMArray<Match> *)m;
     c.attendingTeams = teams;
     [[RLMRealm defaultRealm] commitWriteTransaction];
 }
@@ -363,6 +399,10 @@
             [self logText:logText color:@"blue"];
         }
     }
+}
+- (NSURL *)applicationDocumentsDirectory {
+    return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory
+                                                   inDomains:NSUserDomainMask] lastObject];
 }
 
 -(void)logText:(NSString *)text color:(NSString *)color
@@ -408,6 +448,22 @@
             [logString appendAttributedString:newLog];
             self.logTextView.attributedText = logString;
         }
+        
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *currentContents = [defaults objectForKey:@"serverLog"];
+        [defaults setObject:[currentContents stringByAppendingString:[NSString stringWithFormat:@"\n%@ : %@", [NSDate date], text]] forKey:@"serverLog"];
+//
+//        
+//        
+//        NSString *path = [[self applicationDocumentsDirectory].path
+//                          stringByAppendingPathComponent:@"serverLog.txt"];
+//        NSString *currentContents = [NSString stringWithContentsOfFile:[[self applicationDocumentsDirectory].path
+//                                           stringByAppendingPathComponent:@"serverLog.txt"]
+//    encoding:NSUTF8StringEncoding
+//    error:NULL];
+//        [[currentContents stringByAppendingString:text] writeToFile:path atomically:YES
+//                       encoding:NSUTF8StringEncoding error:nil];
+        
         [self.logTextView scrollRangeToVisible:NSMakeRange([self.logTextView.text length] - 1, 0)];
     });
 }

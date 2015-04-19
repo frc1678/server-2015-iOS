@@ -165,7 +165,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     NSArray *at = (NSArray *)[Team allObjects];
     for (Team *t in at) {
         if (t.number == number) {
-            Log(@"Team already exists", @"yellow");
+            //Log(@"Team already exists", @"yellow");
             return nil;
         }
     }
@@ -211,7 +211,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 -(Match *)blankMatchWithNumber:(NSString *)number {
     for(Match *m in [Match allObjects]) if([m.match isEqualToString:number])
     {
-        Log(@"Match already exists", @"yellow");
+        //Log(@"Match already exists", @"yellow");
         return nil;
     }
     Match *m = [[Match alloc] init];
@@ -238,7 +238,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 -(TeamInMatchData *)blankTeamInMatchDataWithTeam:(Team *)team andMatch:(Match *)match {
     for(TeamInMatchData *m in [TeamInMatchData allObjects]) if(m.team.number == team.number && [m.match.match isEqualToString:match.match]) {
-        Log(@"Team In Match Data Already Exists", @"yellow");
+        //Log(@"Team In Match Data Already Exists", @"yellow");
         return nil;
     }
 
@@ -411,7 +411,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     [tail removeObjectAtIndex:0];
     
     if (!self.haveCheckedTeam) {
-        if ((head.length <= 3) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) { //If its a match string like: "Q35"
+        if ((head.length <= 4) && ([head characterAtIndex:0] == 'Q' || [head characterAtIndex:0] == 'F' || [head characterAtIndex:0] == 'S')) { //If its a match string like: "Q35"
             self.haveCheckedTeam = YES;
             
             [self possiblyCreateMatch:head andImplementTeam:originalTeam intoTheDatabaseWithAllianceColor:color];
@@ -463,6 +463,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 for (RLMProperty *p in [newObject objectSchema].properties) {
                     newObject[p.name] = [p defaultValue];
                 }
+                [array addObject:newObject];
                 if([newObject conformsToProtocol:@protocol(UniqueKey)])
                 {
                     return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
@@ -472,7 +473,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     return [self setValue:head forKeyPath:[newObject semiUniqueKey] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
                 }
                 
-                [array addObject:newObject];
+                
             }
             return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
         }
@@ -504,6 +505,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                     [newObject setValue:utimd forKey:@"uploadedData"];
                     [newObject setValue:ctimd forKey:@"calculatedData"];
                 }
+                else if([className isEqual:@"CoopAction"]) {
+                    
+                }
                 object[head] = newObject;
             }
             return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
@@ -512,14 +516,19 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
     }
     else
     {
-        [self dealWithDictCoopForValue:value andTeam:originalTeam andPath:origionalPath andHead:head];
+        //[self dealWithDictCoopForValue:value andTeam:originalTeam andPath:origionalPath andHead:head];
         @try {
             object[head] = value;
         }
         @catch (NSException *exception) {
-            rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
-            rtError = [rtError stringByAppendingString:[NSString stringWithFormat:@"\nException: %@", exception]];
-            return rtError;
+            @try {
+                [object setValue:value forKey:head];
+            }
+            @catch (NSException *exception) {
+                rtError = [NSString stringWithFormat:@"INVALID: %@ on object of type: %@", head, [[object objectSchema] className]];
+                rtError = [rtError stringByAppendingString:[NSString stringWithFormat:@"\nException: %@", exception]];
+                return rtError;
+            }
         }
     }
     return nil; //Cuz u gotta return something ;)
