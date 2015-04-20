@@ -325,6 +325,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 
 - (void)possiblyCreateMatch:(NSString *)head andImplementTeam:(Team *)originalTeam intoTheDatabaseWithAllianceColor:(NSString *)color
 {
+    if (color.length == 0) {
+        Log(@"No Color", @"red");
+    }
     RLMResults *m = [Match objectsWhere: @"match == %@", head];
     if (m.count == 0) {
         Match *match = [self blankMatchWithNumber:head];
@@ -497,7 +500,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 for (RLMProperty *p in [newObject objectSchema].properties) {
                     newObject[p.name] = [p defaultValue];
                 }
-                if ([className  isEqual: @"TeamInMatchData"]) {
+                /*if ([className  isEqual: @"TeamInMatchData"]) {
                     [newObject setValue:[[Match alloc] init] forKey:@"match"];
                     [newObject setValue:original forKey:@"team"];
                     UploadedTeamInMatchData *utimd = [[UploadedTeamInMatchData alloc] init];
@@ -507,7 +510,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 }
                 else if([className isEqual:@"CoopAction"]) {
                     
-                }
+                }*/
                 object[head] = newObject;
             }
             return [self setValue:value forKeyPath:[tail componentsJoinedByString:@"."] forOrigionalPath:origionalPath onRealmObject:newObject onOriginalObject:original withAllianceColor:color withReturn:nil];
