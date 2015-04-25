@@ -21,7 +21,7 @@
 @property (nonatomic, strong) NSDictionary *autoActionDictionary;
 @property (nonatomic) BOOL currentlyCalculating;
 @property (nonatomic, strong) NSMutableDictionary *predictedTotalScoresOfTeams;
-@property (nonatomic, strong) NSMutableDictionary *totalScoresOfTeams;
+@property (nonatomic, strong) NSMutableDictionary *averageScoresOfTeams;
 
 @property (nonatomic, strong) NSMutableDictionary *playedMatchesForTeamsMemo;
 @property (nonatomic, strong) NSMutableDictionary *officiallyScoredMatchesForTeamsMemo;
@@ -230,7 +230,7 @@
         
         
         self.predictedTotalScoresOfTeams = [[NSMutableDictionary alloc] init];
-        self.totalScoresOfTeams = [[NSMutableDictionary alloc] init];
+        self.averageScoresOfTeams = [[NSMutableDictionary alloc] init];
         RLMRealm *realm = [RLMRealm defaultRealm];
         
         RLMResults *allTeams = [Team allObjectsInRealm:realm];
@@ -300,14 +300,15 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
             t.calculatedData.totalScore = [self validInt:[self totalScoreForTeam:t] orDefault:0.0];
             t.calculatedData.predictedTotalScore = [self validFloat:[self predictedTotalScoreForTeam:t] orDefault:0.0];
             self.predictedTotalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.predictedTotalScore];
-            self.totalScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.totalScore];
+            t.calculatedData.averageScore = [self averageScoreForTeam:t];
+            self.averageScoresOfTeams[@(t.number)] = [NSNumber numberWithFloat:t.calculatedData.averageScore];
             t.calculatedData.avgHumanPlayerLoading = [self averageWithTeam:t withDatapointKeyPath:@"uploadedData.humanPlayerLoading"]/3.0;
             t.calculatedData.firstPickAbility = [self firstPickAbilityForTeam:t];
             t.calculatedData.secondPickAbility = [self secondPickAbilityForTeam:t];
             t.calculatedData.thirdPickAbility = [self thirdPickAbilityForTeamNOLandfill:t];
             t.calculatedData.thirdPickAbilityLandfill = [self thirdPickAbilityForTeamLandfill:t];
-            t.calculatedData.averageScore = [self averageScoreForTeam:t];
-            t.calculatedData.predictedAverageScore = t.calculatedData.averageScore;
+            
+            t.calculatedData.predictedAverageScore = [self predictedAverageScoreForTeam:t];
             
             /*t.calculatedData.avgReconStepAcquisitionTime = [self averageUploadedDataWithTeam:t WithDatapointBlock:^float(TeamInMatchData *TIMD) {
                 //Make sure this implicit conversion is not causing problems
@@ -345,42 +346,35 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
         }
 
-        
-        //Calculating Predicted Seeds
-        //NSMutableArray *totalPredictedScores = [[[NSOrderedSet orderedSetWithArray:[self.predictedTotalScoresOfTeams allValues]] array] mutableCopy];
-        
-        //NSArray *sortedPredictedScores = [[[totalPredictedScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
-        NSDictionary *OPRs = [self doTBAOPRs];
-        NSMutableArray *oprs = [[[NSOrderedSet orderedSetWithArray:[OPRs allValues]] array] mutableCopy];
-        NSArray *sortedPredictedScores = [[[oprs sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
-        
+       
+        NSMutableDictionary *predictedAverages = [[NSMutableDictionary alloc] init];
+        for(Team *t in [Team allObjects]) {
+            predictedAverages[[NSString stringWithFormat:@"%ld", t.number]] = [NSNumber numberWithFloat:[self predictedAverageScoreForTeam:t]];
+        }
+        NSArray *sortedPredictedAvg = [[[[predictedAverages allValues] sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
         NSInteger predictedSeed = 1;
-        
-        for (NSNumber *predictedScore in sortedPredictedScores)
-        {
-            
-            NSArray *numbers = [OPRs allKeysForObject:predictedScore];
-            for (NSNumber *number in numbers)
-            {
-                RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
-                Team *tm = (Team *)[tq firstObject];
-                
-                [realm beginWriteTransaction];
-                tm.calculatedData.predictedSeed = predictedSeed;
-                [realm commitWriteTransaction];
-                
+        [[RLMRealm defaultRealm] beginWriteTransaction];
+        for (NSNumber *predictedAvg in sortedPredictedAvg) {
+            for (NSNumber *num in [predictedAverages allKeysForObject:predictedAvg])  {
+                Team *team = [[Team objectsWhere:@"number == %d", [num integerValue]] firstObject];
+                team.calculatedData.predictedSeed = predictedSeed;
                 predictedSeed++;
             }
         }
-        //Calculating actual Seeds
-        NSMutableArray *totalScores = [[[NSOrderedSet orderedSetWithArray:[self.totalScoresOfTeams allValues]] array] mutableCopy];
+        [[RLMRealm defaultRealm] commitWriteTransaction];
         
-        NSArray *sortedScores = [[[totalScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
+        
+        //Calculating actual Seeds
+        
+        
+        NSMutableArray *averageScores = [[[NSOrderedSet orderedSetWithArray:[self.averageScoresOfTeams allValues]] array] mutableCopy];
+        
+        NSArray *sortedScores = [[[averageScores sortedArrayUsingSelector:@selector(compare:)] reverseObjectEnumerator] allObjects];
         NSInteger seed = 1;
         
         for (NSNumber *score in sortedScores)
         {
-            NSArray *numbers = [self.totalScoresOfTeams allKeysForObject:score];
+            NSArray *numbers = [self.averageScoresOfTeams allKeysForObject:score];
             for (NSNumber *number in numbers)
             {
                 RLMResults *tq = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], number]];
@@ -440,6 +434,9 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     NSDictionary *OPRs = [self doTBAOPRs];
     for (Match *m in allMatches)
     {
+        if([m.match isEqualToString: @"Q36"]){
+            //
+        }
         float totalBlueOPR = 0.0;
         for (Team *t in m.blueTeams) {
             totalBlueOPR += [OPRs[[[NSNumber numberWithFloat:t.number] stringValue]] floatValue];
@@ -706,7 +703,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 - (float)playedMatchesCountForTeam:(Team *)team
 {
-    return [[self playedMatchesForTeam:team] count];
+    return [[self officiallyScoredMatchesForTeam:team] count];
 }
 
 /**
@@ -822,9 +819,23 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     return total/playedMatches;
 }
 
-#pragma mark - Predicted Scores - DEPRICIATED
+#pragma mark - Predicted Scores - DEPRICIATED (mostly)
 #pragma mark ______________________________________________________________
 #pragma mark - Auto
+
+-(float)predictedAverageScoreForTeam:(Team *)team {
+    float totalCurrentScore = [self totalScoreForTeam:team];
+    float averageFutureMatchesScoreForTeam = 0.0;
+    for(TeamInMatchData *timd in team.matchData) {
+        if([self allianceContainsTeam:timd.match.redTeams team:team]) {
+            averageFutureMatchesScoreForTeam += timd.match.calculatedData.predictedRedScore;
+        } else {
+            averageFutureMatchesScoreForTeam += timd.match.calculatedData.predictedBlueScore;
+        }
+    }
+    return [self validFloat:(totalCurrentScore + averageFutureMatchesScoreForTeam)/([self playedMatchesCountForTeam:team] + [self numRemainingQualMatchesForTeam:team]) orDefault:0.0];
+}
+
 /*
 -(NSString *)bestAutoStrategyForAlliance:(NSArray *)alliance
 {
@@ -1204,40 +1215,40 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 {
     
     int totalScore = 0;
-    RLMArray *matchData = [self officiallyScoredMatchesForTeam:team];
+    NSArray *matchData = [self officiallyScoredMatchesForTeam:team];
     for (TeamInMatchData *TIMD in matchData)
     {
         Match *m = TIMD.match;
-        RLMArray<Team> *blueTeams = m.blueTeams;
-        RLMArray<Team> *redTeams = m.redTeams;
-        for (Team *t in blueTeams) {
-            if (t.number == team.number) {
-                totalScore = totalScore + (int)m.officialBlueScore;
-            }
+        if ([self allianceContainsTeam:m.blueTeams team:team]) {
+            totalScore = totalScore + (int)m.officialBlueScore;
+
         }
-        
-        for (Team *t in redTeams)
-        {
-            if (t.number == team.number) {
-                totalScore = totalScore + (int)m.officialRedScore;
-            }
+        if ([self allianceContainsTeam:m.redTeams team:team]) {
+            totalScore = totalScore + (int)m.officialRedScore;
         }
     }
-    
     //get the sum of the official Scores for the previous matches
     return totalScore;
 }
 
+-(BOOL)allianceContainsTeam:(RLMArray *)al team:(Team *)team {
+    for (Team *t in al) {
+        if (t.number == team.number) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+
 -(float)averageScoreForTeam:(Team *)team
 {
-#warning Change Back To Played Matches After Done Testing
-    return [self validFloat:[self totalScoreForTeam:team]/[self numberOfOfficiallyScoredMatchesForTeam:team] orDefault:0.0];
+    return [self validFloat:[self totalScoreForTeam:team]/[self playedMatchesCountForTeam:team] orDefault:0.0];
 }
 
 -(NSInteger)numRemainingQualMatchesForTeam:(Team *)team
 {
     NSInteger matchesPlayed = [self numberOfOfficiallyScoredMatchesForTeam:team];
-    
     return team.matchData.count - matchesPlayed;
 }
 
@@ -1296,8 +1307,8 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
         return self.playedMatchesForTeamsMemo[number];
     }
     RLMArray<TeamInMatchData> *matchData = team.matchData;
-    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1"];
-    //matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1"];
+    //matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"match.officialBlueScore != -1 && match.officialRedScore != -1 && uploadedData.maxFieldToteHeight != -1 && uploadedData.stackingAbility != -1"];
+    matchData = (RLMArray<TeamInMatchData> *)[matchData objectsWhere:@"uploadedData.maxFieldToteHeight != -1 && uploadedData.stackPlacing != -1"];
 
     self.playedMatchesForTeamsMemo[number] = matchData;
     return matchData;
@@ -1330,6 +1341,7 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
 
 -(float)firstPickAbilityForTeam:(Team *)team
 {
+    
     return (20*team.calculatedData.isStackedToteSetPercentage) + team.calculatedData.stackingAbility;
 }
 
@@ -1617,7 +1629,9 @@ t.calculatedData.avgStackPlacing = [self averageWithTeam:t withDatapointKeyPath:
     {
         numTotesStacked += teamInMatchData.uploadedData.numTotesStacked;
         numReconsStacked += teamInMatchData.uploadedData.numReconsStacked;
-        maxFieldToteHeight += teamInMatchData.uploadedData.maxFieldToteHeight;
+        if (!(teamInMatchData.uploadedData.maxFieldToteHeight < 0)) {
+            maxFieldToteHeight += teamInMatchData.uploadedData.maxFieldToteHeight;
+        }
         maxReconsStackHeight += teamInMatchData.uploadedData.maxReconHeight;
         numLitterDropped += teamInMatchData.uploadedData.numLitterDropped;
         numNoodlesContributed += teamInMatchData.uploadedData.numNoodlesContributed;

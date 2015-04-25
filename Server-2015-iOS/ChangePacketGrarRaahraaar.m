@@ -326,8 +326,9 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
 - (void)possiblyCreateMatch:(NSString *)head andImplementTeam:(Team *)originalTeam intoTheDatabaseWithAllianceColor:(NSString *)color
 {
     if (color.length == 0) {
-        Log(@"No Color", @"red");
+        Log(@"No Color", @"yellow");
     }
+    else {
     RLMResults *m = [Match objectsWhere: @"match == %@", head];
     if (m.count == 0) {
         Match *match = [self blankMatchWithNumber:head];
@@ -353,6 +354,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             [self checkForTooManyTeamsInAlliance:match.blueTeams andPossiblyAddTeam:originalTeam];
         }
         [self safeAddTeamInMatchData:[self blankTeamInMatchDataWithTeam:originalTeam andMatch:match] toMatch:match andTeam:originalTeam];
+    }
     }
 }
 
@@ -386,6 +388,24 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
             }
         }
     }
+}
+
+-(NSString *)fixedKeypathForKeypath:(NSString *)keyPath {
+    
+        if ([keyPath containsString:@"numReconsFromStep"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
+            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
+        }
+        if ([keyPath containsString:@"coopAction"] && ![keyPath containsString:@"coopActions"]) {
+            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"coopAction" withString:@"coopActions"];
+            
+        }
+        if ([keyPath containsString:@"coopActionss"]) {
+            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"coopActionss" withString:@"coopActions"];
+        }
+        if ([keyPath containsString:@"number"] && [keyPath containsString:@"reconAcquisitions"]) {
+            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"number" withString:@"numReconsAcquired"];
+        }
+        return keyPath;
 }
 
 // Separates the keyPath into components and creates an array out o them
@@ -667,12 +687,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                 BOOL wasError = NO;
                 for(NSMutableDictionary *change in JSONfile[@"changes"])
                 {
+                   
                     NSString *keyPath = change[@"keyToChange"];
                     NSString *valueToChangeTo = change[@"valueToChangeTo"];
-                       if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
-                        if ([keyPath containsString:@"numReconsFromStep"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
-                            keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
-                        }
+                     if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
+                        keyPath = [self fixedKeypathForKeypath:keyPath];
                         
                         
                         //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
@@ -715,11 +734,7 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         NSString *valueToChangeTo = change[@"valueToChangeTo"];
                         
                             if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
-                                if ([keyPath containsString:@"numReconsFromStep"]) {
-                                    keyPath = [keyPath stringByReplacingOccurrencesOfString:@"numReconsFromStep" withString:@"numTeleopReconsFromStep"];
-                                }
-                                
-                            
+                                keyPath = [self fixedKeypathForKeypath:keyPath];
                             //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
                             
                             // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.

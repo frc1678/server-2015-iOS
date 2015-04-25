@@ -336,9 +336,13 @@
 }
 
 -(NSMutableArray *)mutableArrayFromRLMResults:(RLMResults *)results {
-    RLMArray<Match> *arr = (RLMArray<Match> *)results;
+    RLMArray *arr = (RLMArray *)results;
+    return [self mutableArrayFromRLMArray:arr];
+}
+
+-(NSMutableArray *)mutableArrayFromRLMArray:(RLMArray *)rlmArr {
     NSMutableArray *ma = [[NSMutableArray alloc] init];
-    for (id result in arr) {
+    for (id result in rlmArr) {
         [ma addObject:result];
     }
     return ma;
@@ -354,7 +358,18 @@
         return NSOrderedDescending;
     }];
     
+    [[RLMRealm defaultRealm] beginWriteTransaction];
     RLMArray<Team> *teams = (RLMArray<Team> *)[[Team allObjects] sortedResultsUsingProperty:@"number" ascending:YES];
+    for(Team *t in [self mutableArrayFromRLMResults:[Team allObjects]]) {
+        t.matchData = (RLMArray<TeamInMatchData> *)[[self mutableArrayFromRLMArray:t.matchData] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            if([self numberFromMatchNum:[obj1 valueForKeyPath:@"match.match"]] < [self numberFromMatchNum:[obj2 valueForKeyPath:@"match.match"]]) {
+                return NSOrderedAscending;
+            }
+            return NSOrderedDescending;
+        }];
+    }
+    [[RLMRealm defaultRealm] commitWriteTransaction];
+    
     [[RLMRealm defaultRealm] beginWriteTransaction];
     c.matches = (RLMArray<Match> *)m;
     c.attendingTeams = teams;
