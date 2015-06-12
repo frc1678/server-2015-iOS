@@ -50,7 +50,7 @@
 
 @implementation ReconAcquisition (UniqueKey)
 + (NSString *)semiUniqueKey {
-    return @"uniqueID"; //Should this be idNum?
+    return @"uniqueID"; 
 }
 - (NSString *)semiUniqueKey {
     return [ReconAcquisition semiUniqueKey];

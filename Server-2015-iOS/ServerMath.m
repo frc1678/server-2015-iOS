@@ -147,20 +147,6 @@
                                   };
     
     
-    //RLMResults *team10000Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"1533"]];
-    //RLMResults *team10001Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"2950"]];
-    //RLMResults *team10002Query = [Team objectsWhere:[NSString stringWithFormat:@"%@ == %@", [Team uniqueKey], @"10002"]];
-    
-    //Team *team10000 = (Team *)[team10000Query firstObject];
-    //Team *team10001 = (Team *)[team10001Query firstObject];
-    //Team *team10002 = (Team *)[team10002Query firstObject];
-    
-    //NSArray *alliance = @[team10000, team10001, team10002];
-    
-    
-    //NSLog(@"Team 10000 Calculated Data: %@", team10000.calculatedData);
-    //NSLog(@"Team 10000 Calculated Data: %@", team10001.calculatedData);
-    
     @try {
         NSLog(@"SD: %f",[self predictedScoreStandardDeviation]);
         [self updateCalculatedData];

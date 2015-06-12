@@ -40,13 +40,6 @@
 
 @end
 
-
-/*#define XCODE_COLORS_ESCAPE @"\033["
- 
- #define XCODE_COLORS_RESET_FG  XCODE_COLORS_ESCAPE @"fg;" // Clear any foreground color
- #define XCODE_COLORS_RESET_BG  XCODE_COLORS_ESCAPE @"bg;" // Clear any background color
- #define XCODE_COLORS_RESET     XCODE_COLORS_ESCAPE @";"   // Clear any foreground or background color*/
-
 @interface ChangePacketGrarRaahraaar ()
 
 @property (nonatomic, strong) NSMutableArray *changePackets;
@@ -408,8 +401,20 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
         return keyPath;
 }
 
-// Separates the keyPath into components and creates an array out o them
-// Finds UniqueKey-s and SemiUniqueKey-s among the components
+
+/**
+ *  This recursive function recurses threw a keypath in a change packet, and is able to change the value in the database.
+ *
+ *  @param value         The value that you are setting the database thing to.
+ *  @param keyPath       The keypath that describes what object in the database you are modifying.
+ *  @param origionalPath The origional keypath (the function modifys the keypath as it goes).
+ *  @param object        The current database object that the function is working with, this changes with each recursion.
+ *  @param original      The origional database object, with the current system this is always a team.
+ *  @param allianceColor The color of the alliance that the origional object was from in that change packet ("red" or "blue")
+ *  @param r             The return value. Even though the function is recursing, we want to be able return a value all the way out of the stack. Notice that if this is not nil, we return it immediately at the top of the function.
+ *
+ *  @return Possibly an error message.
+ */
 - (NSString *)setValue:(id)value forKeyPath:(NSString *)keyPath forOrigionalPath:(NSString *)origionalPath onRealmObject:(id)object onOriginalObject:(id)original withAllianceColor:(NSString *)allianceColor withReturn:(NSString *)r
 {
     if (r != nil) {
@@ -693,29 +698,18 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                      if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"]) {
                         keyPath = [self fixedKeypathForKeypath:keyPath];
                         
-                        
-                        //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
-                        
-                        // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
-                        
-                        //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
-                        //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
-                        //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                        //RLMRealm *realm = [RLMRealm defaultRealm];
                         [realm beginWriteTransaction];
                         NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath forOrigionalPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
                         if (setError != nil) {
                             wasError = YES;
                             NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
-                            //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
+
                             Log(log, @"yellow");
                             DBError *e = [[DBError alloc] init];
                             [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&e];
                         }
                         [realm commitWriteTransaction];
                     }
-                    //
-                    
                     //NSLog(@"Success File: %@, object: %@, keyPath: %@", fileInfo.path, objectToModify, keyPath);
                     
                 }
@@ -735,21 +729,11 @@ typedef NS_ENUM(NSInteger, DBFilePathEnum) {
                         
                             if (![keyPath containsString:@"scoutName"] && ![keyPath containsString:@"numLitterThrownToOtherSide"] && ![keyPath containsString:@"numReconsPickedUp"] && ![keyPath containsString:@"officialRedScore"] && ![keyPath containsString:@"officialBlueScore"]) {
                                 keyPath = [self fixedKeypathForKeypath:keyPath];
-                            //NSLog(@"key: %@, Value: %@", keyPath, valueToChangeTo);
-                            
-                            // The one issue is it probably won't work with RLMArray, which is how we store match data, but that can probably be fixed.
-                            
-                            //First get an array of the matchData objects (or whatever type is the first thing in the keyPath) THIS IS THE ONLY THING I CANT SEEM TO DO
-                            //Next, search threw that for the one whose uniqueKey (using the protocol) == keyPathComponents[1]
-                            //Then, use setValue: forKeyPath: on the value and the key path uncluding ONLY keyPathComponents[2] and keyPathComponents[3]
-                            //RLMRealm *realm = [RLMRealm defaultRealm];
                             [realm beginWriteTransaction];
                             NSString *setError = [self setValue:valueToChangeTo forKeyPath:keyPath forOrigionalPath:keyPath onRealmObject:objectToModify  onOriginalObject:objectToModify withAllianceColor:color withReturn:nil];
                             if (setError != nil) {
                                 wasError = YES;
-                                NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];
-                                //NSLog(XCODE_COLORS_ESCAPE @"fg225,0,0;" @"%@" XCODE_COLORS_RESET, log );
-                                Log(log, @"yellow");
+                                NSString *log = [NSString stringWithFormat:@"\nSet Value For Key (recursive version) error: %@\nKeyPath: %@\nValueToChangeTo: %@\nFile Name: %@\n" , setError, keyPath, valueToChangeTo, fileInfo.path.name];                                Log(log, @"yellow");
                                 DBError *e = [[DBError alloc] init];
                                 [[DBFilesystem sharedFilesystem] movePath:fileInfo.path toPath:[[self dropboxFilePath:InvalidChangePackets] childPath:fileInfo.path.name] error:&e];
                             }
